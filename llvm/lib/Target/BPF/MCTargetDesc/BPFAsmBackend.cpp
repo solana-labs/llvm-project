@@ -76,8 +76,8 @@ void BPFAsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
     if (Value) {
       MCContext &Ctx = Asm.getContext();
       Ctx.reportError(Fixup.getLoc(),
-                      "Unsupported relocation: try to compile with -O2 or above, "
-                      "or check your static variable usage");
+                      "Unsupported relocation: Only zero offset section "
+                      "relocations supported");
     }
   } else if (Fixup.getKind() == FK_Data_4) {
     support::endian::write<uint32_t>(&Data[Fixup.getOffset()], Value, Endian);
