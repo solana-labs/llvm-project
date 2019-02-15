@@ -40,6 +40,8 @@ static void fail(const SDLoc &DL, SelectionDAG &DAG, const Twine &Msg) {
   MachineFunction &MF = DAG.getMachineFunction();
   DAG.getContext()->diagnose(
       DiagnosticInfoUnsupported(MF.getFunction(), Msg, DL.getDebugLoc()));
+
+  dbgs() << "Warning: " <<  Msg << '\n';
 }
 
 static void fail(const SDLoc &DL, SelectionDAG &DAG, const char *Msg,
@@ -52,6 +54,8 @@ static void fail(const SDLoc &DL, SelectionDAG &DAG, const char *Msg,
   OS.flush();
   DAG.getContext()->diagnose(
       DiagnosticInfoUnsupported(MF.getFunction(), Str, DL.getDebugLoc()));
+
+  dbgs() << "Warning: " <<  Msg << '\n';
 }
 
 BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
