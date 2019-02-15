@@ -1,3 +1,9 @@
+# The LLVM Compiler Infrastructure modified to support Berkley Packet Filter modules written in Rust
+
+This fork of LLVM is used by [this fork of Rust](https://github.com/solana-labs/rust)
+
+---
+
 # The LLVM Compiler Infrastructure
 
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/llvm/llvm-project/badge)](https://securityscorecards.dev/viewer/?uri=github.com/llvm/llvm-project)
