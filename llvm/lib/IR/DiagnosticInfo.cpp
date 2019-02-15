@@ -356,6 +356,9 @@ void DiagnosticInfoUnsupported::print(DiagnosticPrinter &DP) const {
   std::string Str;
   raw_string_ostream OS(Str);
 
+  dbgs() << "Warning" << getLocationStr() << ": in function " << getFunction().getName() << ' '
+     << *getFunction().getFunctionType() << ": " << Msg << '\n';
+
   OS << getLocationStr() << ": in function " << getFunction().getName() << ' '
      << *getFunction().getFunctionType() << ": " << Msg << '\n';
   OS.flush();
