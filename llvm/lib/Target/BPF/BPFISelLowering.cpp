@@ -37,17 +37,26 @@ static cl::opt<bool> BPFExpandMemcpyInOrder("bpf-expand-memcpy-in-order",
   cl::Hidden, cl::init(false),
   cl::desc("Expand memcpy into load/store pairs in order"));
 
-static void fail(const SDLoc &DL, SelectionDAG &DAG, const Twine &Msg,
-                 SDValue Val = {}) {
-  std::string Str;
-  if (Val) {
-    raw_string_ostream OS(Str);
-    Val->print(OS);
-    OS << ' ';
-  }
+static void fail(const SDLoc &DL, SelectionDAG &DAG, const Twine &Msg) {
   MachineFunction &MF = DAG.getMachineFunction();
-  DAG.getContext()->diagnose(DiagnosticInfoUnsupported(
-      MF.getFunction(), Twine(Str).concat(Msg), DL.getDebugLoc()));
+  DAG.getContext()->diagnose(
+      DiagnosticInfoUnsupported(MF.getFunction(), Msg, DL.getDebugLoc()));
+
+  dbgs() << "Warning: " <<  Msg << '\n';
+}
+
+static void fail(const SDLoc &DL, SelectionDAG &DAG, const char *Msg,
+                 SDValue Val) {
+  MachineFunction &MF = DAG.getMachineFunction();
+  std::string Str;
+  raw_string_ostream OS(Str);
+  OS << Msg;
+  Val->print(OS);
+  OS.flush();
+  DAG.getContext()->diagnose(
+      DiagnosticInfoUnsupported(MF.getFunction(), Str, DL.getDebugLoc()));
+
+  dbgs() << "Warning: " <<  Msg << '\n';
 }
 
 BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
