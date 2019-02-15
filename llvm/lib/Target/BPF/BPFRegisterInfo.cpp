@@ -43,7 +43,7 @@ BitVector BPFRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 
 static void WarnSize(int Offset, MachineFunction &MF, DebugLoc& DL)
 {
-  if (Offset <= -512) {
+  if (Offset <= -2048) {
       const Function &F = MF.getFunction();
       DiagnosticInfoUnsupported DiagStackSize(F,
           "Looks like the BPF stack limit of 512 bytes is exceeded. "
