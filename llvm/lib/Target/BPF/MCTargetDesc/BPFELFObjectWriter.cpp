@@ -27,9 +27,21 @@ public:
 protected:
   unsigned getRelocType(MCContext &Ctx, const MCValue &Target,
                         const MCFixup &Fixup, bool IsPCRel) const override;
+
+  bool needsRelocateWithSymbol(const MCSymbol &Sym,
+                               unsigned Type) const override;
 };
 
 } // end anonymous namespace
+
+// Avoid section relocations because the BPF backend can only handle
+// section relocations with values (offset into the section containing
+// the symbol being relocated).  Forcing a relocation with a symbol
+// will result in the symbol's index being used in the .o file instead.
+bool BPFELFObjectWriter::needsRelocateWithSymbol(const MCSymbol &Sym,
+                                                 unsigned Type) const {
+  return true;
+}
 
 BPFELFObjectWriter::BPFELFObjectWriter(uint8_t OSABI)
     : MCELFObjectTargetWriter(/*Is64Bit*/ true, OSABI, ELF::EM_BPF,
