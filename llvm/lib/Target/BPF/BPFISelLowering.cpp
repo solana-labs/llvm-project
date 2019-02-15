@@ -398,12 +398,10 @@ SDValue BPFTargetLowering::LowerFormalArguments(
       InVals.push_back(DAG.getConstant(0, DL, VA.getLocVT()));
     }
   }
-  if (HasMemArgs)
-    fail(DL, DAG, "stack arguments are not supported");
-  if (IsVarArg)
-    fail(DL, DAG, "variadic functions are not supported");
-  if (MF.getFunction().hasStructRetAttr())
-    fail(DL, DAG, "aggregate returns are not supported");
+
+  if (IsVarArg) {
+    fail(DL, DAG, "functions with VarArgs are not supported");
+  }
 
   return Chain;
 }
@@ -444,14 +442,6 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   if (Outs.size() > MaxArgs)
     fail(CLI.DL, DAG, "too many arguments", Callee);
-
-  for (auto &Arg : Outs) {
-    ISD::ArgFlagsTy Flags = Arg.Flags;
-    if (!Flags.isByVal())
-      continue;
-    fail(CLI.DL, DAG, "pass by value not supported", Callee);
-    break;
-  }
 
   auto PtrVT = getPointerTy(MF.getDataLayout());
   Chain = DAG.getCALLSEQ_START(Chain, NumBytes, 0, CLI.DL);
@@ -555,11 +545,13 @@ BPFTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
   CCState CCInfo(CallConv, IsVarArg, MF, RVLocs, *DAG.getContext());
 
   if (MF.getFunction().getReturnType()->isAggregateType()) {
-    fail(DL, DAG, "aggregate returns are not supported");
+    // TODO  get passed via stack but need to confirm more use caess
+    // fail(DL, DAG, "only integer returns supported");
     return DAG.getNode(Opc, DL, MVT::Other, Chain);
   }
 
-  // Analize return values.
+  // Analyze return values.
+  assert(Outs.size() < 2 && "Too many return values");
   CCInfo.AnalyzeReturn(Outs, getHasAlu32() ? RetCC_BPF32 : RetCC_BPF64);
 
   SDValue Glue;
@@ -598,10 +590,11 @@ SDValue BPFTargetLowering::LowerCallResult(
   SmallVector<CCValAssign, 16> RVLocs;
   CCState CCInfo(CallConv, IsVarArg, MF, RVLocs, *DAG.getContext());
 
-  if (Ins.size() > 1) {
-    fail(DL, DAG, "only small returns supported");
-    for (auto &In : Ins)
-      InVals.push_back(DAG.getConstant(0, DL, In.VT));
+  if (Ins.size() >= 2) {
+    // TODO This error is either mislabeled or not an error, needs more investigation
+    // fail(DL, DAG, "only small returns supported");
+    for (unsigned i = 0, e = Ins.size(); i != e; ++i)
+      InVals.push_back(DAG.getConstant(0, DL, Ins[i].VT));
     return DAG.getCopyFromReg(Chain, DL, 1, Ins[0].VT, InGlue).getValue(1);
   }
 

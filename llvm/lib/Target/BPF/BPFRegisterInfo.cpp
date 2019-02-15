@@ -49,16 +49,16 @@ BitVector BPFRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 
 static void WarnSize(int Offset, MachineFunction &MF, DebugLoc& DL)
 {
-  if (Offset <= -BPFStackSizeOption) {
-    const Function &F = MF.getFunction();
-    DiagnosticInfoUnsupported DiagStackSize(
-        F,
-        "Looks like the BPF stack limit is exceeded. "
-        "Please move large on stack variables into BPF per-cpu array map. For "
-        "non-kernel uses, the stack can be increased using -mllvm "
-        "-bpf-stack-size.\n",
-        DL);
-    F.getContext().diagnose(DiagStackSize);
+  if (Offset <= -2048) {
+      const Function &F = MF.getFunction();
+      DiagnosticInfoUnsupported DiagStackSize(
+          F,
+          "Looks like the BPF stack limit is exceeded. "
+          "Please move large on stack variables into BPF per-cpu array map. For "
+          "non-kernel uses, the stack can be increased using -mllvm "
+          "-bpf-stack-size.\n",
+          DL);
+      F.getContext().diagnose(DiagStackSize);
   }
 }
 
