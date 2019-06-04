@@ -245,7 +245,7 @@ SDValue BPFTargetLowering::LowerFormalArguments(
         RegInfo.addLiveIn(VA.getLocReg(), VReg);
         SDValue ArgValue = DAG.getCopyFromReg(Chain, DL, VReg, RegVT);
 
-        // If this is an value that has been promoted to wider types, insert an
+        // If this is a value that has been promoted to a wider type, insert an
         // assert[sz]ext to capture this, then truncate to the right size.
         if (VA.getLocInfo() == CCValAssign::SExt)
           ArgValue = DAG.getNode(ISD::AssertSext, DL, RegVT, ArgValue,
@@ -259,16 +259,17 @@ SDValue BPFTargetLowering::LowerFormalArguments(
 
         InVals.push_back(ArgValue);
 
-	break;
+        break;
       }
     } else {
-      fail(DL, DAG, "defined with too many args");
+      fail(DL, DAG, "Defined with too many args");
       InVals.push_back(DAG.getConstant(0, DL, VA.getLocVT()));
     }
   }
 
   if (IsVarArg) {
-    fail(DL, DAG, "functions with VarArgs are not supported");
+    fail(DL, DAG, "Functions with VarArgs are not supported");
+    assert(false);
   }
 
   return Chain;
@@ -309,7 +310,7 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   unsigned NumBytes = CCInfo.getNextStackOffset();
 
   if (Outs.size() > MaxArgs)
-    fail(CLI.DL, DAG, "too many args to ", Callee);
+    fail(CLI.DL, DAG, "Too many args to callee: ", Callee);
 
   auto PtrVT = getPointerTy(MF.getDataLayout());
   Chain = DAG.getCALLSEQ_START(Chain, NumBytes, 0, CLI.DL);
@@ -365,9 +366,9 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                         G->getOffset(), 0);
   } else if (ExternalSymbolSDNode *E = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     Callee = DAG.getTargetExternalSymbol(E->getSymbol(), PtrVT, 0);
-    fail(CLI.DL, DAG, Twine("A call to built-in function '"
-                            + StringRef(E->getSymbol())
-                            + "' remains unresolved"));
+    dbgs() << "Info: A call to built-in function '"
+           << StringRef(E->getSymbol())
+           << "' remains unresolved\n";
   }
 
   // Returns a chain & a flag for retval copy to use.
@@ -399,6 +400,15 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                          InVals);
 }
 
+bool BPFTargetLowering::CanLowerReturn(
+    CallingConv::ID CallConv, MachineFunction &MF, bool IsVarArg,
+    const SmallVectorImpl<ISD::OutputArg> &Outs, LLVMContext &Context) const {
+  // At minimal return Outs.size() <= 1, or check valid types in CC.
+  SmallVector<CCValAssign, 16> RVLocs;
+  CCState CCInfo(CallConv, IsVarArg, MF, RVLocs, Context);
+  return CCInfo.CheckReturn(Outs, getHasAlu32() ? RetCC_BPF32 : RetCC_BPF64);
+}
+
 SDValue
 BPFTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
                                bool IsVarArg,
@@ -414,14 +424,10 @@ BPFTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
   // CCState - Info about the registers and stack slot.
   CCState CCInfo(CallConv, IsVarArg, MF, RVLocs, *DAG.getContext());
 
-  if (MF.getFunction().getReturnType()->isAggregateType()) {
-    // TODO  get passed via stack but need to confirm more use caess
-    // fail(DL, DAG, "only integer returns supported");
-    return DAG.getNode(Opc, DL, MVT::Other, Chain);
+  if (Outs.size() > 1) {
+    fail(DL, DAG, "Only a single return supported");
+    assert(false);
   }
-
-  // Analyze return values.
-  assert(Outs.size() < 2 && "Too many return values");
   CCInfo.AnalyzeReturn(Outs, getHasAlu32() ? RetCC_BPF32 : RetCC_BPF64);
 
   SDValue Flag;
@@ -459,12 +465,9 @@ SDValue BPFTargetLowering::LowerCallResult(
   SmallVector<CCValAssign, 16> RVLocs;
   CCState CCInfo(CallConv, IsVarArg, MF, RVLocs, *DAG.getContext());
 
-  if (Ins.size() >= 2) {
-    // TODO This error is either mislabeled or not an error, needs more investigation
-    // fail(DL, DAG, "only small returns supported");
-    for (unsigned i = 0, e = Ins.size(); i != e; ++i)
-      InVals.push_back(DAG.getConstant(0, DL, Ins[i].VT));
-    return DAG.getCopyFromReg(Chain, DL, 1, Ins[0].VT, InFlag).getValue(1);
+  if (Ins.size() > 1) {
+    fail(DL, DAG, "Only a single return supported");
+    assert(false);
   }
 
   CCInfo.AnalyzeCallResult(Ins, getHasAlu32() ? RetCC_BPF32 : RetCC_BPF64);
