@@ -374,7 +374,7 @@ SDValue BPFTargetLowering::LowerFormalArguments(
         RegInfo.addLiveIn(VA.getLocReg(), VReg);
         SDValue ArgValue = DAG.getCopyFromReg(Chain, DL, VReg, RegVT);
 
-        // If this is an value that has been promoted to wider types, insert an
+        // If this is a value that has been promoted to a wider type, insert an
         // assert[sz]ext to capture this, then truncate to the right size.
         if (VA.getLocInfo() == CCValAssign::SExt)
           ArgValue = DAG.getNode(ISD::AssertSext, DL, RegVT, ArgValue,
@@ -397,7 +397,8 @@ SDValue BPFTargetLowering::LowerFormalArguments(
   }
 
   if (IsVarArg) {
-    fail(DL, DAG, "functions with VarArgs are not supported");
+    fail(DL, DAG, "Functions with VarArgs are not supported");
+    assert(false);
   }
 
   return Chain;
@@ -527,6 +528,15 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                          InVals);
 }
 
+bool BPFTargetLowering::CanLowerReturn(
+    CallingConv::ID CallConv, MachineFunction &MF, bool IsVarArg,
+    const SmallVectorImpl<ISD::OutputArg> &Outs, LLVMContext &Context) const {
+  // At minimal return Outs.size() <= 1, or check valid types in CC.
+  SmallVector<CCValAssign, 16> RVLocs;
+  CCState CCInfo(CallConv, IsVarArg, MF, RVLocs, Context);
+  return CCInfo.CheckReturn(Outs, getHasAlu32() ? RetCC_BPF32 : RetCC_BPF64);
+}
+
 SDValue
 BPFTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
                                bool IsVarArg,
@@ -542,14 +552,10 @@ BPFTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
   // CCState - Info about the registers and stack slot.
   CCState CCInfo(CallConv, IsVarArg, MF, RVLocs, *DAG.getContext());
 
-  if (MF.getFunction().getReturnType()->isAggregateType()) {
-    // TODO  get passed via stack but need to confirm more use caess
-    // fail(DL, DAG, "only integer returns supported");
-    return DAG.getNode(Opc, DL, MVT::Other, Chain);
+  if (Outs.size() > 1) {
+    fail(DL, DAG, "Only a single return supported");
+    assert(false);
   }
-
-  // Analyze return values.
-  assert(Outs.size() < 2 && "Too many return values");
   CCInfo.AnalyzeReturn(Outs, getHasAlu32() ? RetCC_BPF32 : RetCC_BPF64);
 
   SDValue Glue;
@@ -587,7 +593,7 @@ SDValue BPFTargetLowering::LowerCallResult(
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
   CCState CCInfo(CallConv, IsVarArg, MF, RVLocs, *DAG.getContext());
-
+  
   if (Ins.size() >= 2) {
     // TODO This error is either mislabeled or not an error, needs more investigation
     // fail(DL, DAG, "only small returns supported");
