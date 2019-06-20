@@ -458,9 +458,10 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                         G->getOffset(), 0);
   } else if (ExternalSymbolSDNode *E = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     Callee = DAG.getTargetExternalSymbol(E->getSymbol(), PtrVT, 0);
-    fail(CLI.DL, DAG, Twine("A call to built-in function '"
-                            + StringRef(E->getSymbol())
-                            + "' remains unresolved"));
+    // This is not a warning but info, will be resolved on load
+    // fail(CLI.DL, DAG, Twine("A call to built-in function '"
+    //                         + StringRef(E->getSymbol())
+    //                         + "' remains unresolved"));
   }
 
   // Returns a chain & a flag for retval copy to use.
