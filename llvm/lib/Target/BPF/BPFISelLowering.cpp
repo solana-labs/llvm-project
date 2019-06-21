@@ -355,7 +355,7 @@ SDValue BPFTargetLowering::LowerFormalArguments(
 	break;
       }
     } else {
-      fail(DL, DAG, "defined with too many args");
+      fail(DL, DAG, "BPF supports a maximum of 5 arguments");
       InVals.push_back(DAG.getConstant(0, DL, VA.getLocVT()));
     }
   }
@@ -402,7 +402,7 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   unsigned NumBytes = CCInfo.getNextStackOffset();
 
   if (Outs.size() > MaxArgs)
-    fail(CLI.DL, DAG, "too many args to ", Callee);
+    fail(CLI.DL, DAG, "BPF supports a maximum of 5 arguments ", Callee);
 
   auto PtrVT = getPointerTy(MF.getDataLayout());
   Chain = DAG.getCALLSEQ_START(Chain, NumBytes, 0, CLI.DL);
