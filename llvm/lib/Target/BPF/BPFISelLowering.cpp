@@ -455,9 +455,6 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   if (HasStackArgs) {
     SDValue FramePtr = DAG.getCopyFromReg(Chain, CLI.DL, BPF::R10, getPointerTy(MF.getDataLayout()));
 
-    // Pass the current stack frame pointer via BPF::R5
-    Chain = DAG.getCopyToReg(Chain, CLI.DL, BPF::R5, FramePtr);
-
     // Stack arguments have to walked in reverse order by inserting
     // chained stores, this ensures their order is not changed by the scheduler
     // and that the push instruction sequence generated is correct, otherwise they
@@ -472,6 +469,9 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       SDValue PtrOff = DAG.getObjectPtrOffset(CLI.DL, FramePtr, VA.getLocMemOffset());
       Chain = DAG.getStore(Chain, CLI.DL, Arg, PtrOff, MachinePointerInfo());
     }
+
+    // Pass the current stack frame pointer via BPF::R5
+    Chain = DAG.getCopyToReg(Chain, CLI.DL, BPF::R5, FramePtr);
   }
   
   SDValue InFlag;
