@@ -43,20 +43,6 @@ static void fail(const SDLoc &DL, SelectionDAG &DAG, const Twine &Msg) {
   dbgs() << "Warning: " <<  Msg << '\n';
 }
 
-static void fail(const SDLoc &DL, SelectionDAG &DAG, const char *Msg,
-                 SDValue Val) {
-  MachineFunction &MF = DAG.getMachineFunction();
-  std::string Str;
-  raw_string_ostream OS(Str);
-  OS << Msg;
-  Val->print(OS);
-  OS.flush();
-  DAG.getContext()->diagnose(
-      DiagnosticInfoUnsupported(MF.getFunction(), Str, DL.getDebugLoc()));
-
-  dbgs() << "Warning: " <<  Msg << '\n';
-}
-
 BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
                                      const BPFSubtarget &STI)
     : TargetLowering(TM) {
@@ -318,11 +304,18 @@ SDValue BPFTargetLowering::LowerFormalArguments(
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
-  CCInfo.AnalyzeFormalArguments(Ins, getHasAlu32() ? CC_BPF32 : CC_BPF64);
+  if (Ins.size() > MaxArgs) {
+    // Pass args 1-4 via registers, remaining args via stack, referenced via BPF::R5
+    CCInfo.AnalyzeFormalArguments(Ins, getHasAlu32() ? CC_BPF32_X : CC_BPF64_X);
+  } else {
+    // Pass all args via registers
+    CCInfo.AnalyzeFormalArguments(Ins, getHasAlu32() ? CC_BPF32 : CC_BPF64);
+  }
 
+  int FI = 0;  // Stack argument position
   for (auto &VA : ArgLocs) {
     if (VA.isRegLoc()) {
-      // Arguments passed in registers
+      // Argument passed in registers
       EVT RegVT = VA.getLocVT();
       MVT::SimpleValueType SimpleTy = RegVT.getSimpleVT().SimpleTy;
       switch (SimpleTy) {
@@ -355,8 +348,19 @@ SDValue BPFTargetLowering::LowerFormalArguments(
         break;
       }
     } else {
-      fail(DL, DAG, "BPF supports a maximum of 5 arguments");
-      InVals.push_back(DAG.getConstant(0, DL, VA.getLocVT()));
+      // Argument passed via stack
+      assert(VA.isMemLoc() && "Should be isMemLoc");
+
+      EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(DAG.getDataLayout());
+      EVT LocVT = VA.getLocVT();
+
+      // Arguments relative to BPF::R5
+      unsigned reg = MF.addLiveIn(BPF::R5, &BPF::GPRRegClass);
+      SDValue Const = DAG.getConstant(8 * FI++, DL, MVT::i64);
+      SDValue SDV = DAG.getCopyFromReg(Chain, DL, reg, getPointerTy(MF.getDataLayout()));
+      SDV = DAG.getNode(ISD::ADD, DL, PtrVT, SDV, Const);
+      SDV = DAG.getLoad(LocVT, DL, Chain, SDV, MachinePointerInfo(), 0);
+      InVals.push_back(SDV);
     }
   }
 
@@ -397,13 +401,15 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
-
-  CCInfo.AnalyzeCallOperands(Outs, getHasAlu32() ? CC_BPF32 : CC_BPF64);
+  if (Outs.size() > MaxArgs) {
+    // Pass args 1-4 via registers, remaining args via stack, referenced via BPF::R5
+    CCInfo.AnalyzeCallOperands(Outs, getHasAlu32() ? CC_BPF32_X : CC_BPF64_X);
+  } else {
+    // Pass all args via registers
+    CCInfo.AnalyzeCallOperands(Outs, getHasAlu32() ? CC_BPF32 : CC_BPF64);
+  }
 
   unsigned NumBytes = CCInfo.getNextStackOffset();
-
-  if (Outs.size() > MaxArgs)
-    fail(CLI.DL, DAG, "BPF supports a maximum of 5 arguments ", Callee);
 
   auto PtrVT = getPointerTy(MF.getDataLayout());
   Chain = DAG.getCALLSEQ_START(Chain, NumBytes, 0, CLI.DL);
@@ -411,11 +417,11 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   SmallVector<std::pair<unsigned, SDValue>, MaxArgs> RegsToPass;
 
   // Walk arg assignments
-  for (unsigned i = 0,
-                e = std::min(static_cast<unsigned>(ArgLocs.size()), MaxArgs);
-       i != e; ++i) {
-    CCValAssign &VA = ArgLocs[i];
-    SDValue Arg = OutVals[i];
+  unsigned AI, AE;
+  bool HasStackArgs = false;
+  for (AI = 0, AE = ArgLocs.size(); AI != AE; ++AI) {
+    CCValAssign &VA = ArgLocs[AI];
+    SDValue Arg = OutVals[AI];
 
     // Promote the value if needed.
     switch (VA.getLocInfo()) {
@@ -434,6 +440,11 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       break;
     }
 
+    if (VA.isMemLoc()) {
+      HasStackArgs = true;
+      break;
+    }
+
     // Push arguments into RegsToPass vector
     if (VA.isRegLoc())
       RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
@@ -441,10 +452,32 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       llvm_unreachable("call arg pass bug");
   }
 
+  if (HasStackArgs) {
+    SDValue FramePtr = DAG.getCopyFromReg(Chain, CLI.DL, BPF::R10, getPointerTy(MF.getDataLayout()));
+
+    // Pass the current stack frame pointer via BPF::R5
+    Chain = DAG.getCopyToReg(Chain, CLI.DL, BPF::R5, FramePtr);
+
+    // Stack arguments have to walked in reverse order by inserting
+    // chained stores, this ensures their order is not changed by the scheduler
+    // and that the push instruction sequence generated is correct, otherwise they
+    // can be freely intermixed.
+    for (AE = AI, AI = ArgLocs.size(); AI != AE; --AI) {
+      unsigned Loc = AI - 1;
+      CCValAssign &VA = ArgLocs[Loc];
+      SDValue Arg = OutVals[Loc];
+
+      assert(VA.isMemLoc());
+
+      SDValue PtrOff = DAG.getObjectPtrOffset(CLI.DL, FramePtr, VA.getLocMemOffset());
+      Chain = DAG.getStore(Chain, CLI.DL, Arg, PtrOff, MachinePointerInfo());
+    }
+  }
+  
   SDValue InFlag;
 
   // Build a sequence of copy-to-reg nodes chained together with token chain and
-  // flag operands which copy the outgoing args into registers.  The InFlag in
+  // flag operands which copy the outgoing args into registers.  The InFlag is
   // necessary since all emitted instructions must be stuck together.
   for (auto &Reg : RegsToPass) {
     Chain = DAG.getCopyToReg(Chain, CLI.DL, Reg.first, Reg.second, InFlag);
@@ -475,6 +508,10 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // known live into the call.
   for (auto &Reg : RegsToPass)
     Ops.push_back(DAG.getRegister(Reg.first, Reg.second.getValueType()));
+
+  if (HasStackArgs) {
+    Ops.push_back(DAG.getRegister(BPF::R5, MVT::i64));
+  }
 
   if (InFlag.getNode())
     Ops.push_back(InFlag);
