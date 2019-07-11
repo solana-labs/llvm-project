@@ -19,9 +19,18 @@ def CC_BPF64 : CallingConv<[
   CCIfType<[ i8, i16, i32 ], CCPromoteToType<i64>>,
 
   // All arguments get passed in integer registers if there is space.
-  CCIfType<[i64], CCAssignToReg<[ R1, R2, R3, R4, R5 ]>>,
+  CCIfType<[i64], CCAssignToReg<[R1, R2, R3, R4, R5]>>,
 
   // Could be assigned to the stack in 8-byte aligned units, but unsupported
+  CCAssignToStack<8, 8>
+]>;
+
+def CC_BPF64_X : CallingConv<[
+  CCIfType<[ i8, i16, i32 ], CCPromoteToType<i64>>,
+
+  // Skip R5 register, reserved for passing frame pointer.
+  CCIfType<[i64], CCAssignToReg<[R1, R2, R3, R4]>>,
+
   CCAssignToStack<8, 8>
 ]>;
 
@@ -42,6 +51,17 @@ def CC_BPF32 : CallingConv<[
                                           [W1, W2, W3, W4, W5]>>,
 
   // Could be assigned to the stack in 8-byte aligned units, but unsupported
+  CCAssignToStack<8, 8>
+]>;
+
+def CC_BPF32_X : CallingConv<[
+  // Skip R5 register, reserved for passing frame pointer.
+  CCIfType<[i32], CCAssignToRegWithShadow<[W1, W2, W3, W4],
+                                          [R1, R2, R3, R4]>>,
+
+  CCIfType<[i64], CCAssignToRegWithShadow<[R1, R2, R3, R4],
+                                          [W1, W2, W3, W4]>>,
+
   CCAssignToStack<8, 8>
 ]>;
 
