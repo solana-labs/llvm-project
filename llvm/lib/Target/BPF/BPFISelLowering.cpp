@@ -312,7 +312,6 @@ SDValue BPFTargetLowering::LowerFormalArguments(
     CCInfo.AnalyzeFormalArguments(Ins, getHasAlu32() ? CC_BPF32 : CC_BPF64);
   }
 
-  int FI = 0;  // Stack argument position
   for (auto &VA : ArgLocs) {
     if (VA.isRegLoc()) {
       // Argument passed in registers
@@ -356,9 +355,9 @@ SDValue BPFTargetLowering::LowerFormalArguments(
 
       // Arguments relative to BPF::R5
       unsigned reg = MF.addLiveIn(BPF::R5, &BPF::GPRRegClass);
-      SDValue Const = DAG.getConstant(8 * FI++, DL, MVT::i64);
+      SDValue Const = DAG.getConstant(VA.getLocMemOffset() + 8, DL, MVT::i64);
       SDValue SDV = DAG.getCopyFromReg(Chain, DL, reg, getPointerTy(MF.getDataLayout()));
-      SDV = DAG.getNode(ISD::ADD, DL, PtrVT, SDV, Const);
+      SDV = DAG.getNode(ISD::SUB, DL, PtrVT, SDV, Const);
       SDV = DAG.getLoad(LocVT, DL, Chain, SDV, MachinePointerInfo(), 0);
       InVals.push_back(SDV);
     }
@@ -466,7 +465,9 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
       assert(VA.isMemLoc());
 
-      SDValue PtrOff = DAG.getObjectPtrOffset(CLI.DL, FramePtr, VA.getLocMemOffset());
+      EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(DAG.getDataLayout());
+      SDValue Const = DAG.getConstant(VA.getLocMemOffset() + 8, CLI.DL, MVT::i64);
+      SDValue PtrOff = DAG.getNode(ISD::SUB, CLI.DL, PtrVT, FramePtr, Const);
       Chain = DAG.getStore(Chain, CLI.DL, Arg, PtrOff, MachinePointerInfo());
     }
 
