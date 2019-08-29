@@ -355,7 +355,7 @@ SDValue BPFTargetLowering::LowerFormalArguments(
 
       // Arguments relative to BPF::R5
       unsigned reg = MF.addLiveIn(BPF::R5, &BPF::GPRRegClass);
-      SDValue Const = DAG.getConstant(VA.getLocMemOffset() + 8, DL, MVT::i64);
+      SDValue Const = DAG.getConstant(2047 - VA.getLocMemOffset(), DL, MVT::i64);
       SDValue SDV = DAG.getCopyFromReg(Chain, DL, reg, getPointerTy(MF.getDataLayout()));
       SDV = DAG.getNode(ISD::SUB, DL, PtrVT, SDV, Const);
       SDV = DAG.getLoad(LocVT, DL, Chain, SDV, MachinePointerInfo(), 0);
@@ -454,7 +454,7 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   if (HasStackArgs) {
     SDValue FramePtr = DAG.getCopyFromReg(Chain, CLI.DL, BPF::R10, getPointerTy(MF.getDataLayout()));
 
-    // Stack arguments have to walked in reverse order by inserting
+    // Stack arguments have to be walked in reverse order by inserting
     // chained stores, this ensures their order is not changed by the scheduler
     // and that the push instruction sequence generated is correct, otherwise they
     // can be freely intermixed.
@@ -466,7 +466,7 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       assert(VA.isMemLoc());
 
       EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(DAG.getDataLayout());
-      SDValue Const = DAG.getConstant(VA.getLocMemOffset() + 8, CLI.DL, MVT::i64);
+      SDValue Const = DAG.getConstant(2047 - VA.getLocMemOffset(), CLI.DL, MVT::i64);
       SDValue PtrOff = DAG.getNode(ISD::SUB, CLI.DL, PtrVT, FramePtr, Const);
       Chain = DAG.getStore(Chain, CLI.DL, Arg, PtrOff, MachinePointerInfo());
     }
