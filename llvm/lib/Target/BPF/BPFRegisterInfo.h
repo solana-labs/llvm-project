@@ -18,6 +18,8 @@
 #define GET_REGINFO_HEADER
 #include "BPFGenRegisterInfo.inc"
 
+static const unsigned FrameLength = 4096;
+
 namespace llvm {
 
 struct BPFRegisterInfo : public BPFGenRegisterInfo {
