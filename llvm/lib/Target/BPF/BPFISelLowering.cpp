@@ -13,6 +13,7 @@
 
 #include "BPFISelLowering.h"
 #include "BPF.h"
+#include "BPFRegisterInfo.h"
 #include "BPFSubtarget.h"
 #include "BPFTargetMachine.h"
 #include "llvm/CodeGen/CallingConvLower.h"
@@ -355,7 +356,7 @@ SDValue BPFTargetLowering::LowerFormalArguments(
 
       // Arguments relative to BPF::R5
       unsigned reg = MF.addLiveIn(BPF::R5, &BPF::GPRRegClass);
-      SDValue Const = DAG.getConstant(2047 - VA.getLocMemOffset(), DL, MVT::i64);
+      SDValue Const = DAG.getConstant(FrameLength - VA.getLocMemOffset(), DL, MVT::i64);
       SDValue SDV = DAG.getCopyFromReg(Chain, DL, reg, getPointerTy(MF.getDataLayout()));
       SDV = DAG.getNode(ISD::SUB, DL, PtrVT, SDV, Const);
       SDV = DAG.getLoad(LocVT, DL, Chain, SDV, MachinePointerInfo(), 0);
@@ -466,7 +467,7 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       assert(VA.isMemLoc());
 
       EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(DAG.getDataLayout());
-      SDValue Const = DAG.getConstant(2047 - VA.getLocMemOffset(), CLI.DL, MVT::i64);
+      SDValue Const = DAG.getConstant(FrameLength - VA.getLocMemOffset(), CLI.DL, MVT::i64);
       SDValue PtrOff = DAG.getNode(ISD::SUB, CLI.DL, PtrVT, FramePtr, Const);
       Chain = DAG.getStore(Chain, CLI.DL, Arg, PtrOff, MachinePointerInfo());
     }
