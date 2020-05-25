@@ -148,3 +148,8 @@ libunwind specific options
 
   Path where built libunwind libraries should be installed. If a relative path,
   relative to ``CMAKE_INSTALL_PREFIX``.
+
+.. option:: LIBUNWIND_ENABLE_RUST_SGX:BOOL
+
+  **Default**: ``OFF``
+
