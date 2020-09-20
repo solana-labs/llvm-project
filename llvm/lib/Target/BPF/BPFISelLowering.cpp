@@ -803,3 +803,16 @@ MVT BPFTargetLowering::getScalarShiftAmountTy(const DataLayout &DL,
                                               EVT VT) const {
   return (getHasAlu32() && VT == MVT::i32) ? MVT::i32 : MVT::i64;
 }
+
+bool BPFTargetLowering::allowsMisalignedMemoryAccesses(EVT VT, unsigned,
+                                                       unsigned Alignment,
+                                                       MachineMemOperand::Flags,
+                                                       bool *Fast) const {
+  if (!VT.isSimple()) {
+    return false;
+  }
+  if (Fast) {
+    *Fast = true;
+  }
+  return true;
+}

@@ -63,6 +63,12 @@ public:
 
   MVT getScalarShiftAmountTy(const DataLayout &, EVT) const override;
 
+  bool allowsMisalignedMemoryAccesses(EVT,
+                                      unsigned,
+                                      unsigned,
+                                      MachineMemOperand::Flags,
+                                      bool*) const override;
+
 private:
   // Control Instruction Selection Features
   bool HasAlu32;
