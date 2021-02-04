@@ -34,7 +34,7 @@ protected:
 
 } // end anonymous namespace
 
-// Avoid section relocations because the BPF backend can only handle 
+// Avoid section relocations because the BPF backend can only handle
 // section relocations with values (offset into the section containing
 // the symbol being relocated).  Forcing a relocation with a symbol
 // will result in the symbol's index being used in the .o file instead.
