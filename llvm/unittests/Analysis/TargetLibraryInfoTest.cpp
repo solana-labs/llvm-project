@@ -564,6 +564,11 @@ TEST_F(TargetLibraryInfoTest, ValidProto) {
       "declare double @__sinh_finite(double)\n"
       "declare float @__sinhf_finite(float)\n"
       "declare x86_fp80 @__sinhl_finite(x86_fp80)\n"
+
+      // rust memory management
+      "declare i8* @__rust_alloc(i64, i64, i8*)\n"
+      "declare void @__rust_dealloc(i8*, i64, i64)\n"
+      "declare i8* @__rust_realloc(i8*, i64, i64, i64, i64, i8*)\n"
       );
 
   for (unsigned FI = 0; FI != LibFunc::NumLibFuncs; ++FI) {
