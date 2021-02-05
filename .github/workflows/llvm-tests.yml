@@ -21,7 +21,7 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          - windows-latest
+          # - windows-latest
           - macOS-latest
     steps:
     - name: Setup Windows
@@ -37,9 +37,11 @@ jobs:
     - name: Test llvm
       uses: llvm/actions/build-test-llvm-project@main
       with:
-        cmake_args: -G Ninja -DCMAKE_BUILD_TYPE=Release
+        cmake_args: -G Ninja -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS='clang;lld' -DLLVM_TARGETS_TO_BUILD='X86;BPF'
 
+  # disable ABI compare
   abi-dump-setup:
+    if: false
     runs-on: ubuntu-latest
     outputs:
       BASELINE_REF: ${{ steps.vars.outputs.BASELINE_REF }}
@@ -70,6 +72,7 @@ jobs:
           fi
 
   abi-dump:
+    if: false
     needs: abi-dump-setup
     runs-on: ubuntu-latest
     strategy:
@@ -140,6 +143,7 @@ jobs:
         path: llvm.symbols
 
   abi-compare:
+    if: false
     runs-on: ubuntu-latest
     needs:
       - abi-dump-setup
