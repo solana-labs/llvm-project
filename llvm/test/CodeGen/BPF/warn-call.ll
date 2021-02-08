@@ -1,3 +1,4 @@
+; XFAIL: *
 ; RUN: not llc -march=bpfel < %s 2>&1 >/dev/null | FileCheck %s
 
 ; CHECK: error: warn_call.c
