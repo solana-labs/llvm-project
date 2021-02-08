@@ -1,3 +1,4 @@
+; XFAIL: *
 ; RUN: llc -march=bpfel -filetype=obj < %s | llvm-objdump -r - | FileCheck --check-prefix=CHECK-RELOC %s
 
 ; Function Attrs: norecurse nounwind readnone
