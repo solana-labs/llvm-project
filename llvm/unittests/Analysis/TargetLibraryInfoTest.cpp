@@ -586,6 +586,11 @@ TEST_F(TargetLibraryInfoTest, ValidProto) {
       "declare i8* @vec_malloc(i64)\n"
       "declare i8* @vec_realloc(i8*, i64)\n"
       "declare void @vec_free(i8*)\n"
+
+      // rust memory management
+      "declare i8* @__rust_alloc(i64, i64, i8*)\n"
+      "declare void @__rust_dealloc(i8*, i64, i64)\n"
+      "declare i8* @__rust_realloc(i8*, i64, i64, i64, i64, i8*)\n"
       );
 
   for (unsigned FI = 0; FI != LibFunc::NumLibFuncs; ++FI) {
