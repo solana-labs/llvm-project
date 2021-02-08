@@ -1,5 +1,6 @@
-; RUN: not llc -march=bpf < %s 2> %t1
-; RUN: FileCheck %s < %t1
+; DISABLE: not llc -march=bpf < %s 2| FileCheck %s
+; RUN: false
+; XFAIL: *
 ; CHECK: with VarArgs
 
 ; Function Attrs: nounwind readnone uwtable
