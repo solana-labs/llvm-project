@@ -246,7 +246,7 @@ public:
     CoreCLR,
     Simulator, // Simulator variants of other systems, e.g., Apple's iOS
     MacABI, // Mac Catalyst variant of Apple's iOS deployment target.
-    
+
     // Shader Stages
     Pixel,
     Vertex,
@@ -826,6 +826,11 @@ public:
   /// Tests whether the target is LoongArch (32- and 64-bit).
   bool isLoongArch() const {
     return getArch() == Triple::loongarch32 || getArch() == Triple::loongarch64;
+  }
+
+  /// Tests whether the target is BPF (little and big endian).
+  bool isBPF() const {
+    return getArch() == Triple::bpfel || getArch() == Triple::bpfeb;
   }
 
   /// Tests whether the target is MIPS 32-bit (little and big endian).
