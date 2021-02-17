@@ -550,6 +550,12 @@ static void initialize(TargetLibraryInfoImpl &TLI, const Triple &T,
     TLI.setUnavailable(LibFunc_nvvm_reflect);
   }
 
+  if (T.isBPF()) {
+    TLI.setUnavailable(LibFunc_rust_alloc);
+    TLI.setUnavailable(LibFunc_rust_dealloc);
+    TLI.setUnavailable(LibFunc_rust_realloc);
+  }
+
   TLI.addVectorizableFunctionsFromVecLib(ClVectorLibrary);
 }
 
@@ -1503,9 +1509,9 @@ bool TargetLibraryInfoImpl::getLibFunc(const Function &FDecl,
                                        LibFunc &F) const {
   // Intrinsics don't overlap w/libcalls; if our module has a large number of
   // intrinsics, this ends up being an interesting compile time win since we
-  // avoid string normalization and comparison. 
+  // avoid string normalization and comparison.
   if (FDecl.isIntrinsic()) return false;
-  
+
   const DataLayout *DL =
       FDecl.getParent() ? &FDecl.getParent()->getDataLayout() : nullptr;
   return getLibFunc(FDecl.getName(), F) &&
