@@ -774,6 +774,11 @@ public:
                : PointerWidth == 64;
   }
 
+  /// Tests whether the target is BPF (little and big endian).
+  bool isBPF() const {
+    return getArch() == Triple::bpfel || getArch() == Triple::bpfeb;
+  }
+
   /// Tests whether the target is MIPS 32-bit (little and big endian).
   bool isMIPS32() const {
     return getArch() == Triple::mips || getArch() == Triple::mipsel;
