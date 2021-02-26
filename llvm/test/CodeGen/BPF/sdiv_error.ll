@@ -1,3 +1,4 @@
+; XFAIL: *
 ; RUN: not --crash llc -march=bpf < %s 2> %t1
 ; RUN: FileCheck %s < %t1
 ; CHECK: Unsupport signed division
