@@ -91,6 +91,7 @@ BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
     if (VT == MVT::i32 && !STI.getHasAlu32())
       continue;
 
+    setOperationAction(ISD::SDIV, VT, Expand);
     setOperationAction(ISD::SDIVREM, VT, Expand);
     setOperationAction(ISD::UDIVREM, VT, Expand);
     setOperationAction(ISD::SREM, VT, Expand);
@@ -475,7 +476,7 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     // Pass the current stack frame pointer via BPF::R5
     Chain = DAG.getCopyToReg(Chain, CLI.DL, BPF::R5, FramePtr);
   }
-  
+
   SDValue InFlag;
 
   // Build a sequence of copy-to-reg nodes chained together with token chain and
