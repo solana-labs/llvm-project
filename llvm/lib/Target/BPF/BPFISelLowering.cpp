@@ -93,6 +93,7 @@ BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
     if (VT == MVT::i32 && !STI.getHasAlu32())
       continue;
 
+    setOperationAction(ISD::SDIV, VT, Expand);
     setOperationAction(ISD::SDIVREM, VT, Expand);
     setOperationAction(ISD::UDIVREM, VT, Expand);
     if (!STI.hasSdivSmod()) {
