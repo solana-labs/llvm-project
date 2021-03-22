@@ -176,6 +176,11 @@ BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
   HasJmpExt = STI.getHasJmpExt();
 }
 
+bool BPFTargetLowering::allowsMisalignedMemoryAccesses(
+    EVT VT, unsigned, unsigned, MachineMemOperand::Flags, bool *) const {
+  return true;
+}
+
 bool BPFTargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
   return false;
 }
