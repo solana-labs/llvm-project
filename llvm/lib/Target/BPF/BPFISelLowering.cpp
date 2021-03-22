@@ -188,6 +188,11 @@ BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
   HasMovsx = STI.hasMovsx();
 }
 
+bool BPFTargetLowering::allowsMisalignedMemoryAccesses(
+    EVT VT, unsigned, unsigned, MachineMemOperand::Flags, bool *) const {
+  return true;
+}
+
 bool BPFTargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
   return false;
 }
