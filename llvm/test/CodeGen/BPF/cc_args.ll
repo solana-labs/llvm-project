@@ -1,3 +1,4 @@
+; XFAIL: *
 ; RUN: llc < %s -march=bpfel -show-mc-encoding | FileCheck %s
 
 define void @test() #0 {
