@@ -49,9 +49,19 @@ BitVector BPFRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 
 static void WarnSize(int Offset, MachineFunction &MF, DebugLoc& DL)
 {
+  static Function *OldMF = nullptr;
+  if (&(MF.getFunction()) == OldMF) {
+    return;
+  }
+  OldMF = &(MF.getFunction());
   int MaxOffset = -1 * FrameLength;
   if (Offset < MaxOffset) {
-      dbgs() << "Error: Function " << MF.getFunction().getName() << " Stack offset of " << Offset
+      dbgs() << "Error:";
+      if (DL) {
+        dbgs() << " ";
+        DL.print(dbgs());
+      }
+      dbgs() << " Function " << MF.getFunction().getName() << " Stack offset of " << Offset
              << " exceeded max offset of " <<  MaxOffset << " by "
              << -(Offset - MaxOffset) << " bytes, please minimize large stack variables\n";
   }
@@ -72,7 +82,7 @@ bool BPFRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     /* try harder to get some debug loc */
     for (auto &I : MBB)
       if (I.getDebugLoc()) {
-        DL = I.getDebugLoc();
+        DL = I.getDebugLoc().getFnDebugLoc();
         break;
       }
 
