@@ -34,8 +34,8 @@ entry:
 }
 ; CHECK-NOT:    w{{[0-9]+}} = *(u16 *)
 ; CHECK-NOT:    w{{[0-9]+}} = *(u8 *)
-; CHECK:        *(u16 *)(r10 - 4) = w{{[0-9]+}}
 ; CHECK:        *(u8 *)(r10 - 2) = w{{[0-9]+}}
+; CHECK:        *(u16 *)(r10 - 4) = w{{[0-9]+}}
 
 ; Function Attrs: argmemonly nounwind willreturn
 declare void @llvm.lifetime.start.p0(i64 immarg, ptr nocapture)
