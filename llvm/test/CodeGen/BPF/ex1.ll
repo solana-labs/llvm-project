@@ -31,10 +31,10 @@ define i32 @bpf_prog1(%struct.bpf_context* nocapture %ctx) #0 section "events/ne
 ; CHECK: call 4
 ; CHECK: call 9
 ; CHECK: if r0 != 0
-; CHECK: r1 = 622884453
+; CHECK r1 = 622884453
 ; CHECK: r1 = 7214898703899978611 ll
-; CHECK: call 11
-; CHECK: r0 = 0
+; CHECK call 11
+; CHECK r0 = 0
 ; CHECK: exit
   br label %13
 
