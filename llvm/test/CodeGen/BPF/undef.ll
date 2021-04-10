@@ -1,4 +1,3 @@
-; XFAIL: *
 ; RUN: llc < %s -march=bpfel | FileCheck -check-prefixes=CHECK,EL %s
 ; RUN: llc < %s -march=bpfeb | FileCheck -check-prefixes=CHECK,EB %s
 
