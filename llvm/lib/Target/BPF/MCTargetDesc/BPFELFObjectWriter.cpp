@@ -21,7 +21,7 @@ namespace {
 
 class BPFELFObjectWriter : public MCELFObjectTargetWriter {
 public:
-  BPFELFObjectWriter(uint8_t OSABI);
+  BPFELFObjectWriter(uint8_t OSABI, bool isSolana);
   ~BPFELFObjectWriter() override = default;
 
 protected:
@@ -30,6 +30,8 @@ protected:
 
   bool needsRelocateWithSymbol(const MCSymbol &Sym,
                                unsigned Type) const override;
+private:
+  bool isSolana;
 };
 
 } // end anonymous namespace
@@ -40,12 +42,13 @@ protected:
 // will result in the symbol's index being used in the .o file instead.
 bool BPFELFObjectWriter::needsRelocateWithSymbol(const MCSymbol &Sym,
                                                  unsigned Type) const {
-  return true;
+  return isSolana;
 }
 
-BPFELFObjectWriter::BPFELFObjectWriter(uint8_t OSABI)
+BPFELFObjectWriter::BPFELFObjectWriter(uint8_t OSABI, bool isSolana)
     : MCELFObjectTargetWriter(/*Is64Bit*/ true, OSABI, ELF::EM_BPF,
-                              /*HasRelocationAddend*/ false) {}
+                              /*HasRelocationAddend*/ false),
+      isSolana(isSolana) {}
 
 unsigned BPFELFObjectWriter::getRelocType(MCContext &Ctx, const MCValue &Target,
                                           const MCFixup &Fixup,
@@ -96,6 +99,6 @@ unsigned BPFELFObjectWriter::getRelocType(MCContext &Ctx, const MCValue &Target,
 }
 
 std::unique_ptr<MCObjectTargetWriter>
-llvm::createBPFELFObjectWriter(uint8_t OSABI) {
-  return std::make_unique<BPFELFObjectWriter>(OSABI);
+llvm::createBPFELFObjectWriter(uint8_t OSABI, bool isSolana) {
+  return std::make_unique<BPFELFObjectWriter>(OSABI, isSolana);
 }

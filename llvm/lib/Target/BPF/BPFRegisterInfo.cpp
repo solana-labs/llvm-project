@@ -54,8 +54,9 @@ static void WarnSize(int Offset, MachineFunction &MF, DebugLoc& DL)
     return;
   }
   OldMF = &(MF.getFunction());
-  int MaxOffset = -1 * FrameLength;
-  if (Offset < MaxOffset) {
+  int MaxOffset = -1 * BPFRegisterInfo::FrameLength;
+  if (Offset <= MaxOffset) {
+    if (MF.getSubtarget<BPFSubtarget>().isSolana()) {
       dbgs() << "Error:";
       if (DL) {
         dbgs() << " ";
@@ -64,6 +65,13 @@ static void WarnSize(int Offset, MachineFunction &MF, DebugLoc& DL)
       dbgs() << " Function " << MF.getFunction().getName() << " Stack offset of " << Offset
              << " exceeded max offset of " <<  MaxOffset << " by "
              << -(Offset - MaxOffset) << " bytes, please minimize large stack variables\n";
+    } else {
+      DiagnosticInfoUnsupported DiagStackSize(MF.getFunction(),
+          "BPF stack limit of 512 bytes is exceeded. "
+          "Please move large on stack variables into BPF per-cpu array map.\n",
+          DL);
+      MF.getFunction().getContext().diagnose(DiagStackSize);
+    }
   }
 }
 

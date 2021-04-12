@@ -9,6 +9,7 @@
 #include "CommonArgs.h"
 #include "Arch/AArch64.h"
 #include "Arch/ARM.h"
+#include "Arch/BPF.h"
 #include "Arch/CSKY.h"
 #include "Arch/LoongArch.h"
 #include "Arch/M68k.h"
@@ -526,6 +527,9 @@ void tools::getTargetFeatures(const Driver &D, const llvm::Triple &Triple,
   case llvm::Triple::aarch64_be:
     aarch64::getAArch64TargetFeatures(D, Triple, Args, Features, ForAS);
     break;
+  case llvm::Triple::bpfeb:
+  case llvm::Triple::bpfel:
+    bpf::getBPFTargetFeatures(D, Args, Features);
   case llvm::Triple::x86:
   case llvm::Triple::x86_64:
     x86::getX86TargetFeatures(D, Triple, Args, Features);
