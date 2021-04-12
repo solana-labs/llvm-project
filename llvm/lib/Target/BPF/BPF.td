@@ -32,6 +32,9 @@ def ALU32 : SubtargetFeature<"alu32", "HasAlu32", "true",
 def DwarfRIS: SubtargetFeature<"dwarfris", "UseDwarfRIS", "true",
                                "Disable MCAsmInfo DwarfUsesRelocationsAcrossSections">;
 
+def FeatureSolana : SubtargetFeature<"solana", "IsSolana", "true",
+                                     "Enable Solana extensions">;
+
 def BPFInstPrinter : AsmWriter {
   string AsmWriterClassName  = "InstPrinter";
   bit isMCAsmWriter = 1;

@@ -1,4 +1,3 @@
-; XFAIL: *
 ; RUN: llc -march=bpfel -filetype=obj -o - %s | llvm-objdump -d - | FileCheck --check-prefix=CHECK %s
 ; RUN: llc -march=bpfeb -filetype=obj -o - %s | llvm-objdump -d - | FileCheck --check-prefix=CHECK %s
 
