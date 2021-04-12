@@ -33,6 +33,7 @@ enum NodeType : unsigned {
 }
 
 class BPFTargetLowering : public TargetLowering {
+  const BPFSubtarget *Subtarget;
 public:
   explicit BPFTargetLowering(const TargetMachine &TM, const BPFSubtarget &STI);
 
