@@ -24,8 +24,11 @@ define dso_local void @test() local_unnamed_addr #0 {
   call void @llvm.lifetime.start.p0(i64 16, ptr nonnull %1) #3
   call void @llvm.memcpy.p0.p0.i64(ptr nonnull align 4 %1, ptr align 4 @test.t, i64 16, i1 false)
 ; CHECK: r1 = 0
-; CHECK: *(u64 *)(r10 - 8) = r1
-; CHECK: r1 = 5
+; CHECK: r1 <<= 32
+; CHECK: r2 = r1
+; CHECK: r2 |= 0
+; CHECK: *(u64 *)(r10 - 8) = r2
+; CHECK: r1 |= 5
 ; CHECK: *(u64 *)(r10 - 16) = r1
 ; CHECK: r1 = r10
 ; CHECK: r1 += -16

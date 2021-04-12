@@ -19,7 +19,7 @@ def CC_BPF64 : CallingConv<[
   CCIfType<[ i8, i16, i32 ], CCPromoteToType<i64>>,
 
   // All arguments get passed in integer registers if there is space.
-  CCIfType<[i64], CCAssignToReg<[R1, R2, R3, R4, R5]>>,
+  CCIfType<[i64], CCAssignToReg<[ R1, R2, R3, R4, R5 ]>>,
 
   // Could be assigned to the stack in 8-byte aligned units, but unsupported
   CCAssignToStack<8, 8>
