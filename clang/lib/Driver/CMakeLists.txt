@@ -27,6 +27,7 @@ add_clang_library(clangDriver
   ToolChain.cpp
   ToolChains/Arch/AArch64.cpp
   ToolChains/Arch/ARM.cpp
+  ToolChains/Arch/BPF.cpp
   ToolChains/Arch/CSKY.cpp
   ToolChains/Arch/M68k.cpp
   ToolChains/Arch/Mips.cpp
