@@ -31,6 +31,8 @@ def : Proc<"v1", []>;
 def : Proc<"v2", []>;
 def : Proc<"v3", [ALU32]>;
 def : Proc<"probe", []>;
+def FeatureSolana : SubtargetFeature<"solana", "IsSolana", "true",
+                                     "Enable Solana extensions">;
 
 def BPFInstPrinter : AsmWriter {
   string AsmWriterClassName  = "InstPrinter";
