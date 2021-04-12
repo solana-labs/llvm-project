@@ -52,6 +52,7 @@ BPFSubtarget &BPFSubtarget::initializeSubtargetDependencies(StringRef CPU,
 }
 
 void BPFSubtarget::initializeEnvironment() {
+  IsSolana = false;
   HasJmpExt = false;
   HasJmp32 = false;
   HasAlu32 = false;
