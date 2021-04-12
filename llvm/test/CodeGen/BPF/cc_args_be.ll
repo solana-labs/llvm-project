@@ -1,4 +1,3 @@
-; XFAIL: *
 ; RUN: llc < %s -march=bpfeb -show-mc-encoding | FileCheck %s
 ; test big endian
 

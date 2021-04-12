@@ -1,4 +1,3 @@
-; XFAIL: *
 ; RUN: llc -march=bpfel -filetype=obj -o - %s | llvm-readelf -x ".BTF" -x ".BTF.ext" - | FileCheck -check-prefixes=CHECK,CHECK-EL %s
 ; RUN: llc -march=bpfeb -filetype=obj -o - %s | llvm-readelf -x ".BTF" -x ".BTF.ext" - | FileCheck -check-prefixes=CHECK,CHECK-EB %s
 

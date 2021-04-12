@@ -51,11 +51,15 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeBPFTarget() {
 }
 
 // DataLayout: little or big endian
-static std::string computeDataLayout(const Triple &TT) {
-  if (TT.getArch() == Triple::bpfeb)
-    return "E-m:e-p:64:64-i64:64-n32:64-S128";
-  else
-    return "e-m:e-p:64:64-i64:64-n32:64-S128";
+static std::string computeDataLayout(const Triple &TT, StringRef FS) {
+  bool isSolana = FS.contains("solana");
+  if (TT.getArch() == Triple::bpfeb) {
+    return isSolana ? "E-m:e-p:64:64-i64:64-n32:64-S128"
+      : "E-m:e-p:64:64-i64:64-i128:128-n32:64-S128";
+  } else {
+    return isSolana ? "e-m:e-p:64:64-i64:64-n32:64-S128"
+      : "e-m:e-p:64:64-i64:64-i128:128-n32:64-S128";
+  }
 }
 
 static Reloc::Model getEffectiveRelocModel(Optional<Reloc::Model> RM) {
@@ -68,7 +72,7 @@ BPFTargetMachine::BPFTargetMachine(const Target &T, const Triple &TT,
                                    Optional<Reloc::Model> RM,
                                    Optional<CodeModel::Model> CM,
                                    CodeGenOpt::Level OL, bool JIT)
-    : LLVMTargetMachine(T, computeDataLayout(TT), TT, CPU, FS, Options,
+    : LLVMTargetMachine(T, computeDataLayout(TT, FS), TT, CPU, FS, Options,
                         getEffectiveRelocModel(RM),
                         getEffectiveCodeModel(CM, CodeModel::Small), OL),
       TLOF(std::make_unique<TargetLoweringObjectFileELF>()),
