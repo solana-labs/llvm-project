@@ -27,9 +27,9 @@ define i32 @test() local_unnamed_addr #0 {
 entry:
     tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 getelementptr inbounds (%struct.test_t1, %struct.test_t1* @g, i64 0, i32 0), i8* align 4 getelementptr inbounds (%struct.test_t1, %struct.test_t1* @test.t1, i64 0, i32 0), i64 16, i1 false)
 ; CHECK-EL:  r2 = 1
-; CHECK-EL:  *(u64 *)(r1 + 0) = r2
-; CHECK-EB:  r2 = 72057594037927936
-; CHECK-EB:  *(u64 *)(r1 + 0) = r2
+; CHECK-EL:  *(u32 *)(r1 + 0) = r2
+; CHECK-EB:  r2 = 16777216
+; CHECK-EB:  *(u32 *)(r1 + 0) = r2
     ret i32 0
 }
 ; CHECK-EL:  .section .rodata.cst16,"aM",@progbits,16
