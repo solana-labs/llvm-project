@@ -28,12 +28,10 @@ define i32 @test() local_unnamed_addr #0 {
 ; CHECK-LABEL: test:
 entry:
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 2 bitcast (%struct.test_t1* @g to i8*), i8* align 2 bitcast (%struct.test_t1* getelementptr inbounds ([4 x %struct.test_t1], [4 x %struct.test_t1]* @test.t1, i64 0, i64 1) to i8*), i64 6, i1 false)
-; CHECK  r2 = 600
-; CHECK  *(u16 *)(r1 + 2) = r2
-; CHECK  r2 = 60
-; CHECK  *(u16 *)(r1 + 0) = r2
-; CHECK: *(u16 *)(r1 + 4) = r2
-; CHECK: *(u32 *)(r1 + 0) = r2
+; CHECK:  r2 = 600
+; CHECK:  *(u16 *)(r1 + 2) = r2
+; CHECK:  r2 = 60
+; CHECK:  *(u16 *)(r1 + 0) = r2
   ret i32 0
 }
 ; CHECK:  .section  .rodata,"a",@progbits

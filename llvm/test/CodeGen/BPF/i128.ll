@@ -33,8 +33,8 @@ entry:
 }
 
 ; CHECK-LABEL: test
-; CHECK:       *(u64 *)(r10 - 32) = r{{[0-9]+}}
-; CHECK:       *(u32 *)(r10 - 32) = r{{[0-9]+}}
+; CHECK:       *(u64 *)(r10 - 48) = r{{[0-9]+}}
+; CHECK:       *(u32 *)(r10 - 48) = r{{[0-9]+}}
 
 ; Function Attrs: argmemonly nounwind willreturn
 declare void @llvm.lifetime.start.p0i8(i64 immarg, i8* nocapture) #1

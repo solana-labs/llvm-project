@@ -26,7 +26,7 @@ class LLVM_LIBRARY_VISIBILITY BPFTargetInfo : public TargetInfo {
   bool HasAlu32 = false;
 
 public:
-  BPFTargetInfo(const llvm::Triple &Triple, const TargetOptions &)
+  BPFTargetInfo(const llvm::Triple &Triple, const TargetOptions &Opts)
       : TargetInfo(Triple) {
     LongWidth = LongAlign = PointerWidth = PointerAlign = 64;
     SizeType = UnsignedLong;
@@ -35,10 +35,25 @@ public:
     IntMaxType = SignedLong;
     Int64Type = SignedLong;
     RegParmMax = 5;
+    auto isSolana = false;
+    for (auto& it : Opts.FeaturesAsWritten) {
+      if (it == "+solana") {
+        isSolana = true;
+        break;
+      }
+    }
     if (Triple.getArch() == llvm::Triple::bpfeb) {
-      resetDataLayout("E-m:e-p:64:64-i64:64-n32:64-S128");
+      if (isSolana) {
+        resetDataLayout("E-m:e-p:64:64-i64:64-n32:64-S128");
+      } else {
+        resetDataLayout("E-m:e-p:64:64-i64:64-i128:128-n32:64-S128");
+      }
     } else {
-      resetDataLayout("e-m:e-p:64:64-i64:64-n32:64-S128");
+      if (isSolana) {
+        resetDataLayout("e-m:e-p:64:64-i64:64-n32:64-S128");
+      } else {
+        resetDataLayout("e-m:e-p:64:64-i64:64-i128:128-n32:64-S128");
+      }
     }
     MaxAtomicPromoteWidth = 64;
     MaxAtomicInlineWidth = 64;
@@ -49,7 +64,8 @@ public:
                         MacroBuilder &Builder) const override;
 
   bool hasFeature(StringRef Feature) const override {
-    return Feature == "bpf" || Feature == "alu32" || Feature == "dwarfris";
+    return Feature == "bpf" || Feature == "alu32" || Feature == "dwarfris" ||
+      Feature == "solana";
   }
 
   void setFeatureEnabled(llvm::StringMap<bool> &Features, StringRef Name,
