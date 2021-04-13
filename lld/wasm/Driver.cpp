@@ -55,17 +55,6 @@ enum {
 #undef OPTION
 };
 
-// This function is called on startup. We need this for LTO since
-// LTO calls LLVM functions to compile bitcode files to native code.
-// Technically this can be delayed until we read bitcode files, but
-// we don't bother to do lazily because the initialization is fast.
-static void initLLVM() {
-  InitializeAllTargets();
-  InitializeAllTargetMCs();
-  InitializeAllAsmPrinters();
-  InitializeAllAsmParsers();
-}
-
 class LinkerDriver {
 public:
   void linkerMain(ArrayRef<const char *> argsArr);
@@ -98,7 +87,6 @@ bool link(ArrayRef<const char *> args, bool canExitEarly, raw_ostream &stdoutOS,
   config = make<Configuration>();
   symtab = make<SymbolTable>();
 
-  initLLVM();
   LinkerDriver().linkerMain(args);
 
   // Exit immediately if we don't need to return to the caller.
