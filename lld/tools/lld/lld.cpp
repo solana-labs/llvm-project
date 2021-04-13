@@ -40,6 +40,8 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/Process.h"
+#include "llvm/Support/Signals.h"
+#include "llvm/Support/TargetSelect.h"
 #include <cstdlib>
 
 using namespace lld;
@@ -138,10 +140,22 @@ static Flavor parseFlavor(std::vector<const char *> &v) {
 
 bool inTestOutputDisabled = false;
 
+// This function is called on startup. We need this for LTO since
+// LTO calls LLVM functions to compile bitcode files to native code.
+// Technically this can be delayed until we read bitcode files, but
+// we don't bother to do lazily because the initialization is fast.
+static void initLLVM() {
+  InitializeAllTargets();
+  InitializeAllTargetMCs();
+  InitializeAllAsmPrinters();
+  InitializeAllAsmParsers();
+}
+
 /// Universal linker main(). This linker emulates the gnu, darwin, or
 /// windows linker based on the argv[0] or -flavor option.
 static int lldMain(int argc, const char **argv, llvm::raw_ostream &stdoutOS,
                    llvm::raw_ostream &stderrOS, bool exitEarly = true) {
+  initLLVM();
   std::vector<const char *> args(argv, argv + argc);
   auto link = [&args]() {
     Flavor f = parseFlavor(args);

@@ -1,34 +1,37 @@
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple x86_64-gnu-linux -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=LIN64
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple x86_64-windows-pc -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=WIN64
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple i386-gnu-linux -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=LIN32
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple i386-windows-pc -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=WIN32
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple nvptx64 -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=NVPTX64
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple nvptx -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=NVPTX
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple sparcv9 -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=SPARCV9
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple sparc -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=SPARC
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple mips64 -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=MIPS64
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple mips -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=MIPS
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple spir64 -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=SPIR64
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple spir -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=SPIR
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple hexagon -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=HEX
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple lanai -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=LANAI
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple r600 -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=R600
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple arc -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=ARC
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple xcore -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=XCORE
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple riscv64 -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=RISCV64
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple riscv32 -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=RISCV32
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple wasm64 -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=WASM
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple wasm32 -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=WASM
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple systemz -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=SYSTEMZ
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple ppc64 -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=PPC64
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple ppc -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=PPC32
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple aarch64 -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=AARCH64
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple aarch64 -target-abi darwinpcs -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=AARCH64DARWIN
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple arm64_32-apple-ios -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=AARCH64
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple arm64_32-apple-ios -target-abi darwinpcs -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=AARCH64DARWIN
-// RUN: %clang_cc1 -no-opaque-pointers -no-enable-noundef-analysis -triple arm -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=ARM
 
-// Make sure 128 and 64 bit versions are passed like integers.
+// RUN: %clang_cc1 -disable-noundef-analysis -triple x86_64-gnu-linux -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=LIN64
+// RUN: %clang_cc1 -disable-noundef-analysis -triple x86_64-windows-pc -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=WIN64
+// RUN: %clang_cc1 -disable-noundef-analysis -triple i386-gnu-linux -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=LIN32
+// RUN: %clang_cc1 -disable-noundef-analysis -triple i386-windows-pc -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=WIN32
+// RUN: %clang_cc1 -disable-noundef-analysis -triple nvptx64 -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=NVPTX64
+// RUN: %clang_cc1 -disable-noundef-analysis -triple nvptx -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=NVPTX
+// RUN: %clang_cc1 -disable-noundef-analysis -triple sparcv9 -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=SPARCV9
+// RUN: %clang_cc1 -disable-noundef-analysis -triple sparc -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=SPARC
+// RUN: %clang_cc1 -disable-noundef-analysis -triple mips64 -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=MIPS64
+// RUN: %clang_cc1 -disable-noundef-analysis -triple mips -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=MIPS
+// RUN: %clang_cc1 -disable-noundef-analysis -triple spir64 -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=SPIR64
+// RUN: %clang_cc1 -disable-noundef-analysis -triple spir -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=SPIR
+// RUN: %clang_cc1 -disable-noundef-analysis -triple hexagon -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=HEX
+// RUN: %clang_cc1 -disable-noundef-analysis -triple lanai -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=LANAI
+// RUN: %clang_cc1 -disable-noundef-analysis -triple r600 -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=R600
+// RUN: %clang_cc1 -disable-noundef-analysis -triple arc -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=ARC
+// RUN: %clang_cc1 -disable-noundef-analysis -triple xcore -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=XCORE
+// RUN: %clang_cc1 -disable-noundef-analysis -triple riscv64 -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=RISCV64
+// RUN: %clang_cc1 -disable-noundef-analysis -triple riscv32 -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=RISCV32
+// RUN: %clang_cc1 -disable-noundef-analysis -triple wasm64 -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=WASM
+// RUN: %clang_cc1 -disable-noundef-analysis -triple wasm32 -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=WASM
+// RUN: %clang_cc1 -disable-noundef-analysis -triple systemz -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=SYSTEMZ
+// RUN: %clang_cc1 -disable-noundef-analysis -triple ppc64 -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=PPC64
+// RUN: %clang_cc1 -disable-noundef-analysis -triple ppc -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=PPC32
+// RUN: %clang_cc1 -disable-noundef-analysis -triple aarch64 -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=AARCH64
+// RUN: %clang_cc1 -disable-noundef-analysis -triple aarch64 -target-abi darwinpcs -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=AARCH64DARWIN
+// RUN: %clang_cc1 -disable-noundef-analysis -triple arm64_32-apple-ios -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=AARCH64
+// RUN: %clang_cc1 -disable-noundef-analysis -triple arm64_32-apple-ios -target-abi darwinpcs -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=AARCH64DARWIN
+// RUN: %clang_cc1 -disable-noundef-analysis -triple arm -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=ARM
+// RUN: %clang_cc1 -disable-noundef-analysis -triple bpf -target-feature +solana -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=BPF
+
+// Make sure 128 and 64 bit versions are passed like integers, and that >128
+// is passed indirectly.
 void ParamPassing(_BitInt(128) b, _BitInt(64) c) {}
 // LIN64: define{{.*}} void @ParamPassing(i64 %{{.+}}, i64 %{{.+}}, i64 %{{.+}})
 // WIN64: define dso_local void @ParamPassing(i128* %{{.+}}, i64 %{{.+}})
@@ -57,6 +60,7 @@ void ParamPassing(_BitInt(128) b, _BitInt(64) c) {}
 // AARCH64: define{{.*}} void @ParamPassing(i128 %{{.+}}, i64 %{{.+}})
 // AARCH64DARWIN: define{{.*}} void @ParamPassing(i128 %{{.+}}, i64 %{{.+}})
 // ARM: define{{.*}} arm_aapcscc void @ParamPassing(i128* byval(i128) align 8 %{{.+}}, i64 %{{.+}})
+// BPF: define{{.*}} void @ParamPassing(i128* byval(i128) align 8 %{{.+}}, i64 %{{.+}})
 
 void ParamPassing2(_BitInt(127) b, _BitInt(63) c) {}
 // LIN64: define{{.*}} void @ParamPassing2(i64 %{{.+}}, i64 %{{.+}}, i64 %{{.+}})
@@ -86,6 +90,7 @@ void ParamPassing2(_BitInt(127) b, _BitInt(63) c) {}
 // AARCH64: define{{.*}} void @ParamPassing2(i127 %{{.+}}, i63 %{{.+}})
 // AARCH64DARWIN: define{{.*}} void @ParamPassing2(i127 %{{.+}}, i63 %{{.+}})
 // ARM: define{{.*}} arm_aapcscc void @ParamPassing2(i127* byval(i127) align 8 %{{.+}}, i63 %{{.+}})
+// BPF: define{{.*}} void @ParamPassing2(i127* byval(i127) align 8 %{{.+}}, i63 %{{.+}})
 
 // Make sure we follow the signext rules for promotable integer types.
 void ParamPassing3(_BitInt(15) a, _BitInt(31) b) {}
@@ -116,6 +121,7 @@ void ParamPassing3(_BitInt(15) a, _BitInt(31) b) {}
 // AARCH64: define{{.*}} void @ParamPassing3(i15 %{{.+}}, i31 %{{.+}})
 // AARCH64DARWIN: define{{.*}} void @ParamPassing3(i15 signext %{{.+}}, i31 signext %{{.+}})
 // ARM: define{{.*}} arm_aapcscc void @ParamPassing3(i15 signext %{{.+}}, i31 signext %{{.+}})
+// BPF: define{{.*}} void @ParamPassing3(i15 signext %{{.+}}, i31 signext %{{.+}})
 
 #if __BITINT_MAXWIDTH__ > 128
 // When supported, bit-precise types that are >128 are passed indirectly. Note,
@@ -180,6 +186,7 @@ _BitInt(63) ReturnPassing(void){}
 // AARCH64: define{{.*}} i63 @ReturnPassing(
 // AARCH64DARWIN: define{{.*}} i63 @ReturnPassing(
 // ARM: define{{.*}} arm_aapcscc i63 @ReturnPassing(
+// BPF: define{{.*}} i63 @ReturnPassing(
 
 _BitInt(64) ReturnPassing2(void){}
 // LIN64: define{{.*}} i64 @ReturnPassing2(
@@ -209,6 +216,7 @@ _BitInt(64) ReturnPassing2(void){}
 // AARCH64: define{{.*}} i64 @ReturnPassing2(
 // AARCH64DARWIN: define{{.*}} i64 @ReturnPassing2(
 // ARM: define{{.*}} arm_aapcscc i64 @ReturnPassing2(
+// BPF: define{{.*}} i64 @ReturnPassing2(
 
 _BitInt(127) ReturnPassing3(void){}
 // LIN64: define{{.*}} { i64, i64 } @ReturnPassing3(
@@ -240,6 +248,7 @@ _BitInt(127) ReturnPassing3(void){}
 // AARCH64: define{{.*}} i127 @ReturnPassing3(
 // AARCH64DARWIN: define{{.*}} i127 @ReturnPassing3(
 // ARM: define{{.*}} arm_aapcscc void @ReturnPassing3(i127* noalias sret
+// BPF: define{{.*}} i127 @ReturnPassing3(
 
 _BitInt(128) ReturnPassing4(void){}
 // LIN64: define{{.*}} { i64, i64 } @ReturnPassing4(
@@ -269,6 +278,7 @@ _BitInt(128) ReturnPassing4(void){}
 // AARCH64: define{{.*}} i128 @ReturnPassing4(
 // AARCH64DARWIN: define{{.*}} i128 @ReturnPassing4(
 // ARM: define{{.*}} arm_aapcscc void @ReturnPassing4(i128* noalias sret
+// BPF: define{{.*}} i128 @ReturnPassing4(
 
 #if __BITINT_MAXWIDTH__ > 128
 _BitInt(129) ReturnPassing5(void){}
@@ -299,6 +309,7 @@ _BitInt(129) ReturnPassing5(void){}
 // AARCH64-NOT: define{{.*}} void @ReturnPassing5(i129* noalias sret
 // AARCH64DARWIN-NOT: define{{.*}} void @ReturnPassing5(i129* noalias sret
 // ARM-NOT: define{{.*}} arm_aapcscc void @ReturnPassing5(i129* noalias sret
+// BPF-NOT: define{{.*}} void @ReturnPassing5(i129* noalias sret
 
 // SparcV9 is odd in that it has a return-size limit of 256, not 128 or 64
 // like other platforms, so test to make sure this behavior will still work.
