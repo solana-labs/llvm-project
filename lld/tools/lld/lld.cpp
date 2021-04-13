@@ -39,6 +39,7 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/Process.h"
+#include "llvm/Support/TargetSelect.h"
 #include "llvm/TargetParser/Host.h"
 #include "llvm/TargetParser/Triple.h"
 #include <cstdlib>
@@ -74,7 +75,20 @@ LLD_HAS_DRIVER(mingw)
 LLD_HAS_DRIVER(macho)
 LLD_HAS_DRIVER(wasm)
 
+
+// This function is called on startup. We need this for LTO since
+// LTO calls LLVM functions to compile bitcode files to native code.
+// Technically this can be delayed until we read bitcode files, but
+// we don't bother to do lazily because the initialization is fast.
+static void initLLVM() {
+  InitializeAllTargets();
+  InitializeAllTargetMCs();
+  InitializeAllAsmPrinters();
+  InitializeAllAsmParsers();
+}
+
 int lld_main(int argc, char **argv, const llvm::ToolContext &) {
+  initLLVM();
   InitLLVM x(argc, argv);
   sys::Process::UseANSIEscapeCodes(true);
 
