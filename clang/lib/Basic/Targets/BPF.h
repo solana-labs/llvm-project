@@ -22,6 +22,7 @@ namespace clang {
 namespace targets {
 
 class LLVM_LIBRARY_VISIBILITY BPFTargetInfo : public TargetInfo {
+  bool HasSolanaFeature = false;
   static const Builtin::Info BuiltinInfo[];
   bool HasAlu32 = false;
 
@@ -35,21 +36,20 @@ public:
     IntMaxType = SignedLong;
     Int64Type = SignedLong;
     RegParmMax = 5;
-    auto isSolana = false;
     for (auto& it : Opts.FeaturesAsWritten) {
       if (it == "+solana") {
-        isSolana = true;
+        HasSolanaFeature = true;
         break;
       }
     }
     if (Triple.getArch() == llvm::Triple::bpfeb) {
-      if (isSolana) {
+      if (HasSolanaFeature) {
         resetDataLayout("E-m:e-p:64:64-i64:64-n32:64-S128");
       } else {
         resetDataLayout("E-m:e-p:64:64-i64:64-i128:128-n32:64-S128");
       }
     } else {
-      if (isSolana) {
+      if (HasSolanaFeature) {
         resetDataLayout("e-m:e-p:64:64-i64:64-n32:64-S128");
       } else {
         resetDataLayout("e-m:e-p:64:64-i64:64-i128:128-n32:64-S128");
@@ -128,6 +128,8 @@ public:
     StringRef CPUName(Name);
     return isValidCPUName(CPUName);
   }
+
+  bool hasExtIntType() const override { return HasSolanaFeature; }
 };
 } // namespace targets
 } // namespace clang

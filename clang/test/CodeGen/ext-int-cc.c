@@ -27,6 +27,7 @@
 // RUN: %clang_cc1 -triple arm64_32-apple-ios -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=AARCH64
 // RUN: %clang_cc1 -triple arm64_32-apple-ios -target-abi darwinpcs -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=AARCH64DARWIN
 // RUN: %clang_cc1 -triple arm -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=ARM
+// RUN: %clang_cc1 -triple bpf -target-feature +solana -O3 -disable-llvm-passes -emit-llvm -o - %s | FileCheck %s --check-prefixes=BPF
 
 // Make sure 128 and 64 bit versions are passed like integers, and that >128
 // is passed indirectly.
@@ -58,6 +59,7 @@ void ParamPassing(_ExtInt(129) a, _ExtInt(128) b, _ExtInt(64) c) {}
 // AARCH64: define{{.*}} void @ParamPassing(i129* byval(i129) align 8 %{{.+}}, i128 %{{.+}}, i64 %{{.+}})
 // AARCH64DARWIN: define{{.*}} void @ParamPassing(i129* byval(i129) align 8 %{{.+}}, i128 %{{.+}}, i64 %{{.+}})
 // ARM: define{{.*}} arm_aapcscc void @ParamPassing(i129* byval(i129) align 8 %{{.+}}, i128* byval(i128) align 8 %{{.+}}, i64 %{{.+}})
+// BPF: define{{.*}} void @ParamPassing(i129* byval(i129) align 8 %{{.+}}, i128 %{{.+}}, i64 %{{.+}})
 
 void ParamPassing2(_ExtInt(129) a, _ExtInt(127) b, _ExtInt(63) c) {}
 // LIN64: define{{.*}} void @ParamPassing2(i129* byval(i129) align 8 %{{.+}}, i64 %{{.+}}, i64 %{{.+}}, i64 %{{.+}})
@@ -87,6 +89,7 @@ void ParamPassing2(_ExtInt(129) a, _ExtInt(127) b, _ExtInt(63) c) {}
 // AARCH64: define{{.*}} void @ParamPassing2(i129* byval(i129) align 8 %{{.+}}, i127 %{{.+}}, i63 %{{.+}})
 // AARCH64DARWIN: define{{.*}} void @ParamPassing2(i129* byval(i129) align 8 %{{.+}}, i127 %{{.+}}, i63 %{{.+}})
 // ARM: define{{.*}} arm_aapcscc void @ParamPassing2(i129* byval(i129) align 8 %{{.+}}, i127* byval(i127) align 8 %{{.+}}, i63 %{{.+}})
+// BPF: define{{.*}} void @ParamPassing2(i129* byval(i129) align 8 %{{.+}}, i127 %{{.+}}, i63 %{{.+}})
 
 // Make sure we follow the signext rules for promotable integer types.
 void ParamPassing3(_ExtInt(15) a, _ExtInt(31) b) {}
@@ -117,6 +120,7 @@ void ParamPassing3(_ExtInt(15) a, _ExtInt(31) b) {}
 // AARCH64: define{{.*}} void @ParamPassing3(i15 %{{.+}}, i31 %{{.+}})
 // AARCH64DARWIN: define{{.*}} void @ParamPassing3(i15 signext %{{.+}}, i31 signext %{{.+}})
 // ARM: define{{.*}} arm_aapcscc void @ParamPassing3(i15 signext %{{.+}}, i31 signext %{{.+}})
+// BPF: define{{.*}} void @ParamPassing3(i15 signext %{{.+}}, i31 signext %{{.+}})
 
 _ExtInt(63) ReturnPassing(){}
 // LIN64: define{{.*}} i64 @ReturnPassing(
@@ -146,6 +150,7 @@ _ExtInt(63) ReturnPassing(){}
 // AARCH64: define{{.*}} i63 @ReturnPassing(
 // AARCH64DARWIN: define{{.*}} i63 @ReturnPassing(
 // ARM: define{{.*}} arm_aapcscc i63 @ReturnPassing(
+// BPF: define{{.*}} i63 @ReturnPassing(
 
 _ExtInt(64) ReturnPassing2(){}
 // LIN64: define{{.*}} i64 @ReturnPassing2(
@@ -175,6 +180,7 @@ _ExtInt(64) ReturnPassing2(){}
 // AARCH64: define{{.*}} i64 @ReturnPassing2(
 // AARCH64DARWIN: define{{.*}} i64 @ReturnPassing2(
 // ARM: define{{.*}} arm_aapcscc i64 @ReturnPassing2(
+// BPF: define{{.*}} i64 @ReturnPassing2(
 
 _ExtInt(127) ReturnPassing3(){}
 // LIN64: define{{.*}} { i64, i64 } @ReturnPassing3(
@@ -206,6 +212,7 @@ _ExtInt(127) ReturnPassing3(){}
 // AARCH64: define{{.*}} i127 @ReturnPassing3(
 // AARCH64DARWIN: define{{.*}} i127 @ReturnPassing3(
 // ARM: define{{.*}} arm_aapcscc void @ReturnPassing3(i127* noalias sret
+// BPF: define{{.*}} i127 @ReturnPassing3(
 
 _ExtInt(128) ReturnPassing4(){}
 // LIN64: define{{.*}} { i64, i64 } @ReturnPassing4(
@@ -235,6 +242,7 @@ _ExtInt(128) ReturnPassing4(){}
 // AARCH64: define{{.*}} i128 @ReturnPassing4(
 // AARCH64DARWIN: define{{.*}} i128 @ReturnPassing4(
 // ARM: define{{.*}} arm_aapcscc void @ReturnPassing4(i128* noalias sret
+// BPF: define{{.*}} i128 @ReturnPassing4(
 
 _ExtInt(129) ReturnPassing5(){}
 // LIN64: define{{.*}} void @ReturnPassing5(i129* noalias sret
@@ -264,6 +272,7 @@ _ExtInt(129) ReturnPassing5(){}
 // AARCH64: define{{.*}} void @ReturnPassing5(i129* noalias sret
 // AARCH64DARWIN: define{{.*}} void @ReturnPassing5(i129* noalias sret
 // ARM: define{{.*}} arm_aapcscc void @ReturnPassing5(i129* noalias sret
+// BPF: define{{.*}} void @ReturnPassing5(i129* noalias sret
 
 // SparcV9 is odd in that it has a return-size limit of 256, not 128 or 64
 // like other platforms, so test to make sure this behavior will still work.
