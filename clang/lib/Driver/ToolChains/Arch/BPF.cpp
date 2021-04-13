@@ -10,7 +10,6 @@
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Options.h"
-#include "llvm/ADT/StringSwitch.h"
 #include "llvm/Option/ArgList.h"
 
 using namespace clang::driver;
@@ -18,7 +17,6 @@ using namespace clang::driver::tools;
 using namespace clang;
 using namespace llvm::opt;
 
-// Decode AArch64 features from string like +[no]featureA+[no]featureB+...
 static bool DecodeBPFFeatures(const Driver &D, StringRef text,
                               std::vector<StringRef> &Features) {
   SmallVector<StringRef, 8> Split;
@@ -46,7 +44,6 @@ getBPFArchFeaturesFromMarch(const Driver &D, StringRef March,
 
 void bpf::getBPFTargetFeatures(const Driver &D, const ArgList &Args,
                                std::vector<StringRef> &Features) {
-  printf("CHECK BPF FEATURES\n");
   Arg *A;
   bool success = true;
   if ((A = Args.getLastArg(options::OPT_march_EQ)))
