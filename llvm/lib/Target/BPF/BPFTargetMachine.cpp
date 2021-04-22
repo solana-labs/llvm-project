@@ -82,6 +82,7 @@ BPFTargetMachine::BPFTargetMachine(const Target &T, const Triple &TT,
   BPFMCAsmInfo *MAI =
       static_cast<BPFMCAsmInfo *>(const_cast<MCAsmInfo *>(AsmInfo.get()));
   MAI->setDwarfUsesRelocationsAcrossSections(!Subtarget.getUseDwarfRIS());
+  MAI->setSupportsDebugInformation(!FS.contains("solana"));
 }
 
 namespace {
