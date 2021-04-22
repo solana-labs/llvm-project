@@ -46,6 +46,10 @@ public:
   void setDwarfUsesRelocationsAcrossSections(bool enable) {
     DwarfUsesRelocationsAcrossSections = enable;
   }
+
+  void setSupportsDebugInformation(bool enable) {
+    SupportsDebugInformation = enable;
+  }
 };
 }
 
