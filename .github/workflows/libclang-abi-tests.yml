@@ -41,7 +41,7 @@ jobs:
           remote_repo='https://github.com/llvm/llvm-project'
           if [ ${{ steps.version.outputs.LLVM_VERSION_MINOR }} -ne 0 -o ${{ steps.version.outputs.LLVM_VERSION_PATCH }} -eq 0 ]; then
             major_version=$(( ${{ steps.version.outputs.LLVM_VERSION_MAJOR }} - 1))
-            baseline_ref="$major_version.0.0"
+            baseline_ref="llvmorg-$major_version.0.0"
 
             # If there is a minor release, we want to use that as the base line.
             minor_ref=`git ls-remote --refs -t $remote_repo llvmorg-$major_version.[1-9].[0-9] | tail -n1 | grep -o 'llvmorg-.\+' || true`
@@ -60,7 +60,7 @@ jobs:
             echo ::set-output name=ABI_LIBS::libclang.so
           else
             echo ::set-output name=BASELINE_VERSION_MAJOR::${{ steps.version.outputs.LLVM_VERSION_MAJOR }}
-            echo ::set-output name=BASELINE_REF::${{ steps.version.outputs.LLVM_VERSION_MAJOR }}.0.0
+            echo ::set-output name=BASELINE_REF::llvmorg-${{ steps.version.outputs.LLVM_VERSION_MAJOR }}.0.0
             echo ::set-output name=ABI_HEADERS::.
             echo ::set-output name=ABI_LIBS::libclang.so libclang-cpp.so
           fi
@@ -104,7 +104,7 @@ jobs:
     - name: Configure
       run: |
         mkdir install
-        cmake -B build -S llvm -G Ninja -DLLVM_ENABLE_PROJECTS=clang -DCMAKE_BUILD_TYPE=Debug -DLLVM_TARGETS_TO_BUILD="" -DLLVM_BUILD_LLVM_DYLIB=ON -DLLVM_LINK_LLVM_DYLIB=ON -DCMAKE_C_FLAGS_DEBUG="-g -Og" -DCMAKE_CXX_FLAGS_DEBUG="-g -Og" -DCMAKE_INSTALL_PREFIX=`pwd`/install llvm
+        cmake -B build -S llvm -G Ninja -DLLVM_ENABLE_PROJECTS=clang -DCMAKE_BUILD_TYPE=Debug -DLLVM_TARGETS_TO_BUILD="" -DLLVM_BUILD_LLVM_DYLIB=ON -DLLVM_LINK_LLVM_DYLIB=ON -DCMAKE_C_FLAGS_DEBUG="-g1 -Og" -DCMAKE_CXX_FLAGS_DEBUG="-g1 -Og" -DCMAKE_INSTALL_PREFIX=`pwd`/install llvm
     - name: Build
       run: ninja -C build/ ${{ needs.abi-dump-setup.outputs.ABI_LIBS }} install-clang-headers
     - name: Dump ABI
@@ -113,13 +113,12 @@ jobs:
         for lib in ${{ needs.abi-dump-setup.outputs.ABI_LIBS }}; do
           # Remove symbol versioning from dumps, so we can compare across major versions.
           sed -i 's/LLVM_${{ matrix.llvm_version_major }}/LLVM_NOVERSION/' $lib-${{ matrix.ref }}.abi
-          tar -czf $lib-${{ matrix.ref }}.abi.tar.gz $lib-${{ matrix.ref }}.abi
         done
     - name: Upload ABI file
       uses: actions/upload-artifact@v2
       with:
         name: ${{ matrix.name }}
-        path: "*${{ matrix.ref }}.abi.tar.gz"
+        path: "*${{ matrix.ref }}.abi"
 
   abi-compare:
     runs-on: ubuntu-latest
@@ -141,7 +140,7 @@ jobs:
       - name: Compare ABI
         run: |
           for lib in ${{ needs.abi-dump-setup.outputs.ABI_LIBS }}; do
-            abi-compliance-checker -lib $lib -old build-baseline/$lib*.abi.tar.gz -new build-latest/$lib*.abi.tar.gz
+            abi-compliance-checker -lib $lib -old build-baseline/$lib*.abi -new build-latest/$lib*.abi
           done
       - name: Upload ABI Comparison
         if: always()
