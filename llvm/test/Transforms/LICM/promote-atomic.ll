@@ -13,7 +13,7 @@ define void @test(%class.LiveThread* %live_thread) {
 ; CHECK-NEXT:    br label [[LOOP:%.*]]
 ; CHECK:       loop:
 ; CHECK-NEXT:    store %class.LiveThread* undef, %class.LiveThread** [[NEXT_UNPROCESSED_]], align 8
-; CHECK-NEXT:    [[XCHG:%.*]] = cmpxchg weak i64* @globallive, i64 undef, i64 undef release monotonic, align 8
+; CHECK-NEXT:    [[XCHG:%.*]] = cmpxchg weak i64* @globallive, i64 undef, i64 undef release monotonic
 ; CHECK-NEXT:    [[DONE:%.*]] = extractvalue { i64, i1 } [[XCHG]], 1
 ; CHECK-NEXT:    br i1 [[DONE]], label [[EXIT:%.*]], label [[LOOP]]
 ; CHECK:       exit:
@@ -24,7 +24,7 @@ define void @test(%class.LiveThread* %live_thread) {
 
 loop:
   store %class.LiveThread* undef, %class.LiveThread** %next_unprocessed_, align 8
-  %xchg = cmpxchg weak i64* @globallive, i64 undef, i64 undef release monotonic, align 8
+  %xchg = cmpxchg weak i64* @globallive, i64 undef, i64 undef release monotonic
   %done = extractvalue { i64, i1 } %xchg, 1
   br i1 %done, label %exit, label %loop
 
