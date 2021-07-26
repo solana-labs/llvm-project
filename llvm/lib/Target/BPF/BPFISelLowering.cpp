@@ -180,9 +180,11 @@ BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
     MaxStoresPerMemcpy = MaxStoresPerMemcpyOptSize = 0;
     MaxStoresPerMemmove = MaxStoresPerMemmoveOptSize = 0;
   } else {
+    auto SelectionDAGInfo = STI.getSelectionDAGInfo();
+    SelectionDAGInfo->setSolanaFlag(STI.isSolana());
     // inline memcpy() for kernel to see explicit copy
     unsigned CommonMaxStores =
-      STI.getSelectionDAGInfo()->getCommonMaxStoresPerMemFunc();
+      SelectionDAGInfo->getCommonMaxStoresPerMemFunc();
 
     MaxStoresPerMemset = MaxStoresPerMemsetOptSize = CommonMaxStores;
     MaxStoresPerMemcpy = MaxStoresPerMemcpyOptSize = CommonMaxStores;
