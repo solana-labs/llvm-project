@@ -100,6 +100,7 @@ BPFSubtarget::BPFSubtarget(const Triple &TT, const std::string &CPU,
       FrameLowering(initializeSubtargetDependencies(CPU, FS)),
       TLInfo(TM, *this) {
   IsLittleEndian = TT.isLittleEndian();
+  TSInfo.setSolanaFlag(IsSolana);
 
   CallLoweringInfo.reset(new BPFCallLowering(*getTargetLowering()));
   Legalizer.reset(new BPFLegalizerInfo(*this));
