@@ -19,6 +19,7 @@ namespace llvm {
 
 class BPFSelectionDAGInfo : public SelectionDAGTargetInfo {
 public:
+  BPFSelectionDAGInfo() : isSolana(false) {}
   SDValue EmitTargetCodeForMemcpy(SelectionDAG &DAG, const SDLoc &dl,
                                   SDValue Chain, SDValue Dst, SDValue Src,
                                   SDValue Size, Align Alignment,
@@ -26,7 +27,15 @@ public:
                                   MachinePointerInfo DstPtrInfo,
                                   MachinePointerInfo SrcPtrInfo) const override;
 
-  unsigned getCommonMaxStoresPerMemFunc() const { return 128; }
+  unsigned getCommonMaxStoresPerMemFunc() const {
+    return isSolana ? 4 : 128;
+  }
+  void setSolanaFlag(bool value) const {
+    isSolana = value;
+  }
+
+private:
+  mutable bool isSolana;
 
 };
 
