@@ -361,9 +361,9 @@ append_list_if(COMPILER_RT_DEBUG -DSANITIZER_DEBUG=1 SANITIZER_COMMON_CFLAGS)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES Clang)
   list(APPEND THREAD_SAFETY_FLAGS
-      "-Werror=thread-safety"
-      "-Werror=thread-safety-reference"
-      "-Werror=thread-safety-beta"
+      "-Wthread-safety"
+      "-Wthread-safety-reference"
+      "-Wthread-safety-beta"
   )
   list(APPEND SANITIZER_COMMON_CFLAGS ${THREAD_SAFETY_FLAGS})
   string(REPLACE ";" " " thread_safety_flags_space_sep "${THREAD_SAFETY_FLAGS}")
