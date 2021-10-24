@@ -1,3 +1,4 @@
+; XFAIL: darwin
 ; RUN: llvm-as %s -o %t.o
 ; RUN: %ld64 -lto_library %llvmshlibdir/libLTO.dylib -dylib -arch x86_64 -macosx_version_min 10.10.0 -o %t.dylib %t.o -save-temps  -undefined dynamic_lookup -exported_symbol _c -exported_symbol _b  -exported_symbol _GlobLinkonce
 
