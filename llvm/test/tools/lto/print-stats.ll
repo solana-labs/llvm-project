@@ -1,3 +1,4 @@
+; XFAIL: darwin
 ; RUN: llvm-as %s -o %t.o
 ; RUN: %ld64 -lto_library %llvmshlibdir/libLTO.dylib -arch x86_64 -dylib -mllvm -stats -o %t.dylib %t.o 2>&1 | FileCheck --check-prefix=STATS %s
 ; RUN: %ld64 -lto_library %llvmshlibdir/libLTO.dylib -arch x86_64 -dylib -o %t.dylib %t.o 2>&1 | FileCheck --check-prefix=NO_STATS %s
