@@ -37,7 +37,7 @@ class BPFTargetLowering : public TargetLowering {
 public:
   explicit BPFTargetLowering(const TargetMachine &TM, const BPFSubtarget &STI);
 
-  bool allowsMisalignedMemoryAccesses(EVT VT, unsigned, unsigned,
+  bool allowsMisalignedMemoryAccesses(EVT VT, unsigned, Align,
                                       MachineMemOperand::Flags,
                                       bool *) const override;
 
