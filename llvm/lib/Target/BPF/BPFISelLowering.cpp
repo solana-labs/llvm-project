@@ -199,7 +199,7 @@ BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
 }
 
 bool BPFTargetLowering::allowsMisalignedMemoryAccesses(
-    EVT VT, unsigned, unsigned, MachineMemOperand::Flags, bool *Fast) const {
+    EVT VT, unsigned, Align, MachineMemOperand::Flags, bool *Fast) const {
   if (!VT.isSimple()) {
     return false;
   }
