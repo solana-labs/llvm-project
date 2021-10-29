@@ -595,9 +595,9 @@ TEST_F(TargetLibraryInfoTest, ValidProto) {
       "declare void @__kmpc_free_shared(i8*, i64)\n"
 
       // rust memory management
-      "declare i8* @__rust_alloc(i64, i64, i8*)\n"
+      "declare i8* @__rust_alloc(i64, i64)\n"
       "declare void @__rust_dealloc(i8*, i64, i64)\n"
-      "declare i8* @__rust_realloc(i8*, i64, i64, i64, i64, i8*)\n"
+      "declare i8* @__rust_realloc(i8*, i64, i64, i64)\n"
       );
 
   for (unsigned FI = 0; FI != LibFunc::NumLibFuncs; ++FI) {
