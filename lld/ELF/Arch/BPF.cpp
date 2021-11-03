@@ -29,6 +29,7 @@ public:
   RelExpr getRelExpr(RelType type, const Symbol &s,
                      const uint8_t *loc) const override;
   RelType getDynRel(RelType type) const override;
+  int64_t getImplicitAddend(const uint8_t *buf, RelType type) const override;
   void relocate(uint8_t *loc, const Relocation &rel, uint64_t val) const override;
 };
 } // namespace
@@ -54,6 +55,10 @@ RelExpr BPF::getRelExpr(RelType type, const Symbol &s,
 
 RelType BPF::getDynRel(RelType type) const {
   return type;
+}
+
+int64_t BPF::getImplicitAddend(const uint8_t *buf, RelType type) const {
+  return 0;
 }
 
 void BPF::relocate(uint8_t *loc, const Relocation &rel, uint64_t val) const {
