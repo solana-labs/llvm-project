@@ -47,8 +47,6 @@ RelExpr BPF::getRelExpr(RelType type, const Symbol &s,
       return R_PC;
     case R_BPF_64_64:
       return R_ABS;
-    case R_BPF_64_ABS64:
-      return R_ADDEND;
     default:
       error(getErrorLocation(loc) + "unrecognized reloc " + toString(type));
   }
@@ -76,14 +74,6 @@ void BPF::relocate(uint8_t *loc, const Relocation &rel, uint64_t val) const {
       // instructions, lower 32 first.
       write32le(loc + 4, val & 0xFFFFFFFF);
       write32le(loc + 8 + 4, val >> 32);
-      break;
-    }
-    case R_BPF_64_ABS64: {
-      // The relocation type is used for normal 64-bit data. The
-      // actual to-be-relocated data is stored at r_offset and the
-      // read/write data bitsize is 64 (8 bytes). The relocation can
-      // be resolved with the symbol value plus implicit addend.
-      write64le(loc, val);
       break;
     }
     default:
