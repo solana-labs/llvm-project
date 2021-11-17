@@ -18,6 +18,7 @@ on:
 
 jobs:
   build_lldb:
+    if: false
     name: lldb build
     runs-on: ${{ matrix.os }}
     # Workaround for build faliure on Mac OS X: llvm.org/PR46190, https://github.com/actions/virtual-environments/issues/2274
