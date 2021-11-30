@@ -708,7 +708,7 @@ uint32_t BPFAbstractMemberAccess::GetFieldInfo(uint32_t InfoKind,
       report_fatal_error("too big field size for llvm.bpf.preserve.field.info");
 
     unsigned OffsetInBits = MemberTy->getOffsetInBits();
-    if (Triple.getArch() == Triple::bpfel)
+    if (Triple.getArch() == Triple::bpfel || Triple.getArch() == Triple::sbf)
       return SBitOffset + 64 - OffsetInBits - SizeInBits;
     else
       return OffsetInBits + 64 - NextSBitOffset;
