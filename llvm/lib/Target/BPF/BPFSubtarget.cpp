@@ -63,5 +63,8 @@ BPFSubtarget::BPFSubtarget(const Triple &TT, const std::string &CPU,
     : BPFGenSubtargetInfo(TT, CPU, /*TuneCPU*/ CPU, FS),
       FrameLowering(initializeSubtargetDependencies(CPU, FS)),
       TLInfo(TM, *this) {
+  if (TT.getArch() == Triple::sbf) {
+    IsSolana = true;
+  }
   TSInfo.setSolanaFlag(IsSolana);
 }
