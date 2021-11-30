@@ -55,6 +55,7 @@ public:
     avr,            // AVR: Atmel AVR microcontroller
     bpfel,          // eBPF or extended BPF or 64-bit BPF (little endian)
     bpfeb,          // eBPF or extended BPF or 64-bit BPF (big endian)
+    sbf,            // Solana dialect of eBPF (little endian)
     csky,           // CSKY: csky
     hexagon,        // Hexagon: hexagon
     m68k,           // M68k: Motorola 680x0 family
@@ -165,6 +166,7 @@ public:
     Mesa,
     SUSE,
     OpenEmbedded,
+    Solana,
     LastVendorType = OpenEmbedded
   };
   enum OSType {
@@ -205,6 +207,7 @@ public:
     Hurd,       // GNU/Hurd
     WASI,       // Experimental WebAssembly OS
     Emscripten,
+    SolanaOS,
     LastOSType = Emscripten
   };
   enum EnvironmentType {

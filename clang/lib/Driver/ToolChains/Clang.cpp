@@ -353,6 +353,7 @@ static void getTargetFeatures(const Driver &D, const llvm::Triple &Triple,
     break;
   case llvm::Triple::bpfeb:
   case llvm::Triple::bpfel:
+  case llvm::Triple::sbf:
     bpf::getBPFTargetFeatures(D, Args, Features);
     break;
   case llvm::Triple::x86:
