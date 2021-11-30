@@ -46,15 +46,16 @@ public:
   enum ArchType {
     UnknownArch,
 
-    arm,            // ARM (little endian): arm, armv.*, xscale
-    armeb,          // ARM (big endian): armeb
-    aarch64,        // AArch64 (little endian): aarch64
-    aarch64_be,     // AArch64 (big endian): aarch64_be
-    aarch64_32,     // AArch64 (little endian) ILP32: aarch64_32
-    arc,            // ARC: Synopsys ARC
-    avr,            // AVR: Atmel AVR microcontroller
-    bpfel,          // eBPF or extended BPF or 64-bit BPF (little endian)
-    bpfeb,          // eBPF or extended BPF or 64-bit BPF (big endian)
+    arm,        // ARM (little endian): arm, armv.*, xscale
+    armeb,      // ARM (big endian): armeb
+    aarch64,    // AArch64 (little endian): aarch64
+    aarch64_be, // AArch64 (big endian): aarch64_be
+    aarch64_32, // AArch64 (little endian) ILP32: aarch64_32
+    arc,        // ARC: Synopsys ARC
+    avr,        // AVR: Atmel AVR microcontroller
+    bpfel,      // eBPF or extended BPF or 64-bit BPF (little endian)
+    bpfeb,      // eBPF or extended BPF or 64-bit BPF (big endian)
+    sbf,            // Solana dialect of eBPF (little endian)
     csky,           // CSKY: csky
     dxil,           // DXIL 32-bit DirectX bytecode
     hexagon,        // Hexagon: hexagon
@@ -180,6 +181,7 @@ public:
     Mesa,
     SUSE,
     OpenEmbedded,
+    Solana,
     LastVendorType = OpenEmbedded
   };
   enum OSType {
@@ -194,7 +196,7 @@ public:
     IOS,
     KFreeBSD,
     Linux,
-    Lv2,        // PS3
+    Lv2, // PS3
     MacOSX,
     NetBSD,
     OpenBSD,
@@ -205,17 +207,17 @@ public:
     Haiku,
     Minix,
     RTEMS,
-    NaCl,       // Native Client
+    NaCl, // Native Client
     AIX,
-    CUDA,       // NVIDIA CUDA
-    NVCL,       // NVIDIA OpenCL
-    AMDHSA,     // AMD HSA Runtime
+    CUDA,   // NVIDIA CUDA
+    NVCL,   // NVIDIA OpenCL
+    AMDHSA, // AMD HSA Runtime
     PS4,
     PS5,
     ELFIAMCU,
-    TvOS,       // Apple tvOS
-    WatchOS,    // Apple watchOS
-    DriverKit,  // Apple DriverKit
+    TvOS,      // Apple tvOS
+    WatchOS,   // Apple watchOS
+    DriverKit, // Apple DriverKit
     Mesa3D,
     Contiki,
     AMDPAL,     // AMD PAL Runtime
@@ -223,6 +225,7 @@ public:
     Hurd,       // GNU/Hurd
     WASI,       // Experimental WebAssembly OS
     Emscripten,
+    SolanaOS,
     ShaderModel, // DirectX ShaderModel
     LiteOS,
     LastOSType = LiteOS
