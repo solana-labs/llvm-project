@@ -445,6 +445,7 @@ std::string tools::getCPUName(const Driver &D, const ArgList &Args,
 
   case llvm::Triple::bpfel:
   case llvm::Triple::bpfeb:
+  case llvm::Triple::sbf:
     if (const Arg *A = Args.getLastArg(options::OPT_mcpu_EQ))
       return A->getValue();
     return "";
@@ -529,7 +530,9 @@ void tools::getTargetFeatures(const Driver &D, const llvm::Triple &Triple,
     break;
   case llvm::Triple::bpfeb:
   case llvm::Triple::bpfel:
+  case llvm::Triple::sbf:
     bpf::getBPFTargetFeatures(D, Args, Features);
+    break;
   case llvm::Triple::x86:
   case llvm::Triple::x86_64:
     x86::getX86TargetFeatures(D, Triple, Args, Features);
