@@ -38,6 +38,11 @@ getBPFArchFeaturesFromMarch(const Driver &D, StringRef March,
   std::string MarchLowerCase = March.lower();
   std::pair<StringRef, StringRef> Split = StringRef(MarchLowerCase).split("+");
 
+  if (Split.first == "sbf") {
+    Features.push_back("+solana");
+    return true;
+  }
+
   return (Split.first == "bpfel" || Split.first == "bpfeb") &&
     (Split.second.size() == 0 || DecodeBPFFeatures(D, Split.second, Features));
 }
