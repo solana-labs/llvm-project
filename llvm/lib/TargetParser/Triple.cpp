@@ -65,6 +65,7 @@ StringRef Triple::getArchTypeName(ArchType Kind) {
   case renderscript64: return "renderscript64";
   case riscv32:        return "riscv32";
   case riscv64:        return "riscv64";
+  case sbf:            return "sbf";
   case shave:          return "shave";
   case sparc:          return "sparc";
   case sparcel:        return "sparcel";
@@ -208,6 +209,8 @@ StringRef Triple::getArchTypePrefix(ArchType Kind) {
   case dxil:        return "dx";
 
   case xtensa:      return "xtensa";
+
+  case sbf:         return "sbf";
   }
 }
 
@@ -228,6 +231,7 @@ StringRef Triple::getVendorTypeName(VendorType Kind) {
   case PC: return "pc";
   case SCEI: return "scei";
   case SUSE: return "suse";
+  case Solana: return "solana";
   }
 
   llvm_unreachable("Invalid VendorType!");
@@ -276,6 +280,7 @@ StringRef Triple::getOSTypeName(OSType Kind) {
   case LiteOS: return "liteos";
   case XROS: return "xros";
   case Vulkan: return "vulkan";
+  case SolanaOS: return "solana";
   }
 
   llvm_unreachable("Invalid OSType");
@@ -354,6 +359,8 @@ static Triple::ArchType parseBPFArch(StringRef ArchName) {
     return Triple::bpfeb;
   } else if (ArchName.equals("bpf_le") || ArchName.equals("bpfel")) {
     return Triple::bpfel;
+  } else if (ArchName.equals("sbf")) {
+    return Triple::sbf;
   } else {
     return Triple::UnknownArch;
   }
@@ -389,6 +396,7 @@ Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
     .Case("riscv32", riscv32)
     .Case("riscv64", riscv64)
     .Case("hexagon", hexagon)
+    .Case("sbf", BPFArch)
     .Case("sparc", sparc)
     .Case("sparcel", sparcel)
     .Case("sparcv9", sparcv9)
@@ -579,7 +587,7 @@ static Triple::ArchType parseArch(StringRef ArchName) {
     if (ArchName.starts_with("arm") || ArchName.starts_with("thumb") ||
         ArchName.starts_with("aarch64"))
       return parseARMArch(ArchName);
-    if (ArchName.starts_with("bpf"))
+    if (ArchName.starts_with("bpf") || ArchName.starts_with("sbf"))
       return parseBPFArch(ArchName);
   }
 
@@ -602,6 +610,7 @@ static Triple::VendorType parseVendor(StringRef VendorName) {
     .Case("mesa", Triple::Mesa)
     .Case("suse", Triple::SUSE)
     .Case("oe", Triple::OpenEmbedded)
+    .Case("solana", Triple::Solana)
     .Default(Triple::UnknownVendor);
 }
 
@@ -648,6 +657,7 @@ static Triple::OSType parseOS(StringRef OSName) {
     .StartsWith("liteos", Triple::LiteOS)
     .StartsWith("serenity", Triple::Serenity)
     .StartsWith("vulkan", Triple::Vulkan)
+    .StartsWith("solana", Triple::SolanaOS)
     .Default(Triple::UnknownOS);
 }
 
@@ -876,6 +886,7 @@ static Triple::ObjectFormatType getDefaultFormat(const Triple &T) {
   case Triple::renderscript64:
   case Triple::riscv32:
   case Triple::riscv64:
+  case Triple::sbf:
   case Triple::shave:
   case Triple::sparc:
   case Triple::sparcel:
@@ -1501,6 +1512,7 @@ static unsigned getArchPointerBitWidth(llvm::Triple::ArchType Arch) {
   case llvm::Triple::ppc64le:
   case llvm::Triple::renderscript64:
   case llvm::Triple::riscv64:
+  case llvm::Triple::sbf:
   case llvm::Triple::sparcv9:
   case llvm::Triple::spirv:
   case llvm::Triple::spir64:
@@ -1535,6 +1547,7 @@ Triple Triple::get32BitArchVariant() const {
   case Triple::bpfeb:
   case Triple::bpfel:
   case Triple::msp430:
+  case Triple::sbf:
   case Triple::systemz:
   case Triple::ve:
     T.setArch(UnknownArch);
@@ -1646,6 +1659,7 @@ Triple Triple::get64BitArchVariant() const {
   case Triple::ppc64le:
   case Triple::renderscript64:
   case Triple::riscv64:
+  case Triple::sbf:
   case Triple::sparcv9:
   case Triple::spir64:
   case Triple::spirv64:
@@ -1825,6 +1839,7 @@ bool Triple::isLittleEndian() const {
   case Triple::renderscript64:
   case Triple::riscv32:
   case Triple::riscv64:
+  case Triple::sbf:
   case Triple::shave:
   case Triple::sparcel:
   case Triple::spir64:
