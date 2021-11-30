@@ -2744,6 +2744,7 @@ bool Generic_GCC::IsIntegratedAssemblerDefault() const {
   case llvm::Triple::avr:
   case llvm::Triple::bpfel:
   case llvm::Triple::bpfeb:
+  case llvm::Triple::sbf:
   case llvm::Triple::thumb:
   case llvm::Triple::thumbeb:
   case llvm::Triple::ppc:
