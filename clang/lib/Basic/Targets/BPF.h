@@ -36,10 +36,14 @@ public:
     IntMaxType = SignedLong;
     Int64Type = SignedLong;
     RegParmMax = 5;
-    for (auto& it : Opts.FeaturesAsWritten) {
-      if (it == "+solana") {
-        HasSolanaFeature = true;
-        break;
+    if (Triple.getArch() == llvm::Triple::sbf) {
+      HasSolanaFeature = true;
+    } else {
+      for (auto& it : Opts.FeaturesAsWritten) {
+        if (it == "+solana") {
+          HasSolanaFeature = true;
+          break;
+        }
       }
     }
     if (Triple.getArch() == llvm::Triple::bpfeb) {

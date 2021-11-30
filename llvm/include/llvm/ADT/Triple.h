@@ -55,6 +55,7 @@ public:
     avr,            // AVR: Atmel AVR microcontroller
     bpfel,          // eBPF or extended BPF or 64-bit BPF (little endian)
     bpfeb,          // eBPF or extended BPF or 64-bit BPF (big endian)
+    sbf,            // Solana dialect of eBPF (little endian)
     csky,           // CSKY: csky
     dxil,           // DXIL 32-bit DirectX bytecode
     hexagon,        // Hexagon: hexagon
@@ -176,6 +177,7 @@ public:
     Mesa,
     SUSE,
     OpenEmbedded,
+    Solana,
     LastVendorType = OpenEmbedded
   };
   enum OSType {
@@ -219,7 +221,8 @@ public:
     WASI,       // Experimental WebAssembly OS
     Emscripten,
     ShaderModel, // DirectX ShaderModel
-    LastOSType = ShaderModel
+    SolanaOS,
+    LastOSType = SolanaOS
   };
   enum EnvironmentType {
     UnknownEnvironment,
