@@ -58,9 +58,9 @@ static void WarnSize(int Offset, MachineFunction &MF, DebugLoc& DL)
         dbgs() << " ";
         DL.print(dbgs());
       }
-      dbgs() << " Function " << MF.getFunction().getName() << " Stack offset of " << Offset
-             << " exceeded max offset of " <<  MaxOffset << " by "
-             << -(Offset - MaxOffset) << " bytes, please minimize large stack variables\n";
+      dbgs() << " Function " << MF.getFunction().getName() << " Stack offset of " << -Offset
+             << " exceeded max offset of " <<  -MaxOffset << " by "
+             << MaxOffset - Offset << " bytes, please minimize large stack variables\n";
     } else {
       DiagnosticInfoUnsupported DiagStackSize(MF.getFunction(),
           "BPF stack limit of 512 bytes is exceeded. "
