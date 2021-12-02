@@ -54,12 +54,12 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeBPFTarget() {
 
 // DataLayout: little or big endian
 static std::string computeDataLayout(const Triple &TT, StringRef FS) {
-  bool isSolana = TT.getArch() == Triple::sbf || FS.contains("solana");
+  bool IsSolana = TT.getArch() == Triple::sbf || FS.contains("solana");
   if (TT.getArch() == Triple::bpfeb) {
-    return isSolana ? "E-m:e-p:64:64-i64:64-n32:64-S128"
+    return IsSolana ? "E-m:e-p:64:64-i64:64-n32:64-S128"
       : "E-m:e-p:64:64-i64:64-i128:128-n32:64-S128";
   } else {
-    return isSolana ? "e-m:e-p:64:64-i64:64-n32:64-S128"
+    return IsSolana ? "e-m:e-p:64:64-i64:64-n32:64-S128"
       : "e-m:e-p:64:64-i64:64-i128:128-n32:64-S128";
   }
 }
@@ -84,7 +84,8 @@ BPFTargetMachine::BPFTargetMachine(const Target &T, const Triple &TT,
   BPFMCAsmInfo *MAI =
       static_cast<BPFMCAsmInfo *>(const_cast<MCAsmInfo *>(AsmInfo.get()));
   MAI->setDwarfUsesRelocationsAcrossSections(!Subtarget.getUseDwarfRIS());
-  MAI->setSupportsDebugInformation(!FS.contains("solana"));
+  bool IsSolana = TT.getArch() == Triple::sbf || FS.contains("solana");
+  MAI->setSupportsDebugInformation(!IsSolana);
 }
 
 namespace {

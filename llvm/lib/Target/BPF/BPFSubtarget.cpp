@@ -25,16 +25,17 @@ using namespace llvm;
 
 void BPFSubtarget::anchor() {}
 
-BPFSubtarget &BPFSubtarget::initializeSubtargetDependencies(StringRef CPU,
+BPFSubtarget &BPFSubtarget::initializeSubtargetDependencies(const Triple &TT,
+                                                            StringRef CPU,
                                                             StringRef FS) {
-  initializeEnvironment();
+  initializeEnvironment(TT);
   initSubtargetFeatures(CPU, FS);
   ParseSubtargetFeatures(CPU, /*TuneCPU*/ CPU, FS);
   return *this;
 }
 
-void BPFSubtarget::initializeEnvironment() {
-  IsSolana = false;
+void BPFSubtarget::initializeEnvironment(const Triple &TT) {
+  IsSolana = TT.getArch() == Triple::sbf;
   HasJmpExt = false;
   HasJmp32 = false;
   HasAlu32 = false;
@@ -60,8 +61,8 @@ void BPFSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
 
 BPFSubtarget::BPFSubtarget(const Triple &TT, const std::string &CPU,
                            const std::string &FS, const TargetMachine &TM)
-    : BPFGenSubtargetInfo(TT, CPU, /*TuneCPU*/ CPU, FS),
-      FrameLowering(initializeSubtargetDependencies(CPU, FS)),
+    : BPFGenSubtargetInfo(TT, CPU, /*TuneCPU*/ CPU, FS), InstrInfo(),
+      FrameLowering(initializeSubtargetDependencies(TT, CPU, FS)),
       TLInfo(TM, *this) {
   if (TT.getArch() == Triple::sbf) {
     IsSolana = true;
