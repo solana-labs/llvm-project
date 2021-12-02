@@ -38,11 +38,6 @@ getBPFArchFeaturesFromMarch(const Driver &D, StringRef March,
   std::string MarchLowerCase = March.lower();
   std::pair<StringRef, StringRef> Split = StringRef(MarchLowerCase).split("+");
 
-  if (Split.first == "sbf") {
-    Features.push_back("+solana");
-    return true;
-  }
-
   return (Split.first == "bpfel" || Split.first == "bpfeb") &&
     (Split.second.size() == 0 || DecodeBPFFeatures(D, Split.second, Features));
 }
@@ -51,6 +46,14 @@ void bpf::getBPFTargetFeatures(const Driver &D, const ArgList &Args,
                                std::vector<StringRef> &Features) {
   Arg *A;
   bool success = true;
+
+  if ((A = Args.getLastArg(options::OPT_target))) {
+    StringRef Target = A->getValue();
+    if (Target == "sbf") {
+      Features.push_back("+solana");
+    }
+  }
+
   if ((A = Args.getLastArg(options::OPT_march_EQ)))
     success = getBPFArchFeaturesFromMarch(D, A->getValue(), Args, Features);
   if (!success)
