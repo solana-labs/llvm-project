@@ -779,7 +779,8 @@ public:
 
   /// Tests whether the target is BPF (little and big endian).
   bool isBPF() const {
-    return getArch() == Triple::bpfel || getArch() == Triple::bpfeb;
+    return getArch() == Triple::bpfel || getArch() == Triple::bpfeb ||
+           getArch() == Triple::sbf;
   }
 
   /// Tests whether the target is MIPS 32-bit (little and big endian).
