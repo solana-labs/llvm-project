@@ -764,6 +764,7 @@ PrettyPrinter &selectPrettyPrinter(Triple const &Triple) {
     return AMDGCNPrettyPrinterInst;
   case Triple::bpfel:
   case Triple::bpfeb:
+  case Triple::sbf:
     return BPFPrettyPrinterInst;
   case Triple::arm:
   case Triple::armeb:

@@ -24,7 +24,9 @@ namespace {
 class BPFAsmBackend : public MCAsmBackend {
 public:
   BPFAsmBackend(support::endianness Endian, const MCSubtargetInfo &STI)
-    : MCAsmBackend(Endian), isSolana(STI.hasFeature(BPF::FeatureSolana)) {}
+    : MCAsmBackend(Endian),
+      isSolana(STI.hasFeature(BPF::FeatureSolana) ||
+               STI.getTargetTriple().getArch() == Triple::sbf) {}
   ~BPFAsmBackend() override = default;
 
   void applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
