@@ -68,6 +68,7 @@ class ImmediateAsmOperand<string name> : AsmOperandClass {
 }
 
 def SImm16AsmOperand : ImmediateAsmOperand<"SImm16">;
+def BPFSubtargetSolana : Predicate<"Subtarget->isSolana()">;
 
 def brtarget : Operand<OtherVT> {
   let PrintMethod = "printBrTargetOperand";
@@ -872,6 +873,14 @@ def : Pat<(atomic_load_sub_32 ADDRri:$addr, GPR32:$val),
           (XFADDW32 ADDRri:$addr, (NEG_32 GPR32:$val))>;
 def : Pat<(atomic_load_sub_64 ADDRri:$addr, GPR:$val),
           (XFADDD ADDRri:$addr, (NEG_64 GPR:$val))>;
+
+let Predicates = [BPFSubtargetSolana], usesCustomInserter = 1, isCodeGenOnly = 1 in {
+  def ATOMIC_FENCE : Pseudo<
+    (outs),
+    (ins),
+    "#atomic_fence",
+    [(atomic_fence timm, timm)]>;
+}
 
 // Atomic Exchange
 class XCHG<BPFWidthModifer SizeOp, string OpcodeStr, PatFrag OpNode>
