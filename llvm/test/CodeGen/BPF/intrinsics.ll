@@ -1,5 +1,8 @@
 ; RUN: llc < %s -march=bpfel -show-mc-encoding | FileCheck --check-prefix=CHECK-EL %s
 ; RUN: llc < %s -march=bpfeb -show-mc-encoding | FileCheck --check-prefix=CHECK-EB %s
+; RUN: not --crash llc -march=sbf <%s 2>&1 | FileCheck --check-prefix=CHECK-SBF %s
+
+; CHECK-SBF: LLVM ERROR: llvm.bpf.load.* intrinsics are not supported in SBF
 
 ; Function Attrs: nounwind uwtable
 define i32 @ld_b(i64 %foo, i64* nocapture %bar, i8* %ctx, i8* %ctx2) #0 {
