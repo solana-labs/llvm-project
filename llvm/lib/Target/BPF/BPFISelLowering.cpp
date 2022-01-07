@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/DiagnosticPrinter.h"
+#include "llvm/IR/IntrinsicsBPF.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -78,6 +79,8 @@ BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Custom);
   setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
+
+  setOperationAction(ISD::INTRINSIC_W_CHAIN, MVT::Other, Custom);
 
   for (auto VT : {MVT::i8, MVT::i16, MVT::i32, MVT::i32, MVT::i64}) {
     if (Subtarget->isSolana()) {
@@ -367,10 +370,28 @@ SDValue BPFTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::ATOMIC_LOAD_UMIN:
   case ISD::ATOMIC_LOAD_XOR:
     return LowerATOMICRMW(Op, DAG);
+  case ISD::INTRINSIC_W_CHAIN: {
+    unsigned IntNo = cast<ConstantSDNode>(Op->getOperand(1))->getZExtValue();
+    switch (IntNo) {
+    case Intrinsic::bpf_load_byte:
+    case Intrinsic::bpf_load_half:
+    case Intrinsic::bpf_load_word:
+      if (Subtarget->isSolana()) {
+        report_fatal_error(
+            "llvm.bpf.load.* intrinsics are not supported in SBF", false);
+      }
+      break;
+    default:
+      break;
+    }
+
+    // continue the expansion as defined with tablegen
+    return SDValue();
+  }
   case ISD::DYNAMIC_STACKALLOC:
     report_fatal_error("Unsupported dynamic stack allocation");
   default:
-    llvm_unreachable("unimplemented atomic operand");
+    llvm_unreachable("unimplemented operation");
   }
 }
 
