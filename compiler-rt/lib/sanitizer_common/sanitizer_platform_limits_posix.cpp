@@ -218,6 +218,9 @@ namespace __sanitizer {
 
   unsigned ucontext_t_sz(void *ctx) {
 #    if SANITIZER_GLIBC && SANITIZER_X64
+#ifndef FP_XSTATE_MAGIC1
+# define FP_XSTATE_MAGIC1 0x46505853U
+#endif
     // See kernel arch/x86/kernel/fpu/signal.c for details.
     const auto *fpregs = static_cast<ucontext_t *>(ctx)->uc_mcontext.fpregs;
     // The member names differ across header versions, but the actual layout
