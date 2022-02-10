@@ -1652,8 +1652,8 @@ void RelocationBaseSection::partitionRels() {
   if (!combreloc)
     return;
   const RelType relativeRel = target->relativeRel;
-  numRelativeRelocs =
-      llvm::partition(relocs, [=](auto &r) { return r.type == relativeRel; }) -
+  numRelativeRelocs = llvm::partition(
+      relocs, [=](const DynamicReloc &r) { return r.type == relativeRel; }) -
       relocs.begin();
 }
 
