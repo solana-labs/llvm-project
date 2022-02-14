@@ -45,7 +45,10 @@ RelExpr BPF::getRelExpr(RelType type, const Symbol &s,
   switch (type) {
     case R_BPF_64_32:
       return R_PC;
+    case R_BPF_64_ABS32:
+    case R_BPF_64_NODYLD32:
     case R_BPF_64_64:
+    case R_BPF_64_ABS64:
       return R_ABS;
     default:
       error(getErrorLocation(loc) + "unrecognized reloc " + toString(type));
@@ -68,12 +71,23 @@ void BPF::relocate(uint8_t *loc, const Relocation &rel, uint64_t val) const {
       write32le(loc + 4, ((val - 8) / 8) & 0xFFFFFFFF);
       break;
     }
+    case R_BPF_64_ABS32:
+    case R_BPF_64_NODYLD32: {
+      // Relocation used by .BTF.ext and DWARF
+      write32le(loc, val & 0xFFFFFFFF);
+      break;
+    }
     case R_BPF_64_64: {
       // Relocation of a lddw instruction
       // 64 bit address is divided into the imm of this and the following
       // instructions, lower 32 first.
       write32le(loc + 4, val & 0xFFFFFFFF);
       write32le(loc + 8 + 4, val >> 32);
+      break;
+    }
+    case R_BPF_64_ABS64: {
+      // Relocation used by DWARF
+      write64le(loc, val);
       break;
     }
     default:
