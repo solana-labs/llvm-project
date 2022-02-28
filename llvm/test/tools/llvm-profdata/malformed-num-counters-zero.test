@@ -1,3 +1,4 @@
+// XFAIL: *
 // Header
 //
 // INSTR_PROF_RAW_HEADER(uint64_t, Magic, __llvm_profile_get_magic())
