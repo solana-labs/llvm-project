@@ -22,21 +22,22 @@ using namespace llvm;
 
 namespace {
 
-void adjustStackPointer(MachineFunction &MF,
-                        MachineBasicBlock &MBB,
+void adjustStackPointer(MachineFunction &MF, MachineBasicBlock &MBB,
                         MachineBasicBlock::iterator &MBBI,
                         unsigned int Opcode) {
   MachineFrameInfo &MFI = MF.getFrameInfo();
-  int NumBytes = (int) MFI.getStackSize();
-  DebugLoc Dl;
-  const BPFInstrInfo &TII =
-      *static_cast<const BPFInstrInfo *>(MF.getSubtarget().getInstrInfo());
-  BuildMI(MBB, MBBI, Dl, TII.get(Opcode), BPF::R11)
-      .addReg(BPF::R11)
-      .addImm(NumBytes);
+  int NumBytes = (int)MFI.getStackSize();
+  if (NumBytes) {
+    DebugLoc Dl;
+    const BPFInstrInfo &TII =
+        *static_cast<const BPFInstrInfo *>(MF.getSubtarget().getInstrInfo());
+    BuildMI(MBB, MBBI, Dl, TII.get(Opcode), BPF::R11)
+        .addReg(BPF::R11)
+        .addImm(NumBytes);
+  }
 }
 
-}  // namespace
+} // namespace
 
 bool BPFFrameLowering::hasFP(const MachineFunction &MF) const { return true; }
 
