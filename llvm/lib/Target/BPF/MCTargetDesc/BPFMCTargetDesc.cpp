@@ -67,9 +67,7 @@ static MCStreamer *createBPFMCStreamer(const Triple &T, MCContext &Ctx,
     A.setRelaxAll(true);
 
   const MCSubtargetInfo *STI = Ctx.getSubtargetInfo();
-  bool isSolana =
-      STI->hasFeature(BPF::FeatureSolana) || T.getArch() == Triple::sbf;
-  if (isSolana) {
+  if (STI->getCPU() == "sbfv2") {
     A.setELFHeaderEFlags(llvm::ELF::EF_SBF_V2);
   }
 

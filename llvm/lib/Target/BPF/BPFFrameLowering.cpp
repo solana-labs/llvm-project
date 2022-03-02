@@ -43,7 +43,7 @@ bool BPFFrameLowering::hasFP(const MachineFunction &MF) const { return true; }
 
 void BPFFrameLowering::emitPrologue(MachineFunction &MF,
                                     MachineBasicBlock &MBB) const {
-  if (!MF.getSubtarget<BPFSubtarget>().isSolana()) {
+  if (!MF.getSubtarget<BPFSubtarget>().getHasDynamicFrames()) {
     return;
   }
   MachineBasicBlock::iterator MBBI = MBB.begin();
@@ -52,7 +52,7 @@ void BPFFrameLowering::emitPrologue(MachineFunction &MF,
 
 void BPFFrameLowering::emitEpilogue(MachineFunction &MF,
                                     MachineBasicBlock &MBB) const {
-  if (!MF.getSubtarget<BPFSubtarget>().isSolana()) {
+  if (!MF.getSubtarget<BPFSubtarget>().getHasDynamicFrames()) {
     return;
   }
   MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();

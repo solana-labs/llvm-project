@@ -91,7 +91,7 @@ void BPFRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   if (MI.getOpcode() == BPF::MOV_rr) {
     int Offset = MF.getFrameInfo().getObjectOffset(FrameIndex);
 
-    if (!MF.getSubtarget<BPFSubtarget>().isSolana()) {
+    if (!MF.getSubtarget<BPFSubtarget>().getHasDynamicFrames()) {
       WarnSize(Offset, MF, DL);
     }
     MI.getOperand(i).ChangeToRegister(FrameReg, false);
@@ -108,7 +108,7 @@ void BPFRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   if (!isInt<32>(Offset))
     llvm_unreachable("bug in frame offset");
 
-  if (!MF.getSubtarget<BPFSubtarget>().isSolana()) {
+  if (!MF.getSubtarget<BPFSubtarget>().getHasDynamicFrames()) {
     WarnSize(Offset, MF, DL);
   }
 
