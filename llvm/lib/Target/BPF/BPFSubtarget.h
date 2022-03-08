@@ -62,6 +62,9 @@ protected:
   // whether the cpu supports alu32 instructions.
   bool HasAlu32;
 
+  // whether we should use fixed or dynamic frames
+  bool HasDynamicFrames;
+
   // whether we should enable MCAsmInfo DwarfUsesRelocationsAcrossSections
   bool UseDwarfRIS;
 
@@ -88,6 +91,7 @@ public:
   bool getHasJmpExt() const { return HasJmpExt; }
   bool getHasJmp32() const { return HasJmp32; }
   bool getHasAlu32() const { return HasAlu32; }
+  bool getHasDynamicFrames() const { return HasDynamicFrames; }
   bool getUseDwarfRIS() const { return UseDwarfRIS; }
   bool hasLdsx() const { return HasLdsx; }
   bool hasMovsx() const { return HasMovsx; }
