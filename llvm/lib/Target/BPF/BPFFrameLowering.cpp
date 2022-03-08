@@ -20,13 +20,44 @@
 
 using namespace llvm;
 
+namespace {
+
+void adjustStackPointer(MachineFunction &MF, MachineBasicBlock &MBB,
+                        MachineBasicBlock::iterator &MBBI,
+                        unsigned int Opcode) {
+  MachineFrameInfo &MFI = MF.getFrameInfo();
+  int NumBytes = (int)MFI.getStackSize();
+  if (NumBytes) {
+    DebugLoc Dl;
+    const BPFInstrInfo &TII =
+        *static_cast<const BPFInstrInfo *>(MF.getSubtarget().getInstrInfo());
+    BuildMI(MBB, MBBI, Dl, TII.get(Opcode), BPF::R11)
+        .addReg(BPF::R11)
+        .addImm(NumBytes);
+  }
+}
+
+} // namespace
+
 bool BPFFrameLowering::hasFP(const MachineFunction &MF) const { return true; }
 
 void BPFFrameLowering::emitPrologue(MachineFunction &MF,
-                                    MachineBasicBlock &MBB) const {}
+                                    MachineBasicBlock &MBB) const {
+  if (!MF.getSubtarget<BPFSubtarget>().getHasDynamicFrames()) {
+    return;
+  }
+  MachineBasicBlock::iterator MBBI = MBB.begin();
+  adjustStackPointer(MF, MBB, MBBI, BPF::SUB_ri);
+}
 
 void BPFFrameLowering::emitEpilogue(MachineFunction &MF,
-                                    MachineBasicBlock &MBB) const {}
+                                    MachineBasicBlock &MBB) const {
+  if (!MF.getSubtarget<BPFSubtarget>().getHasDynamicFrames()) {
+    return;
+  }
+  MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
+  adjustStackPointer(MF, MBB, MBBI, BPF::ADD_ri);
+}
 
 void BPFFrameLowering::determineCalleeSaves(MachineFunction &MF,
                                             BitVector &SavedRegs,

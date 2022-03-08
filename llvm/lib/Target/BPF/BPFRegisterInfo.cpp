@@ -52,22 +52,11 @@ static void WarnSize(int Offset, MachineFunction &MF, DebugLoc& DL)
   OldMF = &(MF.getFunction());
   int MaxOffset = -1 * BPFRegisterInfo::FrameLength;
   if (Offset <= MaxOffset) {
-    if (MF.getSubtarget<BPFSubtarget>().isSolana()) {
-      dbgs() << "Error:";
-      if (DL) {
-        dbgs() << " ";
-        DL.print(dbgs());
-      }
-      dbgs() << " Function " << MF.getFunction().getName() << " Stack offset of " << -Offset
-             << " exceeded max offset of " <<  -MaxOffset << " by "
-             << MaxOffset - Offset << " bytes, please minimize large stack variables\n";
-    } else {
-      DiagnosticInfoUnsupported DiagStackSize(MF.getFunction(),
-          "BPF stack limit of 512 bytes is exceeded. "
-          "Please move large on stack variables into BPF per-cpu array map.\n",
-          DL);
-      MF.getFunction().getContext().diagnose(DiagStackSize);
-    }
+    DiagnosticInfoUnsupported DiagStackSize(MF.getFunction(),
+        "BPF stack limit of 512 bytes is exceeded. "
+        "Please move large on stack variables into BPF per-cpu array map.\n",
+        DL);
+    MF.getFunction().getContext().diagnose(DiagStackSize);
   }
 }
 
@@ -102,7 +91,9 @@ void BPFRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   if (MI.getOpcode() == BPF::MOV_rr) {
     int Offset = MF.getFrameInfo().getObjectOffset(FrameIndex);
 
-    WarnSize(Offset, MF, DL);
+    if (!MF.getSubtarget<BPFSubtarget>().getHasDynamicFrames()) {
+      WarnSize(Offset, MF, DL);
+    }
     MI.getOperand(i).ChangeToRegister(FrameReg, false);
     Register reg = MI.getOperand(i - 1).getReg();
     BuildMI(MBB, ++II, DL, TII.get(BPF::ADD_ri), reg)
@@ -117,7 +108,9 @@ void BPFRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   if (!isInt<32>(Offset))
     llvm_unreachable("bug in frame offset");
 
-  WarnSize(Offset, MF, DL);
+  if (!MF.getSubtarget<BPFSubtarget>().getHasDynamicFrames()) {
+    WarnSize(Offset, MF, DL);
+  }
 
   if (MI.getOpcode() == BPF::FI_ri) {
     // architecture does not really support FI_ri, replace it with
