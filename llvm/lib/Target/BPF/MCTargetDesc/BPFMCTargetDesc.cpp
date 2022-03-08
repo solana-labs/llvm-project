@@ -14,8 +14,14 @@
 #include "MCTargetDesc/BPFInstPrinter.h"
 #include "MCTargetDesc/BPFMCAsmInfo.h"
 #include "TargetInfo/BPFTargetInfo.h"
+#include "llvm/BinaryFormat/ELF.h"
+#include "llvm/MC/MCAsmBackend.h"
+#include "llvm/MC/MCCodeEmitter.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCELFStreamer.h"
 #include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCInstrInfo.h"
+#include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/TargetRegistry.h"
@@ -54,8 +60,18 @@ static MCStreamer *createBPFMCStreamer(const Triple &T, MCContext &Ctx,
                                        std::unique_ptr<MCObjectWriter> &&OW,
                                        std::unique_ptr<MCCodeEmitter> &&Emitter,
                                        bool RelaxAll) {
-  return createELFStreamer(Ctx, std::move(MAB), std::move(OW), std::move(Emitter),
-                           RelaxAll);
+  MCELFStreamer *S =
+      new MCELFStreamer(Ctx, std::move(MAB), std::move(OW), std::move(Emitter));
+  MCAssembler &A = S->getAssembler();
+  if (RelaxAll)
+    A.setRelaxAll(true);
+
+  const MCSubtargetInfo *STI = Ctx.getSubtargetInfo();
+  if (STI->getCPU() == "sbfv2") {
+    A.setELFHeaderEFlags(llvm::ELF::EF_SBF_V2);
+  }
+
+  return S;
 }
 
 static MCInstPrinter *createBPFMCInstPrinter(const Triple &T,
