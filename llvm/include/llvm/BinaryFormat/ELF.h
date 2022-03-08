@@ -892,6 +892,11 @@ enum : unsigned {
   EF_CUDA_VIRTUAL_SM = 0xff0000,
 };
 
+// SBF specific e_flags
+enum : unsigned {
+  EF_SBF_V2 = 0x20,
+};
+
 // ELF Relocation types for BPF
 enum {
 #include "ELFRelocs/BPF.def"

@@ -48,7 +48,6 @@ BPFSubtarget &BPFSubtarget::initializeSubtargetDependencies(const Triple &TT,
                                                             StringRef FS) {
   initializeEnvironment(TT);
   initSubtargetFeatures(CPU, FS);
-  ParseSubtargetFeatures(CPU, /*TuneCPU*/ CPU, FS);
   return *this;
 }
 
@@ -57,6 +56,7 @@ void BPFSubtarget::initializeEnvironment(const Triple &TT) {
   HasJmpExt = false;
   HasJmp32 = false;
   HasAlu32 = false;
+  HasDynamicFrames = false;
   UseDwarfRIS = false;
   HasLdsx = false;
   HasMovsx = false;
@@ -69,17 +69,21 @@ void BPFSubtarget::initializeEnvironment(const Triple &TT) {
 void BPFSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
   if (CPU == "probe")
     CPU = sys::detail::getHostCPUNameForBPF();
-  if (CPU == "generic" || CPU == "v1")
-    return;
+
+  ParseSubtargetFeatures(CPU, /*TuneCPU*/ CPU, FS);
+
   if (CPU == "v2") {
     HasJmpExt = true;
-    return;
   }
+
   if (CPU == "v3") {
     HasJmpExt = true;
     HasJmp32 = true;
     HasAlu32 = true;
-    return;
+  }
+
+  if (CPU == "sbfv2" && !HasDynamicFrames) {
+    report_fatal_error("sbfv2 requires dynamic-frames\n", false);
   }
   if (CPU == "v4") {
     HasJmpExt = true;
