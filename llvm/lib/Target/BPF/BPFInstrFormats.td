@@ -43,6 +43,7 @@ def BPF_XOR  : BPFArithOp<0xa>;
 def BPF_MOV  : BPFArithOp<0xb>;
 def BPF_ARSH : BPFArithOp<0xc>;
 def BPF_END  : BPFArithOp<0xd>;
+def BPF_SDIV : BPFArithOp<0xe>;
 
 def BPF_XCHG    : BPFArithOp<0xe>;
 def BPF_CMPXCHG : BPFArithOp<0xf>;
