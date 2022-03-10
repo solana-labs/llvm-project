@@ -287,18 +287,23 @@ multiclass ALU<BPFArithOp Opc, string OpcodeStr, SDNode OpNode> {
 }
 
 let Constraints = "$dst = $src2" in {
-let isAsCheapAsAMove = 1 in {
-  defm ADD : ALU<BPF_ADD, "+=", add>;
-  defm SUB : ALU<BPF_SUB, "-=", sub>;
-  defm OR  : ALU<BPF_OR, "|=", or>;
-  defm AND : ALU<BPF_AND, "&=", and>;
-  defm SLL : ALU<BPF_LSH, "<<=", shl>;
-  defm SRL : ALU<BPF_RSH, ">>=", srl>;
-  defm XOR : ALU<BPF_XOR, "^=", xor>;
-  defm SRA : ALU<BPF_ARSH, "s>>=", sra>;
-}
-  defm MUL : ALU<BPF_MUL, "*=", mul>;
-  defm DIV : ALU<BPF_DIV, "/=", udiv>;
+    let isAsCheapAsAMove = 1 in {
+        defm ADD : ALU<BPF_ADD, "+=", add>;
+        defm SUB : ALU<BPF_SUB, "-=", sub>;
+        defm OR  : ALU<BPF_OR, "|=", or>;
+        defm AND : ALU<BPF_AND, "&=", and>;
+        defm SLL : ALU<BPF_LSH, "<<=", shl>;
+        defm SRL : ALU<BPF_RSH, ">>=", srl>;
+        defm XOR : ALU<BPF_XOR, "^=", xor>;
+        defm SRA : ALU<BPF_ARSH, "s>>=", sra>;
+    }
+
+    defm MUL : ALU<BPF_MUL, "*=", mul>;
+    defm DIV : ALU<BPF_DIV, "/=", udiv>;
+
+    let Predicates = [BPFSubtargetSolana] in {
+        defm SDIV : ALU<BPF_SDIV, "s/=", sdiv>;
+    }
 }
 
 class NEG_RR<BPFOpClass Class, BPFArithOp Opc,
