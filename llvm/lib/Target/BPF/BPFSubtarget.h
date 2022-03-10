@@ -60,6 +60,9 @@ protected:
   // whether we should use fixed or dynamic frames
   bool HasDynamicFrames;
 
+  // whether the cpu supports native BPF_SDIV
+  bool HasSdiv;
+
   // whether we should enable MCAsmInfo DwarfUsesRelocationsAcrossSections
   bool UseDwarfRIS;
 
@@ -79,6 +82,7 @@ public:
   bool getHasJmp32() const { return HasJmp32; }
   bool getHasAlu32() const { return HasAlu32; }
   bool getHasDynamicFrames() const { return HasDynamicFrames; }
+  bool getHasSdiv() const { return HasSdiv; }
   bool getUseDwarfRIS() const { return UseDwarfRIS; }
 
   const BPFInstrInfo *getInstrInfo() const override { return &InstrInfo; }

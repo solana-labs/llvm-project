@@ -124,9 +124,10 @@ BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
     if (VT == MVT::i32 && !STI.getHasAlu32())
       continue;
 
-    if (Subtarget->isSolana()) {
+    if (Subtarget->isSolana() && !STI.getHasSdiv()) {
       setOperationAction(ISD::SDIV, VT, Expand);
     }
+
     setOperationAction(ISD::SDIVREM, VT, Expand);
     setOperationAction(ISD::UDIVREM, VT, Expand);
     setOperationAction(ISD::SREM, VT, Expand);
