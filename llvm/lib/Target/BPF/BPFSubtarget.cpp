@@ -57,6 +57,7 @@ void BPFSubtarget::initializeEnvironment(const Triple &TT) {
   HasJmp32 = false;
   HasAlu32 = false;
   HasDynamicFrames = false;
+  HasSdiv = false;
   UseDwarfRIS = false;
   HasLdsx = false;
   HasMovsx = false;
