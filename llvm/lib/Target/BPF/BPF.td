@@ -30,6 +30,9 @@ def FeatureSolana : SubtargetFeature<"solana", "IsSolana", "true",
 def FeatureDynamicFrames : SubtargetFeature<"dynamic-frames", "HasDynamicFrames", "true",
                                             "Enable dynamic frames">;
 
+def FeatureSdiv : SubtargetFeature<"sdiv", "HasSdiv", "true",
+                                   "Enable native BPF_SDIV support">;
+
 class Proc<string Name, list<SubtargetFeature> Features>
  : Processor<Name, NoItineraries, Features>;
 
@@ -39,7 +42,7 @@ def : Proc<"v2", []>;
 def : Proc<"v3", [ALU32]>;
 def : Proc<"v4", [ALU32]>;
 def : Proc<"probe", []>;
-def : Proc<"sbfv2", [FeatureSolana, FeatureDynamicFrames]>;
+def : Proc<"sbfv2", [FeatureSolana, FeatureDynamicFrames, FeatureSdiv]>;
 
 def BPFInstPrinter : AsmWriter {
   string AsmWriterClassName  = "InstPrinter";
