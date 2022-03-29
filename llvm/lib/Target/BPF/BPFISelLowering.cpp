@@ -583,6 +583,8 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       llvm_unreachable("call arg pass bug");
   }
 
+  SDValue InFlag;
+
   if (HasStackArgs) {
     SDValue FramePtr = DAG.getCopyFromReg(Chain, CLI.DL, BPF::R10, getPointerTy(MF.getDataLayout()));
 
@@ -603,11 +605,12 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       Chain = DAG.getStore(Chain, CLI.DL, Arg, PtrOff, MachinePointerInfo());
     }
 
-    // Pass the current stack frame pointer via BPF::R5
-    Chain = DAG.getCopyToReg(Chain, CLI.DL, BPF::R5, FramePtr);
+    // Pass the current stack frame pointer via BPF::R5, gluing the
+    // instruction to instructions passing the first 4 arguments in
+    // registers below.
+    Chain = DAG.getCopyToReg(Chain, CLI.DL, BPF::R5, FramePtr, InFlag);
+    InFlag = Chain.getValue(1);
   }
-
-  SDValue InFlag;
 
   // Build a sequence of copy-to-reg nodes chained together with token chain and
   // flag operands which copy the outgoing args into registers.  The InFlag is
