@@ -84,8 +84,7 @@ BPFTargetMachine::BPFTargetMachine(const Target &T, const Triple &TT,
   BPFMCAsmInfo *MAI =
       static_cast<BPFMCAsmInfo *>(const_cast<MCAsmInfo *>(AsmInfo.get()));
   MAI->setDwarfUsesRelocationsAcrossSections(!Subtarget.getUseDwarfRIS());
-  bool IsSolana = TT.getArch() == Triple::sbf || FS.contains("solana");
-  MAI->setSupportsDebugInformation(!IsSolana);
+  MAI->setSupportsDebugInformation(true);
 }
 
 namespace {
