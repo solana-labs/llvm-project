@@ -1475,6 +1475,12 @@ void ELFObjectWriter::recordRelocation(MCAssembler &Asm,
     return;
 
   unsigned Type = TargetObjectWriter->getRelocType(Ctx, Target, Fixup, IsPCRel);
+
+  unsigned Flags = FixupSection.getFlags();
+  // Change R_BPF_64_64 relocations in .debug_* sections to R_BPF_64_ABS64 
+  if (Ctx.getTargetTriple().isBPF() && !(Flags & ELF::SHF_ALLOC) && (Type==ELF::R_BPF_64_64))
+      Type = ELF::R_BPF_64_ABS64;  
+
   const auto *Parent = cast<MCSectionELF>(Fragment->getParent());
   // Emiting relocation with sybmol for CG Profile to  help with --cg-profile.
   bool RelocateWithSymbol =

@@ -92,6 +92,9 @@ unsigned BPFELFObjectWriter::getRelocType(MCContext &Ctx, const MCValue &Target,
           if ((Flags & ELF::SHF_ALLOC) && (Flags & ELF::SHF_WRITE))
             return ELF::R_BPF_64_NODYLD32;
         }
+        // .debug_* sections
+	if (!(Flags & ELF::SHF_ALLOC))
+       	  return ELF::R_BPF_64_ABS32;
       }
     }
     return isSolana ? ELF::R_BPF_64_32 : ELF::R_BPF_64_ABS32;
