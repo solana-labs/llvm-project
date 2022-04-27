@@ -65,6 +65,9 @@ protected:
   // whether we should use fixed or dynamic frames
   bool HasDynamicFrames;
 
+  // Fixme
+  bool UseRelocAbs64;
+
   // whether the cpu supports native BPF_SDIV
   bool HasSdiv;
 

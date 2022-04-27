@@ -33,6 +33,9 @@ def FeatureDynamicFrames : SubtargetFeature<"dynamic-frames", "HasDynamicFrames"
 def FeatureSdiv : SubtargetFeature<"sdiv", "HasSdiv", "true",
                                    "Enable native BPF_SDIV support">;
 
+def FeatureRelocAbs64 : SubtargetFeature<"reloc-abs64", "UseRelocAbs64", "true",
+                                   "Fix 64bit data relocations">;
+
 class Proc<string Name, list<SubtargetFeature> Features>
  : Processor<Name, NoItineraries, Features>;
 
@@ -42,7 +45,7 @@ def : Proc<"v2", []>;
 def : Proc<"v3", [ALU32]>;
 def : Proc<"v4", [ALU32]>;
 def : Proc<"probe", []>;
-def : Proc<"sbfv2", [FeatureSolana, FeatureDynamicFrames, FeatureSdiv]>;
+def : Proc<"sbfv2", [FeatureSolana, FeatureDynamicFrames, FeatureSdiv, FeatureRelocAbs64]>;
 
 def BPFInstPrinter : AsmWriter {
   string AsmWriterClassName  = "InstPrinter";
