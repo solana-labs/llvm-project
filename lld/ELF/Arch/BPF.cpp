@@ -58,7 +58,18 @@ RelExpr BPF::getRelExpr(RelType type, const Symbol &s,
 }
 
 RelType BPF::getDynRel(RelType type) const {
-  return type;
+  switch (type) {
+    case R_BPF_64_ABS64:
+        // R_BPF_64_ABS64 is symbolic like R_BPF_64_64, which is set as our
+        // symbolicRel in the constructor. Return R_BPF_64_64 here so that if
+        // the symbol isn't preemptible, we emit a _RELATIVE relocation instead
+        // and skip emitting the symbol.
+        //
+        // See https://github.com/solana-labs/llvm-project/blob/6b6aef5dbacef31a3c7b3a54f7f1ba54cafc7077/lld/ELF/Relocations.cpp#L1179
+        return R_BPF_64_64;
+    default:
+        return type;
+  }
 }
 
 int64_t BPF::getImplicitAddend(const uint8_t *buf, RelType type) const {
