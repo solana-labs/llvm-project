@@ -31,6 +31,7 @@ public:
   RelType getDynRel(RelType type) const override;
   int64_t getImplicitAddend(const uint8_t *buf, RelType type) const override;
   void relocate(uint8_t *loc, const Relocation &rel, uint64_t val) const override;
+  uint32_t calcEFlags() const override;
 };
 } // namespace
 
@@ -96,6 +97,29 @@ void BPF::relocate(uint8_t *loc, const Relocation &rel, uint64_t val) const {
     default:
       error(getErrorLocation(loc) + "unrecognized reloc " + toString(rel.type));
   }
+}
+
+static uint32_t getEFlags(InputFile *file) {
+  if (config->ekind == ELF64BEKind)
+    return cast<ObjFile<ELF64BE>>(file)->getObj().getHeader().e_flags;
+  return cast<ObjFile<ELF64LE>>(file)->getObj().getHeader().e_flags;
+}
+
+uint32_t BPF::calcEFlags() const {
+  uint32_t ret = 0;
+
+  // Ensure that all the object files were compiled with the same flags, as
+  // different flags indicate different ABIs.
+  for (InputFile *f : objectFiles) {
+    uint32_t flags = getEFlags(f);
+    if (ret == 0) {
+      ret = flags;
+    } else if (ret != flags) {
+      error("can not link object files with incompatible flags");
+    }
+  }
+
+  return ret;
 }
 
 TargetInfo *getBPFTargetInfo() {
