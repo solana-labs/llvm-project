@@ -63,7 +63,7 @@ void BPFTargetInfo::getTargetDefines(const LangOptions &Opts,
 }
 
 static constexpr llvm::StringLiteral ValidCPUNames[] = {"generic", "v1", "v2",
-                                                        "v3", "v4", "probe"};
+                                                        "v3", "v4", "probe", "sbfv2"};
 
 bool BPFTargetInfo::isValidCPUName(StringRef Name) const {
   return llvm::is_contained(ValidCPUNames, Name);
