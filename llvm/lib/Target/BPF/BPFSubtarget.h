@@ -60,11 +60,14 @@ protected:
   // whether we should use fixed or dynamic frames
   bool HasDynamicFrames;
 
-  // Fixme
+  // Relocate FK_Data_8 fixups as R_BPF_64_ABS64
   bool UseRelocAbs64;
 
   // whether the cpu supports native BPF_SDIV
   bool HasSdiv;
+
+  // Not used for anything, just set by the static-syscalls marker feature.
+  bool HasStaticSyscalls;
 
   // whether we should enable MCAsmInfo DwarfUsesRelocationsAcrossSections
   bool UseDwarfRIS;
