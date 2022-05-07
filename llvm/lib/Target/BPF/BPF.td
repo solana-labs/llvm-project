@@ -35,6 +35,9 @@ def FeatureSdiv : SubtargetFeature<"sdiv", "HasSdiv", "true",
 def FeatureRelocAbs64 : SubtargetFeature<"reloc-abs64", "UseRelocAbs64", "true",
                                    "Fix 64bit data relocations">;
 
+def FeatureStaticSyscalls : SubtargetFeature<"static-syscalls", "HasStaticSyscalls", "true",
+                                   "Marker feature used for conditional compilation">;
+
 class Proc<string Name, list<SubtargetFeature> Features>
  : Processor<Name, NoItineraries, Features>;
 
@@ -43,7 +46,7 @@ def : Proc<"v1", []>;
 def : Proc<"v2", []>;
 def : Proc<"v3", []>;
 def : Proc<"probe", []>;
-def : Proc<"sbfv2", [FeatureSolana, FeatureDynamicFrames, FeatureSdiv, FeatureRelocAbs64]>;
+def : Proc<"sbfv2", [FeatureSolana, FeatureDynamicFrames, FeatureSdiv, FeatureRelocAbs64, FeatureStaticSyscalls]>;
 
 def BPFInstPrinter : AsmWriter {
   string AsmWriterClassName  = "InstPrinter";
