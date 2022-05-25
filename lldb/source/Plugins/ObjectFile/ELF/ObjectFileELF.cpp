@@ -245,6 +245,12 @@ bool ELFNote::Parse(const DataExtractor &data, lldb::offset_t *offset) {
   return true;
 }
 
+static uint32_t bpfVariantFromElfFlags(const elf::ELFHeader &header) {
+  if (header.e_flags & llvm::ELF::EF_SBF_V2)
+      return ArchSpec::eBPFSubType_sbfv2;
+  return ArchSpec::eBPFSubType_sbf;
+}
+
 static uint32_t mipsVariantFromElfFlags (const elf::ELFHeader &header) {
   const uint32_t mips_arch = header.e_flags & llvm::ELF::EF_MIPS_ARCH;
   uint32_t endian = header.e_ident[EI_DATA];
@@ -325,6 +331,8 @@ static uint32_t subTypeFromElfHeader(const elf::ELFHeader &header) {
     return ppc64VariantFromElfFlags(header);
   else if (header.e_machine == llvm::ELF::EM_RISCV)
     return riscvVariantFromElfFlags(header);
+  else if (header.e_machine == llvm::ELF::EM_BPF)
+    return bpfVariantFromElfFlags(header);
 
   return LLDB_INVALID_CPUTYPE;
 }
@@ -1407,6 +1415,11 @@ size_t ObjectFileELF::GetSectionHeaderInfo(SectionHeaderColl &section_headers,
     arch_spec.SetFlags(flags);
   }
 
+  if (arch_spec.GetMachine() == llvm::Triple::sbf) {
+    if (header.e_flags & llvm::ELF::EF_SBF_V2)
+      arch_spec.SetFlags(ArchSpec::eBPF_abi_sbf_v2);
+  }
+
   // If there are no section headers we are done.
   if (header.e_shnum == 0)
     return 0;
@@ -1525,6 +1538,15 @@ size_t ObjectFileELF::GetSectionHeaderInfo(SectionHeaderColl &section_headers,
             ParseARMAttributes(data, section_size, arch_spec);
         }
 
+        if (arch_spec.IsBPF()) {
+            uint32_t arch_flags = arch_spec.GetFlags();
+            if (header.e_flags & llvm::ELF::EF_SBF_V2)
+                arch_flags |= lldb_private::ArchSpec::eBPF_abi_sbf_v2;
+            arch_spec.SetFlags(arch_flags);
+            arch_spec.GetTriple().setVendor(llvm::Triple::VendorType::Solana);
+            arch_spec.GetTriple().setOS(llvm::Triple::OSType::SolanaOS);
+        }
+
         if (name == g_sect_name_gnu_debuglink) {
           DataExtractor data;
           if (section_size && (data.SetData(object_data, sheader.sh_offset,
@@ -1544,7 +1566,6 @@ size_t ObjectFileELF::GetSectionHeaderInfo(SectionHeaderColl &section_headers,
         static ConstString g_sect_name_android_ident(".note.android.ident");
         if (!is_note_header && name == g_sect_name_android_ident)
           is_note_header = true;
-
         if (is_note_header) {
           // Allow notes to refine module info.
           DataExtractor data;
