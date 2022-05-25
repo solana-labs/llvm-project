@@ -240,6 +240,12 @@ static const CoreDefinition g_core_definitions[] = {
 
     {eByteOrderLittle, 4, 1, 4, llvm::Triple::wasm32, ArchSpec::eCore_wasm32,
      "wasm32"},
+
+    {eByteOrderLittle, 8, 8, 8, llvm::Triple::sbf, ArchSpec::eCore_sbf,
+     "sbf"},
+
+    {eByteOrderLittle, 8, 8, 8, llvm::Triple::sbf, ArchSpec::eCore_sbfv2,
+     "sbfv2"},
 };
 
 // Ensure that we have an entry in the g_core_definitions for each core. If you
@@ -424,6 +430,10 @@ static const ArchDefinitionEntry g_elf_arch_entries[] = {
     {ArchSpec::eCore_loongarch64, llvm::ELF::EM_LOONGARCH,
      ArchSpec::eLoongArchSubType_loongarch64, 0xFFFFFFFFu,
      0xFFFFFFFFu}, // loongarch64
+    {ArchSpec::eCore_sbf, llvm::ELF::EM_BPF, ArchSpec::eBPFSubType_sbf,
+     0xFFFFFFFFu, 0xFFFFFFFFu}, // sbf
+    {ArchSpec::eCore_sbfv2, llvm::ELF::EM_BPF, ArchSpec::eBPFSubType_sbfv2,
+     0xFFFFFFFFu, 0xFFFFFFFFu}, // sbfv2
 };
 
 static const ArchDefinition g_elf_arch_def = {
@@ -555,6 +565,8 @@ const char *ArchSpec::GetArchitectureName() const {
     return core_def->name;
   return "unknown";
 }
+
+bool ArchSpec::IsBPF() const { return GetTriple().isBPF(); }
 
 bool ArchSpec::IsMIPS() const { return GetTriple().isMIPS(); }
 
@@ -1138,8 +1150,8 @@ static bool cores_match(const ArchSpec::Core core1, const ArchSpec::Core core2,
     break;
 
   // v. https://en.wikipedia.org/wiki/ARM_Cortex-M#Silicon_customization
-  // Cortex-M0 - ARMv6-M - armv6m 
-  // Cortex-M3 - ARMv7-M - armv7m 
+  // Cortex-M0 - ARMv6-M - armv6m
+  // Cortex-M3 - ARMv7-M - armv7m
   // Cortex-M4 - ARMv7E-M - armv7em
   case ArchSpec::eCore_arm_armv7em:
     if (!enforce_exact_match) {
@@ -1156,8 +1168,8 @@ static bool cores_match(const ArchSpec::Core core1, const ArchSpec::Core core2,
     break;
 
   // v. https://en.wikipedia.org/wiki/ARM_Cortex-M#Silicon_customization
-  // Cortex-M0 - ARMv6-M - armv6m 
-  // Cortex-M3 - ARMv7-M - armv7m 
+  // Cortex-M0 - ARMv6-M - armv6m
+  // Cortex-M3 - ARMv7-M - armv7m
   // Cortex-M4 - ARMv7E-M - armv7em
   case ArchSpec::eCore_arm_armv7m:
     if (!enforce_exact_match) {
@@ -1174,8 +1186,8 @@ static bool cores_match(const ArchSpec::Core core1, const ArchSpec::Core core2,
     break;
 
   // v. https://en.wikipedia.org/wiki/ARM_Cortex-M#Silicon_customization
-  // Cortex-M0 - ARMv6-M - armv6m 
-  // Cortex-M3 - ARMv7-M - armv7m 
+  // Cortex-M0 - ARMv6-M - armv6m
+  // Cortex-M3 - ARMv7-M - armv7m
   // Cortex-M4 - ARMv7E-M - armv7em
   case ArchSpec::eCore_arm_armv6m:
     if (!enforce_exact_match) {
