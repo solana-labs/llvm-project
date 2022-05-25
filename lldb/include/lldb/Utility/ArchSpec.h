@@ -92,6 +92,16 @@ public:
     eARM_abi_hard_float = 0x00000400
   };
 
+  // BPF specific e_flags
+  enum BPFeflags {
+    eBPF_abi_sbf_v2 = 0x00000020,
+  };
+
+  enum BPFSubType {
+    eBPFSubType_sbf,
+    eBPFSubType_sbfv2,
+  };
+
   enum RISCVSubType {
     eRISCVSubType_unknown,
     eRISCVSubType_riscv32,
@@ -203,6 +213,9 @@ public:
 
     eCore_wasm32,
 
+    eCore_sbf,
+    eCore_sbfv2,
+
     kNumCores,
 
     kCore_invalid,
@@ -288,6 +301,11 @@ public:
   /// \return A static string corresponding to the current
   ///         architecture.
   const char *GetArchitectureName() const;
+
+  /// if BPF architecture return true.
+  ///
+  ///  \return a boolean value.
+  bool IsBPF() const;
 
   /// if MIPS architecture return true.
   ///

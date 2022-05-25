@@ -180,6 +180,9 @@ bool PlatformLinux::GetSupportedArchitectureAtIndex(uint32_t idx,
     case 9:
       triple.setArchName("s390x");
       break;
+    case 10:
+      triple.setArchName("sbf");
+      break;
     default:
       return false;
     }

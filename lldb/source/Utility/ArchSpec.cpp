@@ -229,6 +229,12 @@ static const CoreDefinition g_core_definitions[] = {
 
     {eByteOrderLittle, 4, 1, 4, llvm::Triple::wasm32, ArchSpec::eCore_wasm32,
      "wasm32"},
+
+    {eByteOrderLittle, 8, 8, 8, llvm::Triple::sbf, ArchSpec::eCore_sbf,
+     "sbf"},
+
+    {eByteOrderLittle, 8, 8, 8, llvm::Triple::sbf, ArchSpec::eCore_sbfv2,
+     "sbfv2"},
 };
 
 // Ensure that we have an entry in the g_core_definitions for each core. If you
@@ -405,6 +411,10 @@ static const ArchDefinitionEntry g_elf_arch_entries[] = {
      ArchSpec::eRISCVSubType_riscv32, 0xFFFFFFFFu, 0xFFFFFFFFu}, // riscv32
     {ArchSpec::eCore_riscv64, llvm::ELF::EM_RISCV,
      ArchSpec::eRISCVSubType_riscv64, 0xFFFFFFFFu, 0xFFFFFFFFu}, // riscv64
+    {ArchSpec::eCore_sbf, llvm::ELF::EM_BPF, ArchSpec::eBPFSubType_sbf,
+     0xFFFFFFFFu, 0xFFFFFFFFu}, // sbf
+    {ArchSpec::eCore_sbfv2, llvm::ELF::EM_BPF, ArchSpec::eBPFSubType_sbfv2,
+     0xFFFFFFFFu, 0xFFFFFFFFu}, // sbfv2
 };
 
 static const ArchDefinition g_elf_arch_def = {
@@ -541,6 +551,8 @@ const char *ArchSpec::GetArchitectureName() const {
     return core_def->name;
   return "unknown";
 }
+
+bool ArchSpec::IsBPF() const { return GetTriple().isBPF(); }
 
 bool ArchSpec::IsMIPS() const { return GetTriple().isMIPS(); }
 
