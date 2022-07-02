@@ -53,7 +53,8 @@ void DWARFDebugAranges::extract(const DWARFDataExtractor &debug_aranges_data) {
         for (uint32_t i = 0; i < num_descriptors; ++i) {
           const DWARFDebugArangeSet::Descriptor &descriptor =
               set.GetDescriptorRef(i);
-          m_aranges.Append(RangeToDIE::Entry(descriptor.address,
+          if (descriptor.address > 0)
+              m_aranges.Append(RangeToDIE::Entry(descriptor.address,
                                              descriptor.length, cu_offset));
         }
       }
@@ -83,7 +84,7 @@ void DWARFDebugAranges::Dump(Log *log) const {
 
 void DWARFDebugAranges::AppendRange(dw_offset_t offset, dw_addr_t low_pc,
                                     dw_addr_t high_pc) {
-  if (high_pc > low_pc)
+  if (high_pc > low_pc && low_pc > 0)
     m_aranges.Append(RangeToDIE::Entry(low_pc, high_pc - low_pc, offset));
 }
 
