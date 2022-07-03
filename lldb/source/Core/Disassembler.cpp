@@ -596,21 +596,22 @@ void Instruction::Dump(lldb_private::Stream *s, uint32_t max_opcode_byte_size,
   }
 
   if (show_bytes) {
+    ArchSpec arch = exe_ctx->GetTargetPtr()->GetArchitecture();
     if (m_opcode.GetType() == Opcode::eTypeBytes) {
       // x86_64 and i386 are the only ones that use bytes right now so pad out
       // the byte dump to be able to always show 15 bytes (3 chars each) plus a
       // space
       if (max_opcode_byte_size > 0)
-        m_opcode.Dump(&ss, max_opcode_byte_size * 3 + 1);
+        m_opcode.Dump(&ss, max_opcode_byte_size * 3 + 1, arch);
       else
-        m_opcode.Dump(&ss, 15 * 3 + 1);
+        m_opcode.Dump(&ss, 15 * 3 + 1, arch);
     } else {
       // Else, we have ARM or MIPS which can show up to a uint32_t 0x00000000
       // (10 spaces) plus two for padding...
       if (max_opcode_byte_size > 0)
-        m_opcode.Dump(&ss, max_opcode_byte_size * 3 + 1);
+        m_opcode.Dump(&ss, max_opcode_byte_size * 3 + 1, arch);
       else
-        m_opcode.Dump(&ss, 12);
+        m_opcode.Dump(&ss, 12, arch);
     }
   }
 
