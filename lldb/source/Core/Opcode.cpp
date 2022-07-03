@@ -21,7 +21,7 @@
 using namespace lldb;
 using namespace lldb_private;
 
-int Opcode::Dump(Stream *s, uint32_t min_byte_width) {
+int Opcode::Dump(Stream *s, uint32_t min_byte_width, const ArchSpec &arch) {
   const uint32_t previous_bytes = s->GetWrittenBytes();
   switch (m_type) {
   case Opcode::eTypeInvalid:
@@ -39,7 +39,15 @@ int Opcode::Dump(Stream *s, uint32_t min_byte_width) {
     break;
 
   case Opcode::eType64:
-    s->Printf("0x%16.16" PRIx64, m_data.inst64);
+    if (arch.IsBPF()) {
+      for (uint32_t i = 0; i < 8; ++i) {
+        if (i > 0)
+          s->PutChar(' ');
+        s->Printf("%2.2x", m_data.inst.bytes[i]);
+      }
+    }
+    else
+      s->Printf("0x%16.16" PRIx64, m_data.inst64);
     break;
 
   case Opcode::eTypeBytes:
