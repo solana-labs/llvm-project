@@ -133,7 +133,7 @@ public:
     return isValidCPUName(CPUName);
   }
 
-  bool hasExtIntType() const override { return HasSolanaFeature; }
+  bool hasBitIntType() const override { return HasSolanaFeature; }
 };
 } // namespace targets
 } // namespace clang
