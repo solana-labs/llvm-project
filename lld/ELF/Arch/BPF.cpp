@@ -36,7 +36,6 @@ public:
 } // namespace
 
 BPF::BPF() {
-  noneRel = R_BPF_NONE;
   relativeRel = R_BPF_64_RELATIVE;
   symbolicRel = R_BPF_64_64;
 }
