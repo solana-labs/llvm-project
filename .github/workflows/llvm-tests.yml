@@ -45,9 +45,7 @@ jobs:
       build_target: check-lld
       projects: lld
 
-  # disable ABI compare
   abi-dump-setup:
-    if: false
     runs-on: ubuntu-latest
     outputs:
       BASELINE_REF: ${{ steps.vars.outputs.BASELINE_REF }}
@@ -78,7 +76,6 @@ jobs:
           fi
 
   abi-dump:
-    if: false
     needs: abi-dump-setup
     runs-on: ubuntu-latest
     strategy:
@@ -149,7 +146,6 @@ jobs:
         path: llvm.symbols
 
   abi-compare:
-    if: false
     runs-on: ubuntu-latest
     needs:
       - abi-dump-setup
