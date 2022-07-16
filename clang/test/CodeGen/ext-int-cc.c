@@ -60,7 +60,7 @@ void ParamPassing(_BitInt(128) b, _BitInt(64) c) {}
 // AARCH64: define{{.*}} void @ParamPassing(i128 %{{.+}}, i64 %{{.+}})
 // AARCH64DARWIN: define{{.*}} void @ParamPassing(i128 %{{.+}}, i64 %{{.+}})
 // ARM: define{{.*}} arm_aapcscc void @ParamPassing(i128* byval(i128) align 8 %{{.+}}, i64 %{{.+}})
-// SBF: define{{.*}} void @ParamPassing(i128* byval(i128) align 8 %{{.+}}, i64 %{{.+}})
+// SBF: define{{.*}} void @ParamPassing(i128 %{{.+}}, i64 %{{.+}})
 
 void ParamPassing2(_BitInt(127) b, _BitInt(63) c) {}
 // LIN64: define{{.*}} void @ParamPassing2(i64 %{{.+}}, i64 %{{.+}}, i64 %{{.+}})
@@ -90,7 +90,7 @@ void ParamPassing2(_BitInt(127) b, _BitInt(63) c) {}
 // AARCH64: define{{.*}} void @ParamPassing2(i127 %{{.+}}, i63 %{{.+}})
 // AARCH64DARWIN: define{{.*}} void @ParamPassing2(i127 %{{.+}}, i63 %{{.+}})
 // ARM: define{{.*}} arm_aapcscc void @ParamPassing2(i127* byval(i127) align 8 %{{.+}}, i63 %{{.+}})
-// SBF: define{{.*}} void @ParamPassing2(i127* byval(i127) align 8 %{{.+}}, i63 %{{.+}})
+// SBF: define{{.*}} void @ParamPassing2(i127 %{{.+}}, i63 %{{.+}})
 
 // Make sure we follow the signext rules for promotable integer types.
 void ParamPassing3(_BitInt(15) a, _BitInt(31) b) {}

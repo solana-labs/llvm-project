@@ -596,6 +596,7 @@ TEST_F(TargetLibraryInfoTest, ValidProto) {
 
       // rust memory management
       "declare i8* @__rust_alloc(i64, i64)\n"
+      "declare i8* @__rust_alloc_zeroed(i64, i64)\n"
       "declare void @__rust_dealloc(i8*, i64, i64)\n"
       "declare i8* @__rust_realloc(i8*, i64, i64, i64)\n"
       );
