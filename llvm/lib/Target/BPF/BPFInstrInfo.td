@@ -53,6 +53,7 @@ def BPFIsLittleEndian : Predicate<"CurDAG->getDataLayout().isLittleEndian()">;
 def BPFIsBigEndian    : Predicate<"!CurDAG->getDataLayout().isLittleEndian()">;
 def BPFHasALU32 : Predicate<"Subtarget->getHasAlu32()">;
 def BPFNoALU32 : Predicate<"!Subtarget->getHasAlu32()">;
+def BPFSubtargetSolana : Predicate<"Subtarget->isSolana()">;
 
 def brtarget : Operand<OtherVT> {
   let PrintMethod = "printBrTargetOperand";
@@ -286,18 +287,23 @@ multiclass ALU<BPFArithOp Opc, string OpcodeStr, SDNode OpNode> {
 }
 
 let Constraints = "$dst = $src2" in {
-let isAsCheapAsAMove = 1 in {
-  defm ADD : ALU<BPF_ADD, "+=", add>;
-  defm SUB : ALU<BPF_SUB, "-=", sub>;
-  defm OR  : ALU<BPF_OR, "|=", or>;
-  defm AND : ALU<BPF_AND, "&=", and>;
-  defm SLL : ALU<BPF_LSH, "<<=", shl>;
-  defm SRL : ALU<BPF_RSH, ">>=", srl>;
-  defm XOR : ALU<BPF_XOR, "^=", xor>;
-  defm SRA : ALU<BPF_ARSH, "s>>=", sra>;
-}
-  defm MUL : ALU<BPF_MUL, "*=", mul>;
-  defm DIV : ALU<BPF_DIV, "/=", udiv>;
+    let isAsCheapAsAMove = 1 in {
+        defm ADD : ALU<BPF_ADD, "+=", add>;
+        defm SUB : ALU<BPF_SUB, "-=", sub>;
+        defm OR  : ALU<BPF_OR, "|=", or>;
+        defm AND : ALU<BPF_AND, "&=", and>;
+        defm SLL : ALU<BPF_LSH, "<<=", shl>;
+        defm SRL : ALU<BPF_RSH, ">>=", srl>;
+        defm XOR : ALU<BPF_XOR, "^=", xor>;
+        defm SRA : ALU<BPF_ARSH, "s>>=", sra>;
+    }
+
+    defm MUL : ALU<BPF_MUL, "*=", mul>;
+    defm DIV : ALU<BPF_DIV, "/=", udiv>;
+
+    let Predicates = [BPFSubtargetSolana] in {
+        defm SDIV : ALU<BPF_SDIV, "s/=", sdiv>;
+    }
 }
 
 class NEG_RR<BPFOpClass Class, BPFArithOp Opc,
@@ -744,6 +750,14 @@ def : Pat<(atomic_load_sub_32 ADDRri:$addr, GPR32:$val),
           (XFADDW32 ADDRri:$addr, (NEG_32 GPR32:$val))>;
 def : Pat<(atomic_load_sub_64 ADDRri:$addr, GPR:$val),
           (XFADDD ADDRri:$addr, (NEG_64 GPR:$val))>;
+
+let Predicates = [BPFSubtargetSolana], usesCustomInserter = 1, isCodeGenOnly = 1 in {
+  def ATOMIC_FENCE : Pseudo<
+    (outs),
+    (ins),
+    "#atomic_fence",
+    [(atomic_fence timm, timm)]>;
+}
 
 // Atomic Exchange
 class XCHG<BPFWidthModifer SizeOp, string OpcodeStr, PatFrag OpNode>

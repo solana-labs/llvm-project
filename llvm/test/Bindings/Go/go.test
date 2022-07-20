@@ -2,4 +2,4 @@
 
 ; REQUIRES: shell, default_triple
 ;; Building Go bindings with Clang is currently unsupported on AIX.
-; UNSUPPORTED: asan, ubsan, msan, -aix
+; UNSUPPORTED: asan, ubsan, msan, system-linux, -aix

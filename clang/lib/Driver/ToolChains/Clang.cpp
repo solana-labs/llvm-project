@@ -10,6 +10,7 @@
 #include "AMDGPU.h"
 #include "Arch/AArch64.h"
 #include "Arch/ARM.h"
+#include "Arch/BPF.h"
 #include "Arch/M68k.h"
 #include "Arch/Mips.h"
 #include "Arch/PPC.h"
@@ -349,6 +350,11 @@ static void getTargetFeatures(const Driver &D, const llvm::Triple &Triple,
   case llvm::Triple::aarch64_be:
     aarch64::getAArch64TargetFeatures(D, Triple, Args, CmdArgs, Features,
                                       ForAS);
+    break;
+  case llvm::Triple::bpfeb:
+  case llvm::Triple::bpfel:
+  case llvm::Triple::sbf:
+    bpf::getBPFTargetFeatures(D, Args, Features);
     break;
   case llvm::Triple::x86:
   case llvm::Triple::x86_64:

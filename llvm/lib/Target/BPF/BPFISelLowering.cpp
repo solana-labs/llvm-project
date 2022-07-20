@@ -13,6 +13,7 @@
 
 #include "BPFISelLowering.h"
 #include "BPF.h"
+#include "BPFRegisterInfo.h"
 #include "BPFSubtarget.h"
 #include "BPFTargetMachine.h"
 #include "llvm/CodeGen/CallingConvLower.h"
@@ -24,6 +25,7 @@
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/DiagnosticPrinter.h"
+#include "llvm/IR/IntrinsicsBPF.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -55,7 +57,7 @@ static void fail(const SDLoc &DL, SelectionDAG &DAG, const char *Msg,
 
 BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
                                      const BPFSubtarget &STI)
-    : TargetLowering(TM) {
+    : TargetLowering(TM), Subtarget(&STI) {
 
   // Set up the register classes.
   addRegisterClass(MVT::i64, &BPF::GPRRegClass);
@@ -78,10 +80,32 @@ BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
 
-  // Set unsupported atomic operations as Custom so
-  // we can emit better error messages than fatal error
-  // from selectiondag.
-  for (auto VT : {MVT::i8, MVT::i16, MVT::i32}) {
+  setOperationAction(ISD::INTRINSIC_W_CHAIN, MVT::Other, Custom);
+
+  for (auto VT : {MVT::i8, MVT::i16, MVT::i32, MVT::i32, MVT::i64}) {
+    if (Subtarget->isSolana()) {
+      // Implement custom lowering for all atomic operations
+      setOperationAction(ISD::ATOMIC_SWAP, VT, Custom);
+      setOperationAction(ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS, VT, Custom);
+      setOperationAction(ISD::ATOMIC_LOAD_ADD, VT, Custom);
+      setOperationAction(ISD::ATOMIC_LOAD_AND, VT, Custom);
+      setOperationAction(ISD::ATOMIC_LOAD_MAX, VT, Custom);
+      setOperationAction(ISD::ATOMIC_LOAD_MIN, VT, Custom);
+      setOperationAction(ISD::ATOMIC_LOAD_NAND, VT, Custom);
+      setOperationAction(ISD::ATOMIC_LOAD_OR, VT, Custom);
+      setOperationAction(ISD::ATOMIC_LOAD_SUB, VT, Custom);
+      setOperationAction(ISD::ATOMIC_LOAD_UMAX, VT, Custom);
+      setOperationAction(ISD::ATOMIC_LOAD_UMIN, VT, Custom);
+      setOperationAction(ISD::ATOMIC_LOAD_XOR, VT, Custom);
+      continue;
+    }
+
+    if (VT == MVT::i64) {
+      continue;
+    }
+
+    // Set unsupported atomic operations as Custom so we can emit better error
+    // messages than fatal error from selectiondag.
     if (VT == MVT::i32) {
       if (STI.getHasAlu32())
         continue;
@@ -99,6 +123,10 @@ BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
   for (auto VT : { MVT::i32, MVT::i64 }) {
     if (VT == MVT::i32 && !STI.getHasAlu32())
       continue;
+
+    if (Subtarget->isSolana() && !STI.getHasSdiv()) {
+      setOperationAction(ISD::SDIV, VT, Expand);
+    }
 
     setOperationAction(ISD::SDIVREM, VT, Expand);
     setOperationAction(ISD::UDIVREM, VT, Expand);
@@ -126,10 +154,17 @@ BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
                        STI.getHasJmp32() ? Custom : Promote);
   }
 
-  setOperationAction(ISD::CTTZ, MVT::i64, Custom);
-  setOperationAction(ISD::CTLZ, MVT::i64, Custom);
-  setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i64, Custom);
-  setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i64, Custom);
+  if (Subtarget->isSolana()) {
+    setOperationAction(ISD::CTTZ, MVT::i64, Expand);
+    setOperationAction(ISD::CTLZ, MVT::i64, Expand);
+    setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i64, Expand);
+    setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i64, Expand);
+  } else {
+    setOperationAction(ISD::CTTZ, MVT::i64, Custom);
+    setOperationAction(ISD::CTLZ, MVT::i64, Custom);
+    setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i64, Custom);
+    setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i64, Custom);
+  }
 
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8, Expand);
@@ -169,9 +204,11 @@ BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
     MaxStoresPerMemcpy = MaxStoresPerMemcpyOptSize = 0;
     MaxStoresPerMemmove = MaxStoresPerMemmoveOptSize = 0;
   } else {
+    auto SelectionDAGInfo = STI.getSelectionDAGInfo();
+    SelectionDAGInfo->setSolanaFlag(STI.isSolana());
     // inline memcpy() for kernel to see explicit copy
     unsigned CommonMaxStores =
-      STI.getSelectionDAGInfo()->getCommonMaxStoresPerMemFunc();
+      SelectionDAGInfo->getCommonMaxStoresPerMemFunc();
 
     MaxStoresPerMemset = MaxStoresPerMemsetOptSize = CommonMaxStores;
     MaxStoresPerMemcpy = MaxStoresPerMemcpyOptSize = CommonMaxStores;
@@ -182,9 +219,32 @@ BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
   HasAlu32 = STI.getHasAlu32();
   HasJmp32 = STI.getHasJmp32();
   HasJmpExt = STI.getHasJmpExt();
+  BPFRegisterInfo::FrameLength = STI.isSolana() ? 4096 : 512;
 }
 
-bool BPFTargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
+bool BPFTargetLowering::allowsMisalignedMemoryAccesses(
+    EVT VT, unsigned, Align, MachineMemOperand::Flags, bool *Fast) const {
+  if (!VT.isSimple()) {
+    return false;
+  }
+  bool isSolana = Subtarget->isSolana();
+  if (isSolana && Fast) {
+    *Fast = true;
+  }
+  return isSolana;
+}
+
+bool BPFTargetLowering::lowerAtomicStoreAsStoreSDNode(
+    const StoreInst &SI) const {
+  return Subtarget->isSolana();
+}
+
+bool BPFTargetLowering::lowerAtomicLoadAsLoadSDNode(const LoadInst &LI) const {
+  return Subtarget->isSolana();
+}
+
+bool BPFTargetLowering::isOffsetFoldingLegal(
+    const GlobalAddressSDNode *GA) const {
   return false;
 }
 
@@ -254,19 +314,31 @@ BPFTargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
   return TargetLowering::getRegForInlineAsmConstraint(TRI, Constraint, VT);
 }
 
-void BPFTargetLowering::ReplaceNodeResults(
-  SDNode *N, SmallVectorImpl<SDValue> &Results, SelectionDAG &DAG) const {
+void BPFTargetLowering::ReplaceNodeResults(SDNode *N,
+                                           SmallVectorImpl<SDValue> &Results,
+                                           SelectionDAG &DAG) const {
   const char *err_msg;
   uint32_t Opcode = N->getOpcode();
   switch (Opcode) {
   default:
     report_fatal_error("Unhandled custom legalization");
-  case ISD::ATOMIC_LOAD_ADD:
-  case ISD::ATOMIC_LOAD_AND:
-  case ISD::ATOMIC_LOAD_OR:
-  case ISD::ATOMIC_LOAD_XOR:
   case ISD::ATOMIC_SWAP:
   case ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS:
+  case ISD::ATOMIC_LOAD_ADD:
+  case ISD::ATOMIC_LOAD_AND:
+  case ISD::ATOMIC_LOAD_MAX:
+  case ISD::ATOMIC_LOAD_MIN:
+  case ISD::ATOMIC_LOAD_NAND:
+  case ISD::ATOMIC_LOAD_OR:
+  case ISD::ATOMIC_LOAD_SUB:
+  case ISD::ATOMIC_LOAD_UMAX:
+  case ISD::ATOMIC_LOAD_UMIN:
+  case ISD::ATOMIC_LOAD_XOR:
+    if (Subtarget->isSolana()) {
+      // We do lowering during legalization, see LowerOperation()
+      return;
+    }
+
     if (HasAlu32 || Opcode == ISD::ATOMIC_LOAD_ADD)
       err_msg = "Unsupported atomic operations, please use 32/64 bit version";
     else
@@ -286,10 +358,41 @@ SDValue BPFTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
     return LowerGlobalAddress(Op, DAG);
   case ISD::SELECT_CC:
     return LowerSELECT_CC(Op, DAG);
+  case ISD::ATOMIC_SWAP:
+  case ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS:
+  case ISD::ATOMIC_LOAD_ADD:
+  case ISD::ATOMIC_LOAD_AND:
+  case ISD::ATOMIC_LOAD_MAX:
+  case ISD::ATOMIC_LOAD_MIN:
+  case ISD::ATOMIC_LOAD_NAND:
+  case ISD::ATOMIC_LOAD_OR:
+  case ISD::ATOMIC_LOAD_SUB:
+  case ISD::ATOMIC_LOAD_UMAX:
+  case ISD::ATOMIC_LOAD_UMIN:
+  case ISD::ATOMIC_LOAD_XOR:
+    return LowerATOMICRMW(Op, DAG);
+  case ISD::INTRINSIC_W_CHAIN: {
+    unsigned IntNo = cast<ConstantSDNode>(Op->getOperand(1))->getZExtValue();
+    switch (IntNo) {
+    case Intrinsic::bpf_load_byte:
+    case Intrinsic::bpf_load_half:
+    case Intrinsic::bpf_load_word:
+      if (Subtarget->isSolana()) {
+        report_fatal_error(
+            "llvm.bpf.load.* intrinsics are not supported in SBF", false);
+      }
+      break;
+    default:
+      break;
+    }
+
+    // continue the expansion as defined with tablegen
+    return SDValue();
+  }
   case ISD::DYNAMIC_STACKALLOC:
     report_fatal_error("Unsupported dynamic stack allocation");
   default:
-    llvm_unreachable("unimplemented operand");
+    llvm_unreachable("unimplemented operation");
   }
 }
 
@@ -314,11 +417,17 @@ SDValue BPFTargetLowering::LowerFormalArguments(
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
-  CCInfo.AnalyzeFormalArguments(Ins, getHasAlu32() ? CC_BPF32 : CC_BPF64);
+  if (Subtarget->isSolana() && Ins.size() > MaxArgs) {
+    // Pass args 1-4 via registers, remaining args via stack, referenced via BPF::R5
+    CCInfo.AnalyzeFormalArguments(Ins, getHasAlu32() ? CC_BPF32_X : CC_BPF64_X);
+  } else {
+    // Pass all args via registers
+    CCInfo.AnalyzeFormalArguments(Ins, getHasAlu32() ? CC_BPF32 : CC_BPF64);
+  }
 
   for (auto &VA : ArgLocs) {
     if (VA.isRegLoc()) {
-      // Arguments passed in registers
+      // Argument passed in registers
       EVT RegVT = VA.getLocVT();
       MVT::SimpleValueType SimpleTy = RegVT.getSimpleVT().SimpleTy;
       switch (SimpleTy) {
@@ -334,7 +443,7 @@ SDValue BPFTargetLowering::LowerFormalArguments(
         RegInfo.addLiveIn(VA.getLocReg(), VReg);
         SDValue ArgValue = DAG.getCopyFromReg(Chain, DL, VReg, RegVT);
 
-        // If this is an value that has been promoted to wider types, insert an
+        // If this is a value that has been promoted to a wider type, insert an
         // assert[sz]ext to capture this, then truncate to the right size.
         if (VA.getLocInfo() == CCValAssign::SExt)
           ArgValue = DAG.getNode(ISD::AssertSext, DL, RegVT, ArgValue,
@@ -348,15 +457,34 @@ SDValue BPFTargetLowering::LowerFormalArguments(
 
         InVals.push_back(ArgValue);
 
-	break;
+        break;
       }
+    } else if (Subtarget->isSolana()) {
+      // Argument passed via stack
+      assert(VA.isMemLoc() && "Should be isMemLoc");
+
+      EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(DAG.getDataLayout());
+      EVT LocVT = VA.getLocVT();
+
+      // Arguments relative to BPF::R5
+      unsigned reg = MF.addLiveIn(BPF::R5, &BPF::GPRRegClass);
+      SDValue Const = DAG.getConstant(BPFRegisterInfo::FrameLength - VA.getLocMemOffset(), DL, MVT::i64);
+      SDValue SDV = DAG.getCopyFromReg(Chain, DL, reg, getPointerTy(MF.getDataLayout()));
+      SDV = DAG.getNode(ISD::SUB, DL, PtrVT, SDV, Const);
+      SDV = DAG.getLoad(LocVT, DL, Chain, SDV, MachinePointerInfo(), 0);
+      InVals.push_back(SDV);
     } else {
       fail(DL, DAG, "defined with too many args");
       InVals.push_back(DAG.getConstant(0, DL, VA.getLocVT()));
     }
   }
 
-  if (IsVarArg || MF.getFunction().hasStructRetAttr()) {
+  if (Subtarget->isSolana()) {
+    if (IsVarArg) {
+      fail(DL, DAG, "Functions with VarArgs are not supported");
+      assert(false);
+    }
+  } else if (IsVarArg || MF.getFunction().hasStructRetAttr()) {
     fail(DL, DAG, "functions with VarArgs or StructRet are not supported");
   }
 
@@ -392,20 +520,27 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
-
-  CCInfo.AnalyzeCallOperands(Outs, getHasAlu32() ? CC_BPF32 : CC_BPF64);
+  if (Subtarget->isSolana() && Outs.size() > MaxArgs) {
+    // Pass args 1-4 via registers, remaining args via stack, referenced via BPF::R5
+    CCInfo.AnalyzeCallOperands(Outs, getHasAlu32() ? CC_BPF32_X : CC_BPF64_X);
+  } else {
+    // Pass all args via registers
+    CCInfo.AnalyzeCallOperands(Outs, getHasAlu32() ? CC_BPF32 : CC_BPF64);
+  }
 
   unsigned NumBytes = CCInfo.getNextStackOffset();
 
-  if (Outs.size() > MaxArgs)
-    fail(CLI.DL, DAG, "too many args to ", Callee);
+  if (!Subtarget->isSolana()) {
+    if (Outs.size() > MaxArgs)
+      fail(CLI.DL, DAG, "too many args to ", Callee);
 
-  for (auto &Arg : Outs) {
-    ISD::ArgFlagsTy Flags = Arg.Flags;
-    if (!Flags.isByVal())
-      continue;
+    for (auto &Arg : Outs) {
+      ISD::ArgFlagsTy Flags = Arg.Flags;
+      if (!Flags.isByVal())
+        continue;
 
-    fail(CLI.DL, DAG, "pass by value not supported ", Callee);
+      fail(CLI.DL, DAG, "pass by value not supported ", Callee);
+    }
   }
 
   auto PtrVT = getPointerTy(MF.getDataLayout());
@@ -414,9 +549,9 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   SmallVector<std::pair<unsigned, SDValue>, MaxArgs> RegsToPass;
 
   // Walk arg assignments
-  for (unsigned i = 0,
-                e = std::min(static_cast<unsigned>(ArgLocs.size()), MaxArgs);
-       i != e; ++i) {
+  bool HasStackArgs = false;
+  unsigned e, i, ae = ArgLocs.size();
+  for (i = 0, e = (Subtarget->isSolana()) ? ae : std::min(ae, MaxArgs); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
     SDValue Arg = OutVals[i];
 
@@ -437,6 +572,11 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       break;
     }
 
+    if (Subtarget->isSolana() && VA.isMemLoc()) {
+      HasStackArgs = true;
+      break;
+    }
+
     // Push arguments into RegsToPass vector
     if (VA.isRegLoc())
       RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
@@ -446,8 +586,35 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   SDValue InFlag;
 
+  if (HasStackArgs) {
+    SDValue FramePtr = DAG.getCopyFromReg(Chain, CLI.DL, BPF::R10, getPointerTy(MF.getDataLayout()));
+
+    // Stack arguments have to be walked in reverse order by inserting
+    // chained stores, this ensures their order is not changed by the scheduler
+    // and that the push instruction sequence generated is correct, otherwise they
+    // can be freely intermixed.
+    for (ae = i, i = ArgLocs.size(); i != ae; --i) {
+      unsigned Loc = i - 1;
+      CCValAssign &VA = ArgLocs[Loc];
+      SDValue Arg = OutVals[Loc];
+
+      assert(VA.isMemLoc());
+
+      EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(DAG.getDataLayout());
+      SDValue Const = DAG.getConstant(BPFRegisterInfo::FrameLength - VA.getLocMemOffset(), CLI.DL, MVT::i64);
+      SDValue PtrOff = DAG.getNode(ISD::SUB, CLI.DL, PtrVT, FramePtr, Const);
+      Chain = DAG.getStore(Chain, CLI.DL, Arg, PtrOff, MachinePointerInfo());
+    }
+
+    // Pass the current stack frame pointer via BPF::R5, gluing the
+    // instruction to instructions passing the first 4 arguments in
+    // registers below.
+    Chain = DAG.getCopyToReg(Chain, CLI.DL, BPF::R5, FramePtr, InFlag);
+    InFlag = Chain.getValue(1);
+  }
+
   // Build a sequence of copy-to-reg nodes chained together with token chain and
-  // flag operands which copy the outgoing args into registers.  The InFlag in
+  // flag operands which copy the outgoing args into registers.  The InFlag is
   // necessary since all emitted instructions must be stuck together.
   for (auto &Reg : RegsToPass) {
     Chain = DAG.getCopyToReg(Chain, CLI.DL, Reg.first, Reg.second, InFlag);
@@ -462,9 +629,12 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                         G->getOffset(), 0);
   } else if (ExternalSymbolSDNode *E = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     Callee = DAG.getTargetExternalSymbol(E->getSymbol(), PtrVT, 0);
-    fail(CLI.DL, DAG, Twine("A call to built-in function '"
-                            + StringRef(E->getSymbol())
-                            + "' is not supported."));
+    // This is not a warning but info, will be resolved on load
+    if (!Subtarget->isSolana()) {
+      fail(CLI.DL, DAG, Twine("A call to built-in function '"
+                              + StringRef(E->getSymbol())
+                              + "' remains unresolved"));
+    }
   }
 
   // Returns a chain & a flag for retval copy to use.
@@ -477,6 +647,10 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // known live into the call.
   for (auto &Reg : RegsToPass)
     Ops.push_back(DAG.getRegister(Reg.first, Reg.second.getValueType()));
+
+  if (HasStackArgs) {
+    Ops.push_back(DAG.getRegister(BPF::R5, MVT::i64));
+  }
 
   if (InFlag.getNode())
     Ops.push_back(InFlag);
@@ -496,6 +670,18 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                          InVals);
 }
 
+bool BPFTargetLowering::CanLowerReturn(
+    CallingConv::ID CallConv, MachineFunction &MF, bool IsVarArg,
+    const SmallVectorImpl<ISD::OutputArg> &Outs, LLVMContext &Context) const {
+  if (!Subtarget->isSolana()) {
+    return true;
+  }
+  // At minimal return Outs.size() <= 1, or check valid types in CC.
+  SmallVector<CCValAssign, 16> RVLocs;
+  CCState CCInfo(CallConv, IsVarArg, MF, RVLocs, Context);
+  return CCInfo.CheckReturn(Outs, getHasAlu32() ? RetCC_BPF32 : RetCC_BPF64);
+}
+
 SDValue
 BPFTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
                                bool IsVarArg,
@@ -511,7 +697,12 @@ BPFTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
   // CCState - Info about the registers and stack slot.
   CCState CCInfo(CallConv, IsVarArg, MF, RVLocs, *DAG.getContext());
 
-  if (MF.getFunction().getReturnType()->isAggregateType()) {
+  if (Subtarget->isSolana()) {
+    if (Outs.size() > 1) {
+      fail(DL, DAG, "Only a single return supported");
+      assert(false);
+    }
+  } else if (MF.getFunction().getReturnType()->isAggregateType()) {
     fail(DL, DAG, "only integer returns supported");
     return DAG.getNode(Opc, DL, MVT::Other, Chain);
   }
@@ -554,7 +745,12 @@ SDValue BPFTargetLowering::LowerCallResult(
   SmallVector<CCValAssign, 16> RVLocs;
   CCState CCInfo(CallConv, IsVarArg, MF, RVLocs, *DAG.getContext());
 
-  if (Ins.size() >= 2) {
+  if (Subtarget->isSolana()) {
+    if (Ins.size() > 1) {
+      fail(DL, DAG, "Only a single return supported");
+      assert(false);
+    }
+  } else if (Ins.size() >= 2) {
     fail(DL, DAG, "only small returns supported");
     for (unsigned i = 0, e = Ins.size(); i != e; ++i)
       InVals.push_back(DAG.getConstant(0, DL, Ins[i].VT));
@@ -619,6 +815,114 @@ SDValue BPFTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
   SDValue Ops[] = {LHS, RHS, TargetCC, TrueV, FalseV};
 
   return DAG.getNode(BPFISD::SELECT_CC, DL, VTs, Ops);
+}
+
+SDValue BPFTargetLowering::LowerATOMICRMW(SDValue Op, SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  AtomicSDNode *AN = cast<AtomicSDNode>(Op);
+  assert(AN && "Expected custom lowering of an atomic load node");
+
+  SDValue Chain = AN->getChain();
+  SDValue Ptr = AN->getBasePtr();
+  EVT PtrVT = AN->getMemoryVT();
+  EVT RetVT = Op.getValueType();
+
+  // Load the current value
+  SDValue Load =
+      DAG.getExtLoad(ISD::EXTLOAD, DL, RetVT, Chain, Ptr, MachinePointerInfo(),
+                     PtrVT, AN->getAlignment());
+  Chain = Load.getValue(1);
+
+  // Most ops return the current value, except CMP_SWAP_WITH_SUCCESS see below
+  SDValue Ret = Load;
+  SDValue RetFlag;
+
+  // Val contains the new value we want to set. For CMP_SWAP, Cmp contains the
+  // expected current value.
+  SDValue Cmp, Val;
+  if (AN->isCompareAndSwap()) {
+    Cmp = Op.getOperand(2);
+    Val = Op.getOperand(3);
+
+    // The Cmp value must match the pointer type
+    EVT CmpVT = Cmp->getValueType(0);
+    if (CmpVT != RetVT) {
+      Cmp = RetVT.bitsGT(CmpVT) ? DAG.getNode(ISD::SIGN_EXTEND, DL, RetVT, Cmp)
+                                : DAG.getNode(ISD::TRUNCATE, DL, RetVT, Cmp);
+    }
+  } else {
+    Val = AN->getVal();
+  }
+
+  // The new value type must match the pointer type
+  EVT ValVT = Val->getValueType(0);
+  if (ValVT != RetVT) {
+    Val = RetVT.bitsGT(ValVT) ? DAG.getNode(ISD::SIGN_EXTEND, DL, RetVT, Val)
+                              : DAG.getNode(ISD::TRUNCATE, DL, RetVT, Val);
+    ValVT = Val->getValueType(0);
+  }
+
+  SDValue NewVal;
+  switch (Op.getOpcode()) {
+  case ISD::ATOMIC_SWAP:
+    NewVal = Val;
+    break;
+  case ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS: {
+    EVT RetFlagVT = AN->getValueType(1);
+    NewVal = DAG.getSelectCC(DL, Load, Cmp, Val, Load, ISD::SETEQ);
+    RetFlag = DAG.getSelectCC(
+        DL, Load, Cmp, DAG.getBoolConstant(true, DL, RetFlagVT, RetFlagVT),
+        DAG.getBoolConstant(false, DL, RetFlagVT, RetFlagVT), ISD::SETEQ);
+    break;
+  }
+  case ISD::ATOMIC_LOAD_ADD:
+    NewVal = DAG.getNode(ISD::ADD, DL, ValVT, Load, Val);
+    break;
+  case ISD::ATOMIC_LOAD_SUB:
+    NewVal = DAG.getNode(ISD::SUB, DL, ValVT, Load, Val);
+    break;
+  case ISD::ATOMIC_LOAD_AND:
+    NewVal = DAG.getNode(ISD::AND, DL, ValVT, Load, Val);
+    break;
+  case ISD::ATOMIC_LOAD_NAND: {
+    NewVal =
+        DAG.getNOT(DL, DAG.getNode(ISD::AND, DL, ValVT, Load, Val), ValVT);
+    break;
+  }
+  case ISD::ATOMIC_LOAD_OR:
+    NewVal = DAG.getNode(ISD::OR, DL, ValVT, Load, Val);
+    break;
+  case ISD::ATOMIC_LOAD_XOR:
+    NewVal = DAG.getNode(ISD::XOR, DL, ValVT, Load, Val);
+    break;
+  case ISD::ATOMIC_LOAD_MIN:
+    NewVal = DAG.getNode(ISD::SMIN, DL, ValVT, Load, Val);
+    break;
+  case ISD::ATOMIC_LOAD_UMIN:
+    NewVal = DAG.getNode(ISD::UMIN, DL, ValVT, Load, Val);
+    break;
+  case ISD::ATOMIC_LOAD_MAX:
+    NewVal = DAG.getNode(ISD::SMAX, DL, ValVT, Load, Val);
+    break;
+  case ISD::ATOMIC_LOAD_UMAX:
+    NewVal = DAG.getNode(ISD::UMAX, DL, ValVT, Load, Val);
+    break;
+  default:
+    llvm_unreachable("unknown atomicrmw op");
+  }
+
+  Chain =
+      DAG.getTruncStore(Chain, DL, NewVal, Ptr, MachinePointerInfo(), PtrVT);
+
+  if (RetFlag) {
+    // CMP_SWAP_WITH_SUCCESS returns {value, success, chain}
+    Ret = DAG.getMergeValues({Ret, RetFlag, Chain}, DL);
+  } else {
+    // All the other ops return {value, chain}
+    Ret = DAG.getMergeValues({Ret, Chain}, DL);
+  }
+
+  return Ret;
 }
 
 const char *BPFTargetLowering::getTargetNodeName(unsigned Opcode) const {
@@ -724,6 +1028,7 @@ BPFTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
                        Opc == BPF::Select_32_64);
 
   bool isMemcpyOp = Opc == BPF::MEMCPY;
+  bool isAtomicFence = Opc == BPF::ATOMIC_FENCE;
 
 #ifndef NDEBUG
   bool isSelectRIOp = (Opc == BPF::Select_Ri ||
@@ -732,12 +1037,18 @@ BPFTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
                        Opc == BPF::Select_Ri_32_64);
 
 
-  assert((isSelectRROp || isSelectRIOp || isMemcpyOp) &&
+  assert((isSelectRROp || isSelectRIOp || isMemcpyOp || isAtomicFence) &&
          "Unexpected instr type to insert");
 #endif
 
   if (isMemcpyOp)
     return EmitInstrWithCustomInserterMemcpy(MI, BB);
+
+  if (isAtomicFence) {
+    // this is currently a nop
+    MI.eraseFromParent();
+    return BB;
+  }
 
   bool is32BitCmp = (Opc == BPF::Select_32 ||
                      Opc == BPF::Select_32_64 ||

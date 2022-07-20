@@ -91,6 +91,8 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeBPFDisassembler() {
                                          createBPFDisassembler);
   TargetRegistry::RegisterMCDisassembler(getTheBPFbeTarget(),
                                          createBPFDisassembler);
+  TargetRegistry::RegisterMCDisassembler(getTheSBFTarget(),
+                                         createBPFDisassembler);
 }
 
 static const unsigned GPRDecoderTable[] = {

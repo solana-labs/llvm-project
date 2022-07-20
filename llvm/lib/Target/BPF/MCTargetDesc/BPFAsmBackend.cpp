@@ -23,7 +23,11 @@ namespace {
 
 class BPFAsmBackend : public MCAsmBackend {
 public:
-  BPFAsmBackend(support::endianness Endian) : MCAsmBackend(Endian) {}
+  BPFAsmBackend(support::endianness Endian, const MCSubtargetInfo &STI)
+      : MCAsmBackend(Endian),
+        isSolana(STI.hasFeature(BPF::FeatureSolana) ||
+                 STI.getTargetTriple().getArch() == Triple::sbf),
+        relocAbs64(STI.hasFeature(BPF::FeatureRelocAbs64)) {}
   ~BPFAsmBackend() override = default;
 
   void applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
@@ -45,6 +49,9 @@ public:
 
   bool writeNopData(raw_ostream &OS, uint64_t Count,
                     const MCSubtargetInfo *STI) const override;
+private:
+  bool isSolana;
+  bool relocAbs64;
 };
 
 } // end anonymous namespace
@@ -95,19 +102,19 @@ void BPFAsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
 
 std::unique_ptr<MCObjectTargetWriter>
 BPFAsmBackend::createObjectTargetWriter() const {
-  return createBPFELFObjectWriter(0);
+  return createBPFELFObjectWriter(0, isSolana, relocAbs64);
 }
 
 MCAsmBackend *llvm::createBPFAsmBackend(const Target &T,
                                         const MCSubtargetInfo &STI,
                                         const MCRegisterInfo &MRI,
                                         const MCTargetOptions &) {
-  return new BPFAsmBackend(support::little);
+  return new BPFAsmBackend(support::little, STI);
 }
 
 MCAsmBackend *llvm::createBPFbeAsmBackend(const Target &T,
                                           const MCSubtargetInfo &STI,
                                           const MCRegisterInfo &MRI,
                                           const MCTargetOptions &) {
-  return new BPFAsmBackend(support::big);
+  return new BPFAsmBackend(support::big, STI);
 }

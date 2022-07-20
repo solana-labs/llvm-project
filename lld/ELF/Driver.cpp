@@ -293,17 +293,6 @@ void LinkerDriver::addLibrary(StringRef name) {
     error("unable to find library -l" + name, ErrorTag::LibNotFound, {name});
 }
 
-// This function is called on startup. We need this for LTO since
-// LTO calls LLVM functions to compile bitcode files to native code.
-// Technically this can be delayed until we read bitcode files, but
-// we don't bother to do lazily because the initialization is fast.
-static void initLLVM() {
-  InitializeAllTargets();
-  InitializeAllTargetMCs();
-  InitializeAllAsmPrinters();
-  InitializeAllAsmParsers();
-}
-
 // Some command line options or some combinations of them are not allowed.
 // This function checks for such errors.
 static void checkOptions() {
@@ -543,7 +532,6 @@ void LinkerDriver::linkerMain(ArrayRef<const char *> argsArr) {
   {
     llvm::TimeTraceScope timeScope("ExecuteLinker");
 
-    initLLVM();
     createFiles(args);
     if (errorCount())
       return;

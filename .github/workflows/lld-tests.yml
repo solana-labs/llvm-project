@@ -25,7 +25,7 @@ concurrency:
 jobs:
   check_lld:
     name: Test lld
-    uses: llvm/llvm-project/.github/workflows/llvm-project-tests.yml@release/14.x
+    uses: ./.github/workflows/llvm-project-tests.yml
     with:
       build_target: check-lld
       projects: lld

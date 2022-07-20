@@ -592,7 +592,14 @@ TEST_F(TargetLibraryInfoTest, ValidProto) {
 
       // These functions are OpenMP Offloading allocation / free routines
       "declare i8* @__kmpc_alloc_shared(i64)\n"
-      "declare void @__kmpc_free_shared(i8*, i64)\n");
+      "declare void @__kmpc_free_shared(i8*, i64)\n"
+
+      // rust memory management
+      "declare i8* @__rust_alloc(i64, i64)\n"
+      "declare i8* @__rust_alloc_zeroed(i64, i64)\n"
+      "declare void @__rust_dealloc(i8*, i64, i64)\n"
+      "declare i8* @__rust_realloc(i8*, i64, i64, i64)\n"
+      );
 
   for (unsigned FI = 0; FI != LibFunc::NumLibFuncs; ++FI) {
     LibFunc LF = (LibFunc)FI;

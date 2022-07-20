@@ -21,6 +21,7 @@
 namespace llvm {
 
 struct BPFRegisterInfo : public BPFGenRegisterInfo {
+  static unsigned FrameLength;
 
   BPFRegisterInfo();
 

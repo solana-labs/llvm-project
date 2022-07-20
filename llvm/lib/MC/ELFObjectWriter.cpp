@@ -1475,6 +1475,7 @@ void ELFObjectWriter::recordRelocation(MCAssembler &Asm,
     return;
 
   unsigned Type = TargetObjectWriter->getRelocType(Ctx, Target, Fixup, IsPCRel);
+
   const auto *Parent = cast<MCSectionELF>(Fragment->getParent());
   // Emiting relocation with sybmol for CG Profile to  help with --cg-profile.
   bool RelocateWithSymbol =

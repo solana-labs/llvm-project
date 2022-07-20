@@ -1635,6 +1635,7 @@ bool Sema::CheckTSBuiltinFunctionCall(const TargetInfo &TI, unsigned BuiltinID,
     return CheckAArch64BuiltinFunctionCall(TI, BuiltinID, TheCall);
   case llvm::Triple::bpfeb:
   case llvm::Triple::bpfel:
+  case llvm::Triple::sbf:
     return CheckBPFBuiltinFunctionCall(BuiltinID, TheCall);
   case llvm::Triple::hexagon:
     return CheckHexagonBuiltinFunctionCall(BuiltinID, TheCall);

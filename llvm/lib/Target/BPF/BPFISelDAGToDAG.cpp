@@ -187,16 +187,19 @@ void BPFDAGToDAGISel::Select(SDNode *Node) {
   switch (Opcode) {
   default:
     break;
+
   case ISD::SDIV: {
-    DebugLoc Empty;
-    const DebugLoc &DL = Node->getDebugLoc();
-    if (DL != Empty)
-      errs() << "Error at line " << DL.getLine() << ": ";
-    else
-      errs() << "Error: ";
-    errs() << "Unsupport signed division for DAG: ";
-    Node->print(errs(), CurDAG);
-    errs() << "Please convert to unsigned div/mod.\n";
+    if (!Subtarget->isSolana()) {
+      DebugLoc Empty;
+      const DebugLoc &DL = Node->getDebugLoc();
+      if (DL != Empty)
+        errs() << "Error at line " << DL.getLine() << ": ";
+      else
+        errs() << "Error: ";
+      errs() << "Unsupport signed division for DAG: ";
+      Node->print(errs(), CurDAG);
+      errs() << "\nPlease convert to unsigned div/mod.\n";
+    }
     break;
   }
   case ISD::INTRINSIC_W_CHAIN: {
@@ -301,6 +304,47 @@ void BPFDAGToDAGISel::PreprocessLoad(SDNode *Node,
 
   LLVM_DEBUG(dbgs() << "Replacing load of size " << size << " with constant "
                     << val << '\n');
+
+  /* Some load nodes have edges from TokenFactor nodes.  In this case
+     replacing the load with a constant makes the DAG disconnected.
+     The following checks if any of the load operands are TokenFactor
+     nodes, and if another TokenFactor is a user of the load, the
+     operand TokenFactor is connected to the user, so that the DAG
+     remains connected after replacing the load node by a constant.
+  */
+  for (unsigned I = 0, E = Node->getNumOperands(); I != E; ++I) {
+    const SDValue &OpV = Node->getOperand(I);
+    SDNode *Op = OpV.getNode();
+    if (Op->getOpcode() == ISD::TokenFactor) {
+      for (SDNode::use_iterator UI = Node->use_begin(), UE = Node->use_end(); UI != UE; ++UI) {
+        SDUse &Use = UI.getUse();
+        SDNode *User = Use.getUser();
+        if (User->getOpcode() == ISD::TokenFactor) {
+          SmallVector<SDValue, 8> ExtendedOps;
+          bool NotExtended = true;
+          for (unsigned UOI = 0, UOE = User->getNumOperands(); UOI != UOE; ++UOI) {
+            const SDValue &Operand = User->getOperand(UOI);
+            if (OpV == Operand) {
+              NotExtended = false;
+              break;
+            }
+            ExtendedOps.push_back(Operand);
+          }
+          if (NotExtended) {
+            ExtendedOps.push_back(OpV);
+            SDValue ExtendedTokenFactor = CurDAG->getTokenFactor(SDLoc(User), ExtendedOps);
+            I--;
+            SDValue From[] = {SDValue(User, 0)};
+            SDValue To[] = {ExtendedTokenFactor};
+            CurDAG->ReplaceAllUsesOfValuesWith(From, To, 1);
+            I++;
+            CurDAG->DeleteNode(User);
+          }
+        }
+      }
+    }
+  }
+
   SDValue NVal = CurDAG->getConstant(val, DL, LD->getValueType(0));
 
   // After replacement, the current node is dead, we need to
