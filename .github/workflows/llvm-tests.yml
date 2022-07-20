@@ -24,7 +24,7 @@ concurrency:
 jobs:
   check_all:
     name: Test llvm,clang,libclc
-    uses: llvm/llvm-project/.github/workflows/llvm-project-tests.yml@release/14.x
+    uses: ./.github/workflows/llvm-project-tests.yml
     with:
       build_target: check-all
       projects: clang;libclc
@@ -33,14 +33,14 @@ jobs:
   # space to build all these projects on Windows.
   build_lldb:
     name: Build lldb
-    uses: llvm/llvm-project/.github/workflows/llvm-project-tests.yml@release/14.x
+    uses: ./.github/workflows/llvm-project-tests.yml
     with:
       build_target: ''
       projects: clang;lldb
 
   check_lld:
     name: Test lld
-    uses: llvm/llvm-project/.github/workflows/llvm-project-tests.yml@release/14.x
+    uses: ./.github/workflows/llvm-project-tests.yml
     with:
       build_target: check-lld
       projects: lld
