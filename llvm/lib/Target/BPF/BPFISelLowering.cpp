@@ -16,6 +16,7 @@
 #include "BPFRegisterInfo.h"
 #include "BPFSubtarget.h"
 #include "BPFTargetMachine.h"
+#include "BPFMachineFunctionInfo.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -159,6 +160,10 @@ BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::CTLZ, MVT::i64, Expand);
     setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i64, Expand);
     setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i64, Expand);
+    setOperationAction(ISD::VASTART, MVT::Other, Custom);
+    setOperationAction(ISD::VAEND, MVT::Other, Expand);
+    setOperationAction(ISD::VAARG, MVT::Other, Expand);
+    setOperationAction(ISD::VACOPY, MVT::Other, Expand);
   } else {
     setOperationAction(ISD::CTTZ, MVT::i64, Custom);
     setOperationAction(ISD::CTLZ, MVT::i64, Custom);
@@ -391,6 +396,7 @@ SDValue BPFTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   }
   case ISD::DYNAMIC_STACKALLOC:
     report_fatal_error("Unsupported dynamic stack allocation");
+  case ISD::VASTART: return LowerVASTART(Op, DAG);
   default:
     llvm_unreachable("unimplemented operation");
   }
@@ -398,6 +404,10 @@ SDValue BPFTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
 
 // Calling Convention Implementation
 #include "BPFGenCallingConv.inc"
+
+namespace {
+static const MCPhysReg SBFArgRegs[4] = {BPF::R1, BPF::R2, BPF::R3, BPF::R4};
+}
 
 SDValue BPFTargetLowering::LowerFormalArguments(
     SDValue Chain, CallingConv::ID CallConv, bool IsVarArg,
@@ -412,7 +422,11 @@ SDValue BPFTargetLowering::LowerFormalArguments(
   }
 
   MachineFunction &MF = DAG.getMachineFunction();
+  MachineFrameInfo &MFI = MF.getFrameInfo();
   MachineRegisterInfo &RegInfo = MF.getRegInfo();
+  BPFMachineFunctionInfo *BFI = MF.getInfo<BPFMachineFunctionInfo>();
+
+  BFI->setVarArgsFrameIndex(0);
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
@@ -481,8 +495,47 @@ SDValue BPFTargetLowering::LowerFormalArguments(
 
   if (Subtarget->isSolana()) {
     if (IsVarArg) {
-      fail(DL, DAG, "Functions with VarArgs are not supported");
-      assert(false);
+      ArrayRef<MCPhysReg> ArgRegs = makeArrayRef(SBFArgRegs);
+      unsigned Idx = CCInfo.getFirstUnallocated(ArgRegs);
+      const TargetRegisterClass *RC = getRegClassFor(MVT::i64);
+
+      // Offset of the first variable argument from stack pointer.
+      int VaArgOffset;
+
+      if (ArgRegs.size() == Idx)
+        VaArgOffset = alignTo(CCInfo.getNextStackOffset(), 8);
+      else {
+        VaArgOffset = -((int)(8 * (ArgRegs.size() - Idx)));
+      }
+
+      // Record the frame index of the first variable argument
+      // which is a value necessary to VASTART.
+      int FI = MFI.CreateFixedObject(8, VaArgOffset, true);
+      BFI->setVarArgsFrameIndex(FI);
+
+      // Used with vargs to acumulate store chains.
+      std::vector<SDValue> OutChains;
+
+      for (unsigned I = Idx; I < ArgRegs.size();
+          ++I, VaArgOffset += 8) {
+        Register Reg = MF.getRegInfo().createVirtualRegister(RC);
+        MF.getRegInfo().addLiveIn(ArgRegs[I], Reg);
+        SDValue ArgValue = DAG.getCopyFromReg(Chain, DL, Reg, MVT::i64);
+        FI = MFI.CreateFixedObject(8, VaArgOffset, true);
+        SDValue PtrOff = DAG.getFrameIndex(FI, getPointerTy(DAG.getDataLayout()));
+        SDValue Store =
+            DAG.getStore(Chain, DL, ArgValue, PtrOff, MachinePointerInfo::getFixedStack(MF, FI));
+        cast<StoreSDNode>(Store.getNode())->getMemOperand()->setValue(
+            (Value *)nullptr);
+        OutChains.push_back(Store);
+      }
+
+      // All stores are grouped in one node to allow the matching between
+      // the size of Ins and InVals. This only happens when on varg functions
+      if (!OutChains.empty()) {
+        OutChains.push_back(Chain);
+        Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other, OutChains);
+      }
     }
   } else if (IsVarArg || MF.getFunction().hasStructRetAttr()) {
     fail(DL, DAG, "functions with VarArgs or StructRet are not supported");
@@ -955,6 +1008,20 @@ SDValue BPFTargetLowering::LowerGlobalAddress(SDValue Op,
   SDValue GA = DAG.getTargetGlobalAddress(GV, DL, MVT::i64);
 
   return DAG.getNode(BPFISD::Wrapper, DL, MVT::i64, GA);
+}
+
+SDValue BPFTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
+  const MachineFunction &MF = DAG.getMachineFunction();
+  const BPFMachineFunctionInfo *BFI = MF.getInfo<BPFMachineFunctionInfo>();
+
+  // vastart just stores the address of the VarArgsFrameIndex slot into the
+  // memory location argument.
+  SDLoc dl(Op);
+  EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(DAG.getDataLayout());
+  SDValue FR = DAG.getFrameIndex(BFI->getVarArgsFrameIndex(), PtrVT);
+  const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
+  return DAG.getStore(Op.getOperand(0), dl, FR, Op.getOperand(1),
+                      MachinePointerInfo(SV));
 }
 
 unsigned
