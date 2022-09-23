@@ -99,6 +99,9 @@ private:
   SDValue LowerCall(TargetLowering::CallLoweringInfo &CLI,
                     SmallVectorImpl<SDValue> &InVals) const override;
 
+  /// Returns true if arguments should be sign-extended in lib calls.
+  bool shouldSignExtendTypeInLibCall(EVT Type, bool IsSigned) const override;
+
   // Lower incoming arguments, copy physregs into vregs
   SDValue LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv,
                                bool IsVarArg,
