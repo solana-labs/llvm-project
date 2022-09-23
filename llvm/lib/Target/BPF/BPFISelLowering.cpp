@@ -670,6 +670,10 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                          InVals);
 }
 
+bool BPFTargetLowering::shouldSignExtendTypeInLibCall(EVT Type, bool IsSigned) const {
+  return Subtarget->isSolana() && (IsSigned || Type == MVT::i32);
+}
+
 bool BPFTargetLowering::CanLowerReturn(
     CallingConv::ID CallConv, MachineFunction &MF, bool IsVarArg,
     const SmallVectorImpl<ISD::OutputArg> &Outs, LLVMContext &Context) const {
