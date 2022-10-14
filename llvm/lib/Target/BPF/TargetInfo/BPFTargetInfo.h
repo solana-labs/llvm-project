@@ -16,8 +16,6 @@ class Target;
 Target &getTheBPFleTarget();
 Target &getTheBPFbeTarget();
 Target &getTheBPFTarget();
-
-Target &getTheSBFTarget();
 } // namespace llvm
 
 #endif // LLVM_LIB_TARGET_BPF_TARGETINFO_BPFTARGETINFO_H

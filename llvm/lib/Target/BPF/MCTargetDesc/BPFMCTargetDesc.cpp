@@ -116,7 +116,7 @@ static MCInstrAnalysis *createBPFInstrAnalysis(const MCInstrInfo *Info) {
 
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeBPFTargetMC() {
   for (Target *T :
-       {&getTheBPFleTarget(), &getTheBPFbeTarget(), &getTheBPFTarget(), &getTheSBFTarget()}) {
+       {&getTheBPFleTarget(), &getTheBPFbeTarget(), &getTheBPFTarget()}) {
     // Register the MC asm info.
     RegisterMCAsmInfo<BPFMCAsmInfo> X(*T);
 
@@ -145,16 +145,12 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeBPFTargetMC() {
                                         createBPFMCCodeEmitter);
   TargetRegistry::RegisterMCCodeEmitter(getTheBPFbeTarget(),
                                         createBPFbeMCCodeEmitter);
-  TargetRegistry::RegisterMCCodeEmitter(getTheSBFTarget(),
-                                        createBPFMCCodeEmitter);
 
   // Register the ASM Backend
   TargetRegistry::RegisterMCAsmBackend(getTheBPFleTarget(),
                                        createBPFAsmBackend);
   TargetRegistry::RegisterMCAsmBackend(getTheBPFbeTarget(),
                                        createBPFbeAsmBackend);
-  TargetRegistry::RegisterMCAsmBackend(getTheSBFTarget(),
-                                       createBPFAsmBackend);
 
   if (sys::IsLittleEndianHost) {
     TargetRegistry::RegisterMCCodeEmitter(getTheBPFTarget(),
