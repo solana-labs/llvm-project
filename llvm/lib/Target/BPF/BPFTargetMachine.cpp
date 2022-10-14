@@ -40,8 +40,6 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeBPFTarget() {
   RegisterTargetMachine<BPFTargetMachine> Y(getTheBPFbeTarget());
   RegisterTargetMachine<BPFTargetMachine> Z(getTheBPFTarget());
 
-  RegisterTargetMachine<BPFTargetMachine> XX(getTheSBFTarget());
-
   PassRegistry &PR = *PassRegistry::getPassRegistry();
   initializeBPFAbstractMemberAccessLegacyPassPass(PR);
   initializeBPFPreserveDITypePass(PR);
@@ -54,7 +52,8 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeBPFTarget() {
 
 // DataLayout: little or big endian
 static std::string computeDataLayout(const Triple &TT, StringRef FS) {
-  bool IsSolana = TT.getArch() == Triple::sbf || FS.contains("solana");
+  // TODO: jle: remove 'solana', sbf is now provided by the SBF backend.
+  bool IsSolana = FS.contains("solana");
   if (TT.getArch() == Triple::bpfeb) {
     return IsSolana ? "E-m:e-p:64:64-i64:64-n32:64-S128"
       : "E-m:e-p:64:64-i64:64-i128:128-n32:64-S128";

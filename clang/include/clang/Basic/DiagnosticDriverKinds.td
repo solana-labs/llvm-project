@@ -685,4 +685,7 @@ def warn_drv_sarif_format_unstable : Warning<
 
 def err_drv_riscv_unsupported_with_linker_relaxation : Error<
   "%0 is unsupported with RISC-V linker relaxation (-mrelax)">;
+
+def warn_drv_no_solana_with_bpf : Warning<
+  "'+solana' with bpf target is deprecated; use '-target sbf' instead">;
 }
