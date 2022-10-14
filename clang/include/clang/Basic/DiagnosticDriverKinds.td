@@ -741,4 +741,7 @@ def warn_drv_missing_multilib : Warning<
   InGroup<DiagGroup<"missing-multilib">>;
 def note_drv_available_multilibs : Note<
   "available multilibs are:%0">;
+
+def warn_drv_no_solana_with_bpf : Warning<
+  "'+solana' with bpf target is deprecated; use '-target sbf' instead">;
 }

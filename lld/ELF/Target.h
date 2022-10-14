@@ -179,6 +179,7 @@ TargetInfo *getAMDGPUTargetInfo();
 TargetInfo *getARMTargetInfo();
 TargetInfo *getAVRTargetInfo();
 TargetInfo *getBPFTargetInfo();
+TargetInfo *getSBFTargetInfo();
 TargetInfo *getHexagonTargetInfo();
 TargetInfo *getLoongArchTargetInfo();
 TargetInfo *getMSP430TargetInfo();
