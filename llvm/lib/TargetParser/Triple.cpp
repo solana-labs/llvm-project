@@ -1730,6 +1730,7 @@ Triple Triple::getBigEndianArchVariant() const {
   case Triple::renderscript64:
   case Triple::riscv32:
   case Triple::riscv64:
+  case Triple::sbf:
   case Triple::shave:
   case Triple::spir64:
   case Triple::spir:

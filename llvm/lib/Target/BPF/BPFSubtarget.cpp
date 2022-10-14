@@ -52,7 +52,8 @@ BPFSubtarget &BPFSubtarget::initializeSubtargetDependencies(const Triple &TT,
 }
 
 void BPFSubtarget::initializeEnvironment(const Triple &TT) {
-  IsSolana = TT.getArch() == Triple::sbf;
+  // TODO: jle: remove, sbf is now provided by the SBF backend.
+  IsSolana = false;
   HasJmpExt = false;
   HasJmp32 = false;
   HasAlu32 = false;
@@ -106,10 +107,7 @@ BPFSubtarget::BPFSubtarget(const Triple &TT, const std::string &CPU,
       FrameLowering(initializeSubtargetDependencies(TT, CPU, FS)),
       TLInfo(TM, *this) {
   IsLittleEndian = TT.isLittleEndian();
-  if (TT.getArch() == Triple::sbf) {
-    IsSolana = true;
-  }
-  TSInfo.setSolanaFlag(IsSolana);
+  TSInfo.setSolanaFlag(false);
 
   CallLoweringInfo.reset(new BPFCallLowering(*getTargetLowering()));
   Legalizer.reset(new BPFLegalizerInfo(*this));

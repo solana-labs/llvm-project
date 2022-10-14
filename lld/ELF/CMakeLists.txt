@@ -33,6 +33,7 @@ add_lld_library(lldELF
   Arch/PPC.cpp
   Arch/PPC64.cpp
   Arch/RISCV.cpp
+  Arch/SBF.cpp
   Arch/SPARCV9.cpp
   Arch/SystemZ.cpp
   Arch/X86.cpp
