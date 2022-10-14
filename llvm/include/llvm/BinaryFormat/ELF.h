@@ -319,6 +319,7 @@ enum {
   EM_BPF = 247,           // Linux kernel bpf virtual machine
   EM_VE = 251,            // NEC SX-Aurora VE
   EM_CSKY = 252,          // C-SKY 32-bit processor
+  EM_SBF = 263,           // Solana Bytecode Format
 };
 
 // Object file classes.
@@ -822,6 +823,11 @@ enum {
 
 enum : unsigned {
   EF_SBF_V2 = 0x20,
+};
+
+// ELF Relocation types for SBF.
+enum {
+#include "ELFRelocs/SBF.def"
 };
 
 // ELF Relocation types for BPF
