@@ -717,4 +717,7 @@ def err_drv_riscv_unsupported_with_linker_relaxation : Error<
 
 def err_drv_loongarch_invalid_mfpu_EQ : Error<
   "invalid argument '%0' to -mfpu=; must be one of: 64, 32, none, 0 (alias for none)">;
+
+def warn_drv_no_solana_with_bpf : Warning<
+  "'+solana' with bpf target is deprecated; use '-target sbf' instead">;
 }
