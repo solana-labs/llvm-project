@@ -145,6 +145,13 @@ StringRef llvm::object::getELFRelocationTypeName(uint32_t Machine,
       break;
     }
     break;
+  case ELF::EM_SBF:
+    switch (Type) {
+#include "llvm/BinaryFormat/ELFRelocs/SBF.def"
+    default:
+      break;
+    }
+    break;
   case ELF::EM_MSP430:
     switch (Type) {
 #include "llvm/BinaryFormat/ELFRelocs/MSP430.def"
@@ -220,6 +227,8 @@ uint32_t llvm::object::getELFRelativeRelocationType(uint32_t Machine) {
   case ELF::EM_VE:
     return ELF::R_VE_RELATIVE;
   case ELF::EM_AMDGPU:
+    break;
+  case ELF::EM_SBF:
     break;
   case ELF::EM_BPF:
     break;

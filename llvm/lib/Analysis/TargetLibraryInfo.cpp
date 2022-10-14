@@ -826,7 +826,7 @@ static void initialize(TargetLibraryInfoImpl &TLI, const Triple &T,
     TLI.setUnavailable(LibFunc_vec_free);
   }
 
-  if (T.isBPF()) {
+  if (T.isBPF() || T.isSBF()) {
     TLI.setUnavailable(LibFunc_rust_alloc);
     TLI.setUnavailable(LibFunc_rust_dealloc);
     TLI.setUnavailable(LibFunc_rust_realloc);

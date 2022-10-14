@@ -1,0 +1,12 @@
+Note that BTF has been disabled for SBF as of commit
+559ff25f978a675230cc2dbcc18851424ace7fb9.
+
+Moreover, we are tentatively going to completely remove BTF and related
+support from SBF.
+
+We have therefore removed the BTF/ and CORE/ test subdirectories which only
+apply when BTF is available.
+
+Once we determine for certain that BTF will definitely be removed, delete
+this TODO-NOTE. If for some reason BTF is deemed necessary, re-instate the
+test directories mentioned above.

@@ -79,6 +79,7 @@ module LLVM_BinaryFormat {
     textual header "BinaryFormat/ELFRelocs/PowerPC64.def"
     textual header "BinaryFormat/ELFRelocs/PowerPC.def"
     textual header "BinaryFormat/ELFRelocs/RISCV.def"
+    textual header "BinaryFormat/ELFRelocs/SBF.def"
     textual header "BinaryFormat/ELFRelocs/Sparc.def"
     textual header "BinaryFormat/ELFRelocs/SystemZ.def"
     textual header "BinaryFormat/ELFRelocs/VE.def"

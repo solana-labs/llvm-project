@@ -257,6 +257,14 @@ TEST(ELFObjectFileTest, MachineTestForBPF) {
   }
 }
 
+TEST(ELFObjectFileTest, MachineTestForSBF) {
+  std::array<StringRef, 4> Formats = {"elf32-unknown", "elf32-unknown",
+                                      "elf64-sbf", "elf64-sbf"};
+  size_t I = 0;
+  for (const DataForTest &D : generateData(ELF::EM_SBF))
+    checkFormatAndArch(D, Formats[I++], Triple::sbf);
+}
+
 TEST(ELFObjectFileTest, MachineTestForAVR) {
   std::array<StringRef, 4> Formats = {"elf32-avr", "elf32-avr", "elf64-unknown",
                                       "elf64-unknown"};
