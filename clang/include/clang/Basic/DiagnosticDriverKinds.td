@@ -798,4 +798,8 @@ def warn_android_unversioned_fallback : Warning<
 
 def err_drv_triple_version_invalid : Error<
   "version '%0' in target triple '%1' is invalid">;
+
+def warn_drv_no_solana_with_bpf : Warning<
+  "'+solana' with bpf target is deprecated; use '-target sbf' instead">;
+  
 }

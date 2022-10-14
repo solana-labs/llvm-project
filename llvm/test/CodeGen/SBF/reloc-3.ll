@@ -1,0 +1,23 @@
+; RUN: llc -march=sbf -filetype=obj -o %t.el < %s
+; RUN: llvm-readelf -r %t.el | FileCheck %s
+
+; source code:
+;   int g() { return 0; }
+;   struct t { void *p; } gbl = { g };
+; compilation flag:
+;   clang -target bpf -O2 -emit-llvm -S test.c
+
+%struct.t = type { i8* }
+
+@gbl = dso_local local_unnamed_addr global %struct.t { i8* bitcast (i32 ()* @g to i8*) }, align 8
+
+; CHECK: '.rel.data'
+; CHECK: 0000000000000000 0000000200000001 R_SBF_64_64 0000000000000000 g
+
+; Function Attrs: nofree norecurse nosync nounwind readnone willreturn mustprogress
+define dso_local i32 @g() #0 {
+entry:
+  ret i32 0
+}
+
+attributes #0 = { nofree norecurse nosync nounwind readnone willreturn mustprogress "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" }
