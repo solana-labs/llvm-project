@@ -155,5 +155,4 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeBPFAsmPrinter() {
   RegisterAsmPrinter<BPFAsmPrinter> X(getTheBPFleTarget());
   RegisterAsmPrinter<BPFAsmPrinter> Y(getTheBPFbeTarget());
   RegisterAsmPrinter<BPFAsmPrinter> Z(getTheBPFTarget());
-  RegisterAsmPrinter<BPFAsmPrinter> XX(getTheSBFTarget());
 }

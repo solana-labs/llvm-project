@@ -354,6 +354,24 @@ TEST(TripleTest, ParsedIDs) {
   EXPECT_EQ(Triple::Linux, T.getOS());
   EXPECT_EQ(Triple::UnknownEnvironment, T.getEnvironment());
 
+  T = Triple("sbf-solana-solana");
+  EXPECT_EQ(Triple::sbf, T.getArch());
+  EXPECT_EQ(Triple::Solana, T.getVendor());
+  EXPECT_EQ(Triple::SolanaOS, T.getOS());
+  EXPECT_EQ(Triple::UnknownEnvironment, T.getEnvironment());
+
+  T = Triple("sbf-unknown-unknown");
+  EXPECT_EQ(Triple::sbf, T.getArch());
+  EXPECT_EQ(Triple::UnknownVendor, T.getVendor());
+  EXPECT_EQ(Triple::UnknownOS, T.getOS());
+  EXPECT_EQ(Triple::UnknownEnvironment, T.getEnvironment());
+
+  T = Triple("sbf");
+  EXPECT_EQ(Triple::sbf, T.getArch());
+  EXPECT_EQ(Triple::UnknownVendor, T.getVendor());
+  EXPECT_EQ(Triple::UnknownOS, T.getOS());
+  EXPECT_EQ(Triple::UnknownEnvironment, T.getEnvironment());
+
   T = Triple("riscv32-unknown-unknown");
   EXPECT_EQ(Triple::riscv32, T.getArch());
   EXPECT_EQ(Triple::UnknownVendor, T.getVendor());
@@ -944,6 +962,12 @@ TEST(TripleTest, BitWidthPredicates) {
   EXPECT_TRUE(T.isArch64Bit());
   EXPECT_TRUE(T.isRISCV());
 
+  T.setArch(Triple::sbf);
+  EXPECT_FALSE(T.isArch16Bit());
+  EXPECT_FALSE(T.isArch32Bit());
+  EXPECT_TRUE(T.isArch64Bit());
+  EXPECT_TRUE(T.isSBF());
+
   T.setArch(Triple::csky);
   EXPECT_FALSE(T.isArch16Bit());
   EXPECT_TRUE(T.isArch32Bit());
@@ -1092,6 +1116,10 @@ TEST(TripleTest, BitWidthArchVariants) {
   EXPECT_EQ(Triple::csky, T.get32BitArchVariant().getArch());
   EXPECT_EQ(Triple::UnknownArch, T.get64BitArchVariant().getArch());
 
+  T.setArch(Triple::sbf);
+  EXPECT_EQ(Triple::UnknownArch, T.get32BitArchVariant().getArch());
+  EXPECT_EQ(Triple::sbf, T.get64BitArchVariant().getArch());
+
   T.setArch(Triple::thumbeb);
   EXPECT_EQ(Triple::thumbeb, T.get32BitArchVariant().getArch());
   EXPECT_EQ(Triple::aarch64_be, T.get64BitArchVariant().getArch());
@@ -1173,6 +1201,10 @@ TEST(TripleTest, EndianArchVariants) {
   T.setArch(Triple::bpfel);
   EXPECT_EQ(Triple::bpfeb, T.getBigEndianArchVariant().getArch());
   EXPECT_EQ(Triple::bpfel, T.getLittleEndianArchVariant().getArch());
+
+  T.setArch(Triple::sbf);
+  EXPECT_EQ(Triple::UnknownArch, T.getBigEndianArchVariant().getArch());
+  EXPECT_EQ(Triple::sbf, T.getLittleEndianArchVariant().getArch());
 
   T.setArch(Triple::mips64);
   EXPECT_EQ(Triple::mips64, T.getBigEndianArchVariant().getArch());

@@ -633,4 +633,7 @@ def err_drv_invalid_or_unsupported_offload_target : Error<
   "invalid or unsupported offload target: '%0'">;
 def err_drv_cuda_offload_only_emit_bc : Error<
   "CUDA offload target is supported only along with --emit-llvm">;
+
+def warn_drv_no_solana_with_bpf : Warning<
+  "'+solana' with bpf target is deprecated; use '-target sbf' instead">;
 }
