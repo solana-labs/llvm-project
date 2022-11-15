@@ -44,10 +44,10 @@ for.body:                                         ; preds = %for.body, %entry
   %exitcond = icmp eq i64 %inc, 100
   br i1 %exitcond, label %for.cond.cleanup, label %for.body, !llvm.loop !2
 }
-; CHECK: [[VAL:r[0-9]+]] = w{{[0-9]+}}
-; CHECK-NOT: [[VAL:r[0-9]+]] <<= 32
-; CHECK-NOT: [[VAL]] >>= 32
-; CHECK: if [[VAL]] == 0 goto
+; CHECK: mov32 [[VAL:r[0-9]+]], w{{[0-9]+}}
+; CHECK-NOT: lsh32 [[VAL:r[0-9]+]], 32
+; CHECK-NOT: rsh32 [[VAL]], 32
+; CHECK: jeq [[VAL]], 0,
 
 !2 = distinct !{!2, !3}
 !3 = !{!"llvm.loop.unroll.disable"}

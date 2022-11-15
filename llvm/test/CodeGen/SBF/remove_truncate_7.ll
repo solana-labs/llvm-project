@@ -49,7 +49,7 @@ if.end:
   ret i8* %p.0
 }
 
-; CHECK:       w0 = *(u32 *)(r2 + 0)
-; CHECK:       w0 = *(u32 *)(r2 + 4)
-; CHECK-NOT:   r[[#]] = w[[#]]
+; CHECK:       ldxw w0, [r2 + 0]
+; CHECK:       ldxw w0, [r2 + 4]
+; CHECK-NOT:   mov64 r[[#]], w[[#]]
 ; CHECK:       exit

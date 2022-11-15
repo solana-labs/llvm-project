@@ -32,8 +32,8 @@ entry:
   %conv = zext i32 %0 to i64
   %1 = inttoptr i64 %conv to i8*
   %2 = load i8, i8* %1, align 1
-; CHECK:  r1 = *(u32 *)(r1 + 0)
-; CHECK:  r1 = *(u8 *)(r1 + 0)
+; CHECK:  ldxw r1, [r1 + 0]
+; CHECK:  ldxb r1, [r1 + 0]
   %3 = load i32, i32* @gbl, align 4
   switch i32 %3, label %if.end [
     i32 0, label %if.else
@@ -42,16 +42,16 @@ entry:
 
 if.end:                                           ; preds = %entry
   %cmp4 = icmp eq i8 %2, 1
-; CHECK:  r0 = 3
-; CHECK-NOT:  r1 &= 255
-; CHECK:  if r1 == 1 goto
+; CHECK:  mov64 r0, 3
+; CHECK-NOT:  and64 r1, 255
+; CHECK:  jeq r1, 1,
   br i1 %cmp4, label %cleanup, label %if.end13
 
 if.else:                                          ; preds = %entry
   %cmp9 = icmp eq i8 %2, 0
-; CHECK:  r0 = 2
-; CHECK-NOT:  r1 &= 255
-; CHECK:  if r1 == 0 goto
+; CHECK:  mov64 r0, 2
+; CHECK-NOT:  and64 r1, 255
+; CHECK:  jeq r1, 0,
   br i1 %cmp9, label %cleanup, label %if.end13
 
 if.end13:                                         ; preds = %if.else, %if.end

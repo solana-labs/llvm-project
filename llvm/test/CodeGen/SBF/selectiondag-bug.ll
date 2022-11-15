@@ -56,10 +56,10 @@ entry:
   call void @llvm.lifetime.start.p0i8(i64 -1, i8* nonnull %19)
 
 ; CHECK:        call 8
-; CHECK-NOT:    r{{[0-9]+}} = 0
-; CHECK:        [[REG3:r[0-9]+]] = *(u64 *)(r10 - 24)
-; CHECK:        [[REG1:r[0-9]+]] = 0
-; CHECK:        *(u64 *)(r10 - 24) = [[REG1]]
+; CHECK-NOT:    mov64 r{{[0-9]+}}, 0
+; CHECK:        ldxdw [[REG3:r[0-9]+]], [r10 - 24]
+; CHECK:        mov64 [[REG1:r[0-9]+]], 0
+; CHECK:        stxdw [r10 - 24], [[REG1]]
 
   %probe_read5 = call i64 inttoptr (i64 9 to i64 (i64*, i32, i64)*)(i64* nonnull %"struct kernfs_node.parent", i32 8, i64 %18)
   %21 = load i64, i64* %"struct kernfs_node.parent", align 8

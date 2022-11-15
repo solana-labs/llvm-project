@@ -25,11 +25,11 @@
 define i32 @test() local_unnamed_addr #0 {
 entry:
     tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 4 getelementptr inbounds (%struct.test_t1, %struct.test_t1* @g, i64 0, i32 0), i8* align 4 getelementptr inbounds (%struct.test_t1, %struct.test_t1* @test.t1, i64 0, i32 0), i64 16, i1 false)
-; CHECK-EL: r1 = g ll
-; CHECK-EL: r2 = 0
-; CHECK-EL: *(u64 *)(r1 + 8) = r2
-; CHECK-EL: r2 = 1
-; CHECK-EL: *(u64 *)(r1 + 0) = r2
+; CHECK-EL: lddw r1, g
+; CHECK-EL: mov64 r2, 0
+; CHECK-EL: stxdw [r1 + 8], r2
+; CHECK-EL: mov64 r2, 1
+; CHECK-EL: stxdw [r1 + 0], r2
     ret i32 0
 }
 ; CHECK-EL:  .section .rodata.cst16,"aM",@progbits,16

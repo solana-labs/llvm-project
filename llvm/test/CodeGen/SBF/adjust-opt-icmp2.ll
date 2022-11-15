@@ -31,17 +31,17 @@ entry:
   %cmp = icmp sle i32 %1, 0
   br i1 %cmp, label %if.then, label %if.end
 
-; CHECK:         [[REG1:r[0-9]+]] <<= 32
-; CHECK:         [[REG1]] s>>= 32
-; CHECK:         [[REG2:r[0-9]+]] = 1
-; CHECK:         if [[REG2]] s> [[REG1]] goto
-; CHECK:         if [[REG1]] s> 7 goto
+; CHECK:         lsh64 [[REG1:r[0-9]+]], 32
+; CHECK:         arsh64 [[REG1]], 32
+; CHECK:         mov64 [[REG2:r[0-9]+]], 1
+; CHECK:         jsgt [[REG2]], [[REG1]],
+; CHECK:         jsgt [[REG1]], 7,
 
-; CHECK-DISABLE: [[REG1:r[0-9]+]] += -8
-; CHECK-DISABLE: [[REG1]] <<= 32
-; CHECK-DISABLE: [[REG1]] >>= 32
-; CHECK-DISABLE: [[REG2:r[0-9]+]] = 4294967289
-; CHECK-DISABLE: if [[REG2]] > [[REG1]] goto
+; CHECK-DISABLE: add64 [[REG1:r[0-9]+]], -8
+; CHECK-DISABLE: lsh64 [[REG1]], 32
+; CHECK-DISABLE: rsh64 [[REG1]], 32
+; CHECK-DISABLE: lddw [[REG2:r[0-9]+]], 4294967289
+; CHECK-DISABLE: jgt [[REG2]], [[REG1]],
 
 if.then:                                          ; preds = %entry
   store i32 0, i32* %retval, align 4

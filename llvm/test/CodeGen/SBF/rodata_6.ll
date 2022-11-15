@@ -18,8 +18,8 @@ define dso_local i32 @foo() local_unnamed_addr {
 entry:
   %0 = load i32, i32* getelementptr inbounds (%struct.t1, %struct.t1* @data, i64 0, i32 0), align 4
   %add = add nsw i32 %0, 20
-; CHECK:   [[REG1:r[0-9]+]] = data ll
-; CHECK:   r0 = *(u32 *)([[REG1]] + 0)
-; CHECK:   r0 += 20
+; CHECK:   lddw [[REG1:r[0-9]+]], data
+; CHECK:   ldxw r0, [[[REG1]] + 0]
+; CHECK:   add64 r0, 20
   ret i32 %add
 }

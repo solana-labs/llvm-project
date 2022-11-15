@@ -14,8 +14,8 @@ define double @powi_f64(double %a, i32 %b) nounwind {
 ;
 ; CHECK64-LABEL: powi_f64:
 ; CHECK64:       # %bb.0:
-; CHECK64-NEXT:    r2 <<= 32
-; CHECK64-NEXT:    r2 s>>= 32
+; CHECK64-NEXT:    lsh64 r2, 32
+; CHECK64-NEXT:    arsh64 r2, 32
 ; CHECK64-NEXT:    call __powidf2
 ; CHECK64-NEXT:    exit
   %1 = call double @llvm.powi.f64.i32(double %a, i32 %b)

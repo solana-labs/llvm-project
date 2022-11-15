@@ -215,6 +215,10 @@ def debug_vars_indent_EQ : Joined<["--"], "debug-vars-indent=">,
   HelpText<"Distance to indent the source-level variable display, "
            "relative to the start of the disassembly">;
 
+def output_asm_variant_EQ : Joined<["--"], "output-asm-variant=">,
+  MetaVarName<"uint">,
+  HelpText<"Select output assembly syntax variant">;
+
 def x86_asm_syntax_att : Flag<["--"], "x86-asm-syntax=att">,
   HelpText<"Emit AT&T-style disassembly">;
 
