@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=sbf -mcpu=v3 -verify-machineinstrs | tee -i /tmp/log | FileCheck %s
+; RUN: llc < %s -march=bpfel -mattr=+solana -mcpu=v3 -verify-machineinstrs | tee -i /tmp/log | FileCheck %s
 ;
 ; CHECK-LABEL: test_load_add_32
 ; CHECK: w0 = *(u32 *)(r1 + 0)

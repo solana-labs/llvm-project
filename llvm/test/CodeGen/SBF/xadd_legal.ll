@@ -17,13 +17,13 @@ define dso_local i32 @test(i32* nocapture %ptr, i64 %a) {
 entry:
   %conv = trunc i64 %a to i32
   %0 = atomicrmw add i32* %ptr, i32 %conv seq_cst
-; CHECK-64: r0 = *(u32 *)(r1 + 0)
-; CHECK-64: r0 += r2
-; CHECK-64: *(u32 *)(r1 + 0) = r0
+; CHECK-64: ldxw r0, [r1 + 0]
+; CHECK-64: add64 r0, r2
+; CHECK-64: stxw [r1 + 0], r0
 
-; CHECK-32: w0 = *(u32 *)(r1 + 0)
-; CHECK-32: w0 += w2
-; CHECK-32: *(u32 *)(r1 + 0) = w0
+; CHECK-32: ldxw w0, [r1 + 0]
+; CHECK-32: add32 w0, w2
+; CHECK-32: stxw [r1 + 0], w0
 
   %1 = load i32, i32* %ptr, align 4
   ret i32 %1

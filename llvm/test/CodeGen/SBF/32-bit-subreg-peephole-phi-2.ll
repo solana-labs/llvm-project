@@ -27,8 +27,8 @@ entry:
   %call = tail call i32 @helper(i32 %conv)
   ret i32 %call
 }
-; CHECK: r{{[0-9]+}} = w{{[0-9]+}}
-; CHECK: r{{[0-9]+}} = w{{[0-9]+}}
-; CHECK: if r{{[0-9]+}} == r{{[0-9]+}} goto
+; CHECK: mov32 r{{[0-9]+}}, w{{[0-9]+}}
+; CHECK: mov32 r{{[0-9]+}}, w{{[0-9]+}}
+; CHECK: jeq r{{[0-9]+}}, r{{[0-9]+}},
 
 declare dso_local i32 @helper(i32) local_unnamed_addr

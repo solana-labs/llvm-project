@@ -48,10 +48,25 @@ def : Proc<"v3", []>;
 def : Proc<"probe", []>;
 def : Proc<"sbfv2", [FeatureSolana, FeatureDynamicFrames, FeatureSdiv, FeatureRelocAbs64, FeatureStaticSyscalls]>;
 
-def SBFInstPrinter : AsmWriter {
+//===----------------------------------------------------------------------===//
+// Assembly printer
+//===----------------------------------------------------------------------===//
+
+def SBFAsmWriter : AsmWriter {
   string AsmWriterClassName  = "InstPrinter";
+  int Variant = 0;
   bit isMCAsmWriter = 1;
 }
+
+def LegacyAsmWriter : AsmWriter {
+  let AsmWriterClassName = "LegacyInstPrinter";
+  int Variant = 1;
+  int isMCAsmWriter = 1;
+}
+
+//===----------------------------------------------------------------------===//
+// Assembly parser
+//===----------------------------------------------------------------------===//
 
 def SBFAsmParser : AsmParser {
   bit HasMnemonicFirst = 0;
@@ -59,14 +74,24 @@ def SBFAsmParser : AsmParser {
 
 def SBFAsmParserVariant : AsmParserVariant {
   int Variant = 0;
-  string Name = "SBF";
+  string Name = "sbf";
+  string BreakCharacters = ".";
+}
+
+def LegacyAsmParserVariant : AsmParserVariant {
+  int Variant = 1;
+  string Name = "legacy";
   string BreakCharacters = ".";
   string TokenizingCharacters = "#()[]=:.<>!+*/";
 }
 
+//===----------------------------------------------------------------------===//
+// Target Declaration
+//===----------------------------------------------------------------------===//
+
 def SBF : Target {
   let InstructionSet = SBFInstrInfo;
-  let AssemblyWriters = [SBFInstPrinter];
+  let AssemblyWriters = [SBFAsmWriter, LegacyAsmWriter];
   let AssemblyParsers = [SBFAsmParser];
-  let AssemblyParserVariants = [SBFAsmParserVariant];
+  let AssemblyParserVariants = [SBFAsmParserVariant, LegacyAsmParserVariant];
 }

@@ -32,10 +32,10 @@ entry:
   call void @llvm.lifetime.end.p0i8(i64 3, i8* nonnull %v1.sub)
   ret i32 0
 }
-; CHECK-NOT:    w{{[0-9]+}} = *(u16 *)
-; CHECK-NOT:    w{{[0-9]+}} = *(u8 *)
-; CHECK:        *(u8 *)(r10 - 2) = w{{[0-9]+}}
-; CHECK:        *(u16 *)(r10 - 4) = w{{[0-9]+}}
+; CHECK-NOT:    ldxh w{{[0-9]+}},
+; CHECK-NOT:    ldxb w{{[0-9]+}},
+; CHECK:        stxb [r10 - 2], w{{[0-9]+}}
+; CHECK:        stxh [r10 - 4], w{{[0-9]+}}
 
 ; Function Attrs: argmemonly nounwind willreturn
 declare void @llvm.lifetime.start.p0i8(i64 immarg, i8* nocapture)

@@ -58,8 +58,8 @@ cleanup:                                          ; preds = %entry, %if.end10
   ret i32 %retval.0
 }
 
-; CHECK: w{{[0-9]+}} = *(u32 *)(r{{[0-9]+}} + 0)
-; CHECK-NOT: w{{[0-9]+}} = w{{[0-9]+}}
+; CHECK: ldxw w{{[0-9]+}}, [r{{[0-9]+}} + 0]
+; CHECK-NOT: mov32 w{{[0-9]+}}, w{{[0-9]+}}
 
 declare dso_local i32 @work(%struct.env_t*, i32) local_unnamed_addr #1
 
