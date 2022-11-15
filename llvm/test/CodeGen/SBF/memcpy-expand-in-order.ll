@@ -66,13 +66,13 @@ entry:
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 %0, i8* align 8 %1, i64 27, i1 false)
   ret void
 }
-; CHECK: [[SCRATCH_REG:r[0-9]]] = *(u64 *)([[SRC_REG:r[0-9]]] + 0)
-; CHECK: *(u64 *)([[DST_REG:r[0-9]]] + 0) = [[SCRATCH_REG]]
-; CHECK: [[SCRATCH_REG]] = *(u64 *)([[SRC_REG]] + 8)
-; CHECK: *(u64 *)([[DST_REG]] + 8) = [[SCRATCH_REG]]
-; CHECK: [[SCRATCH_REG]] = *(u64 *)([[SRC_REG]] + 16)
-; CHECK: *(u64 *)([[DST_REG]] + 16) = [[SCRATCH_REG]]
-; CHECK: [[SCRATCH_REG]] = *(u16 *)([[SRC_REG]] + 24)
-; CHECK: *(u16 *)([[DST_REG]] + 24) = [[SCRATCH_REG]]
-; CHECK: [[SCRATCH_REG]] = *(u8 *)([[SRC_REG]] + 26)
-; CHECK: *(u8 *)([[DST_REG]] + 26) = [[SCRATCH_REG]]
+; CHECK: ldxdw [[SCRATCH_REG:r[0-9]]], [[[SRC_REG:r[0-9]]] + 0]
+; CHECK: stxdw [[[DST_REG:r[0-9]]] + 0], [[SCRATCH_REG]]
+; CHECK: ldxdw [[SCRATCH_REG]], [[[SRC_REG]] + 8]
+; CHECK: stxdw [[[DST_REG]] + 8], [[SCRATCH_REG]]
+; CHECK: ldxdw [[SCRATCH_REG]], [[[SRC_REG]] + 16]
+; CHECK: stxdw [[[DST_REG]] + 16], [[SCRATCH_REG]]
+; CHECK: ldxh [[SCRATCH_REG]], [[[SRC_REG]] + 24]
+; CHECK: stxh [[[DST_REG]] + 24], [[SCRATCH_REG]]
+; CHECK: ldxb [[SCRATCH_REG]], [[[SRC_REG]] + 26]
+; CHECK: stxb [[[DST_REG]] + 26], [[SCRATCH_REG]]
