@@ -48,14 +48,14 @@ if.then:                                          ; preds = %entry
   %3 = load i8, i8* %2, align 1
   %cmp = icmp eq i8 %3, 1
   br i1 %cmp, label %cleanup20, label %if.end12
-; CHECK:  r1 = *(u32 *)(r1 + 0)
-; CHECK:  r2 = *(u8 *)(r1 + 0)
+; CHECK:  ldxw r1, [r1 + 0]
+; CHECK:  ldxb r2, [r1 + 0]
 
 if.else:                                          ; preds = %entry
   %data_end = getelementptr inbounds %struct.xdp_md, %struct.xdp_md* %xdp, i64 0, i32 1
   %4 = load i32, i32* %data_end, align 4
   %conv6 = zext i32 %4 to i64
-; CHECK:  r2 = *(u32 *)(r1 + 4)
+; CHECK:  ldxw r2, [r1 + 4]
   %5 = inttoptr i64 %conv6 to i8*
   %6 = load volatile i8, i8* %5, align 1
   %cmp8 = icmp eq i8 %6, 1
@@ -65,16 +65,16 @@ if.else.if.end12_crit_edge:                       ; preds = %if.else
   %data13.phi.trans.insert = getelementptr inbounds %struct.xdp_md, %struct.xdp_md* %xdp, i64 0, i32 0
   %.pre = load i32, i32* %data13.phi.trans.insert, align 4
   br label %if.end12
-; CHECK: r1 = *(u32 *)(r1 + 0)
+; CHECK: ldxw r1, [r1 + 0]
 
 if.end12:                                         ; preds = %if.else.if.end12_crit_edge, %if.then
   %7 = phi i32 [ %.pre, %if.else.if.end12_crit_edge ], [ %1, %if.then ]
   %conv14 = zext i32 %7 to i64
-; CHECK-NOT: r1 <<= 32
-; CHECK-NOT: r1 >>= 32
+; CHECK-NOT: lsh64 r1, 32
+; CHECK-NOT: rsh64 r1, 32
   %8 = inttoptr i64 %conv14 to i8*
   %9 = load volatile i8, i8* %8, align 1
-; CHECK:  r1 = *(u8 *)(r1 + 0)
+; CHECK: ldxb r1, [r1 + 0]
   %cmp16 = icmp eq i8 %9, 0
   %.28 = zext i1 %cmp16 to i32
   br label %cleanup20

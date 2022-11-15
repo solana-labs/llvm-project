@@ -5,6 +5,6 @@
 define i32 @test(i32 %len) #0 {
   %1 = sdiv i32 %len, 15
 ; CHECK-SBF: call __divdi3
-; CHECK-SBFV2: r0 s/= 15
+; CHECK-SBFV2: sdiv64 r0, 15
   ret i32 %1
 }
