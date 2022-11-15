@@ -5,10 +5,10 @@
 ; Function Attrs: nounwind uwtable
 define void @bar(i32 %a) #0 {
 ; CHECK-LABEL: bar:
-; CHECK: r2 = 8589934593 ll
-; CHECK: *(u64 *)(r10 - 40) = r2
-; CHECK: r2 = r10
-; CHECK: r2 += -40
+; CHECK: lddw r2, 8589934593
+; CHECK: stxdw [r10 - 40], r2
+; CHECK: mov64 r2, r10
+; CHECK: add64 r2, -40
 ; CHECK: call foo
 entry:
   %.compoundliteral = alloca %struct.S, align 8

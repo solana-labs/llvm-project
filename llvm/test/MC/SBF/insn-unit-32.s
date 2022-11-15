@@ -1,6 +1,8 @@
 # RUN: llvm-mc -triple sbf -filetype=obj -o %t %s
-# RUN: llvm-objdump -d -r %t | FileCheck %s
-# RUN: llvm-objdump --mattr=+alu32 -d -r %t | FileCheck %s
+# RUN: llvm-objdump --output-asm-variant=1 -d -r %t | FileCheck %s
+# RUN: llvm-objdump --output-asm-variant=1 --mattr=+alu32 -d -r %t | FileCheck %s
+
+.syntax_old
 
 // ======== BPF_ALU Class ========
   w1 = -w1    // BPF_NEG

@@ -25,11 +25,11 @@ entry:
   %conv5 = trunc i64 %add4 to i32
   ret i32 %conv5
 ; CHECK-LABEL: bswap:
-; CHECK-EL: r1 = be64 r1
-; CHECK-EL: r0 = be32 r0
-; CHECK-EL: r0 += r1
-; CHECK-EL: r3 = be16 r3
-; CHECK-EL: r0 += r3
+; CHECK-EL: be64 r1
+; CHECK-EL: be32 r0
+; CHECK-EL: add64 r0, r1
+; CHECK-EL: be16 r3
+; CHECK-EL: add64 r0, r3
 }
 
 declare i64 @llvm.bswap.i64(i64) #1
