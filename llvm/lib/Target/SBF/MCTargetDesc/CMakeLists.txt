@@ -2,6 +2,7 @@ add_llvm_component_library(LLVMSBFDesc
   SBFMCTargetDesc.cpp
   SBFAsmBackend.cpp
   SBFInstPrinter.cpp
+  SBFMCAsmInfo.cpp
   SBFMCCodeEmitter.cpp
   SBFELFObjectWriter.cpp
 

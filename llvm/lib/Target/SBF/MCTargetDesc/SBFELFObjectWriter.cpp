@@ -8,6 +8,7 @@
 
 #include "MCTargetDesc/SBFMCTargetDesc.h"
 #include "llvm/BinaryFormat/ELF.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCObjectWriter.h"
@@ -65,6 +66,10 @@ unsigned SBFELFObjectWriter::getRelocType(MCContext &Ctx, const MCValue &Target,
   case FK_PCRel_4:
     // CALL instruction.
     return ELF::R_SBF_64_32;
+  case FK_PCRel_2:
+    // Branch instruction.
+    Ctx.reportError(Fixup.getLoc(), "2-byte relocations not supported");
+    return ELF::R_SBF_NONE;
   case FK_Data_8:
     return (isSolana && !relocAbs64) ? ELF::R_SBF_64_64 : ELF::R_SBF_64_ABS64;
   case FK_Data_4:
