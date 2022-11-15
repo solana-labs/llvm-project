@@ -14,20 +14,20 @@
 ; Function Attrs: nounwind uwtable
 define i32 @ebpf_filter(%struct.__sk_buff* nocapture readnone %ebpf_packet) #0 section "socket1" {
 
-; CHECK: r1 = 2569
-; CHECK: *(u16 *)(r10 - 4) = r1
-; CHECK: r1 = 134678021
-; CHECK: *(u32 *)(r10 - 8) = r1
+; CHECK: mov64 r1, 2569
+; CHECK: stxh [r10 - 4], r1
+; CHECK: mov64 r1, 134678021
+; CHECK: stxw [r10 - 8], r1
 
-; CHECK: r1 = 0
-; CHECK-DAG:  *(u64 *)(r10 - 2) = r1
-; CHECK-DAG:  *(u64 *)(r10 + 6) = r1
-; CHECK-DAG:  *(u64 *)(r10 + 14) = r1
-; CHECK-DAG:  *(u64 *)(r10 + 20) = r1
+; CHECK: mov64 r1, 0
+; CHECK-DAG: stxdw [r10 - 2], r1
+; CHECK-DAG: stxdw [r10 + 6], r1
+; CHECK-DAG: stxdw [r10 + 14], r1
+; CHECK-DAG: stxdw [r10 + 20], r1
 
-; CHECK: r2 = r10
-; CHECK: r2 += -8
-; CHECK: r1 = routing
+; CHECK: mov64 r2, r10
+; CHECK: add64 r2, -8
+; CHECK: lddw r1, routing
 ; CHECK: call bpf_map_lookup_elem
 ; CHECK: exit
   %key = alloca %struct.routing_key_2, align 1
