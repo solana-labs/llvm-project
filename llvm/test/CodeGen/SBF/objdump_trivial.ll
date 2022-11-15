@@ -1,6 +1,6 @@
 ; RUN: llc -march=sbf -filetype=obj -o - %s | llvm-objdump -d - | FileCheck %s
 
-; CHECK: if r2 s> r1 goto
+; CHECK: jsgt r2, r1,
 ; CHECK: call 1
 ; CHECK: exit
 ; CHECK: call 2

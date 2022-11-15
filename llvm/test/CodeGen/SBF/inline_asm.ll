@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=sbf -verify-machineinstrs | FileCheck %s
+; RUN: llc < %s -march=sbf -verify-machineinstrs --sbf-output-asm-variant=1 | FileCheck %s
 
 ; Source code:
 ; int g[2];
@@ -25,17 +25,17 @@ entry:
   %0 = bitcast i32* %a to i8*
   call void @llvm.lifetime.start.p0i8(i64 4, i8* nonnull %0) #2
   store i32 4, i32* %a, align 4
-  tail call void asm sideeffect "r0 = *(u16 *)skb[$0]", "i"(i32 2) #2
+  tail call void asm sideeffect ".syntax_old r0 = *(u16 *)skb[$0]", "i"(i32 2) #2
 ; CHECK: r0 = *(u16 *)skb[2]
-  tail call void asm sideeffect "r0 = *(u16 *)skb[$0]", "r"(i32 4) #2
+  tail call void asm sideeffect ".syntax_old r0 = *(u16 *)skb[$0]", "r"(i32 4) #2
 ; CHECK: r0 = *(u16 *)skb[r1]
-  %1 = tail call i32 asm sideeffect "$0 = $1", "=r,i"(i32 4) #2
+  %1 = tail call i32 asm sideeffect ".syntax_old $0 = $1", "=r,i"(i32 4) #2
 ; CHECK: r1 = 4
-  %2 = tail call i32 asm sideeffect "$0 = $1 ll", "=r,i"(i64 333333333333) #2
+  %2 = tail call i32 asm sideeffect ".syntax_old $0 = $1 ll", "=r,i"(i64 333333333333) #2
 ; CHECK: r1 = 333333333333 ll
-  %3 = call i32 asm sideeffect "$0 = *(u16 *) $1", "=r,*m"(i32* elementtype(i32) nonnull %a) #2
+  %3 = call i32 asm sideeffect ".syntax_old $0 = *(u16 *) $1", "=r,*m"(i32* elementtype(i32) nonnull %a) #2
 ; CHECK: r1 = *(u16 *) (r10 - 4)
-  %4 = call i32 asm sideeffect "$0 = *(u32 *) $1", "=r,*m"(i32* elementtype(i32) getelementptr inbounds ([2 x i32], [2 x i32]* @g, i64 0, i64 1)) #2
+  %4 = call i32 asm sideeffect ".syntax_old $0 = *(u32 *) $1", "=r,*m"(i32* elementtype(i32) getelementptr inbounds ([2 x i32], [2 x i32]* @g, i64 0, i64 1)) #2
 ; CHECK: r1 = g ll
 ; CHECK: r0 = *(u32 *) (r1 + 4)
   call void @llvm.lifetime.end.p0i8(i64 4, i8* nonnull %0) #2

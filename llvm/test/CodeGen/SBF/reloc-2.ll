@@ -41,8 +41,8 @@ entry:
 ; DUMP:       .text:
 ; DUMP-EMPTY:
 ; DUMP-NEXT:  <test>
-; DUMP-NEXT:  r[[#]] = r[[#]]
-; DUMP-NEXT:  r[[#]] = r[[#]]
+; DUMP-NEXT:  mov64 r[[#]], r[[#]]
+; DUMP-NEXT:  mov64 r[[#]], r[[#]]
 ; DUMP-NEXT:  call -1
 
 ; DUMP:       sec1:

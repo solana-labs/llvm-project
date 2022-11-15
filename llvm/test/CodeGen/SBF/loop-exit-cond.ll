@@ -49,9 +49,9 @@ for.cond:                                         ; preds = %for.inc, %if.then
   %cmp1 = icmp slt i32 %2, %3
   br i1 %cmp1, label %for.body, label %for.cond.cleanup
 
-; CHECK:      w[[LEN:[0-9]+]] = w1
-; CHECK:      w[[IDX:[0-9]+]] += 1
-; CHECK-NEXT: w[[IDX]] s< w[[LEN]] goto
+; CHECK:      mov32 w[[LEN:[0-9]+]], w1
+; CHECK:      add32 w[[IDX:[0-9]+]], 1
+; CHECK-NEXT: jslt w[[IDX]], w[[LEN]],
 
 for.cond.cleanup:                                 ; preds = %for.cond
   %4 = bitcast i32* %i to i8*

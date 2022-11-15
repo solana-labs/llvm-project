@@ -43,27 +43,27 @@ if.end:                                           ; preds = %if.then, %entry
   ret i8* %4
 }
 
-; CHECK-COMMON:  [[REG6:r[0-9]+]] = r1
+; CHECK-COMMON:  mov64 [[REG6:r[0-9]+]], r1
 ; CHECK-COMMON:  call foo
 
-; CHECK:         r0 <<= 32
-; CHECK:         r0 >>= 32
-; CHECK:         if r0 > 7 goto [[LABEL:.*]]
-; CHECK:         [[REG6]] += r0
+; CHECK:         lsh64 r0, 32
+; CHECK:         rsh64 r0, 32
+; CHECK:         jgt r0, 7, [[LABEL:.*]]
+; CHECK:         add64 [[REG6]], r0
 ; CHECK:         [[LABEL]]:
-; CHECK:         r0 = [[REG6]]
+; CHECK:         mov64 r0, [[REG6]]
 
-; CHECK-DISABLE: [[REG1:r[0-9]+]] = r0
-; CHECK-DISABLE: [[REG1]] <<= 32
-; CHECK-DISABLE: [[REG1]] >>= 32
-; CHECK-DISABLE: [[REG2:r[0-9]+]] = 8
-; CHECK-DISABLE: if [[REG2]] > [[REG1]] goto [[LABEL:.*]]
-; CHECK-DISABLE: r0 = 0
+; CHECK-DISABLE: mov64 [[REG1:r[0-9]+]], r0
+; CHECK-DISABLE: lsh64 [[REG1]], 32
+; CHECK-DISABLE: rsh64 [[REG1]], 32
+; CHECK-DISABLE: mov64 [[REG2:r[0-9]+]], 8
+; CHECK-DISABLE: jgt [[REG2]], [[REG1]], [[LABEL:.*]]
+; CHECK-DISABLE: mov64 r0, 0
 ; CHECK-DISABLE: [[LABEL]]:
-; CHECK-DISABLE: r0 <<= 32
-; CHECK-DISABLE: r0 >>= 32
-; CHECK-DISABLE: [[REG6]] += r0
-; CHECK-DISABLE: r0 = [[REG6]]
+; CHECK-DISABLE: lsh64 r0, 32
+; CHECK-DISABLE: rsh64 r0, 32
+; CHECK-DISABLE: add64 [[REG6]], r0
+; CHECK-DISABLE: mov64 r0, [[REG6]]
 
 ; CHECK-COMMON:  exit
 

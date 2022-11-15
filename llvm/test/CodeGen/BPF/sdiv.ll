@@ -1,6 +1,6 @@
 ; RUN: llc -march=bpf -mattr=+solana < %s | FileCheck %s -check-prefixes=CHECK-SBF
-; RUN: llc -march=sbf < %s | FileCheck %s -check-prefixes=CHECK-SBF
-; RUN: llc -march=sbf -mcpu=sbfv2 < %s | FileCheck %s -check-prefixes=CHECK-SBFV2
+; RUN: llc -march=bpfel -mattr=+solana < %s | FileCheck %s -check-prefixes=CHECK-SBF
+; RUN: llc -march=bpfel -mattr=+solana -mcpu=sbfv2 < %s | FileCheck %s -check-prefixes=CHECK-SBFV2
 
 ; Function Attrs: norecurse nounwind readnone
 define i32 @test(i32 %len) #0 {

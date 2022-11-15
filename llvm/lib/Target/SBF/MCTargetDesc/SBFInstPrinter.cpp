@@ -23,6 +23,7 @@ using namespace llvm;
 
 // Include the auto-generated portion of the assembly writer.
 #include "SBFGenAsmWriter.inc"
+#include "SBFGenAsmWriter1.inc"
 
 void SBFInstPrinter::printInst(const MCInst *MI, uint64_t Address,
                                StringRef Annot, const MCSubtargetInfo &STI,

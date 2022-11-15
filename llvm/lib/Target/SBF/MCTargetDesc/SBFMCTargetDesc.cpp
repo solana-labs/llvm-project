@@ -81,6 +81,9 @@ static MCInstPrinter *createSBFMCInstPrinter(const Triple &T,
                                              const MCRegisterInfo &MRI) {
   if (SyntaxVariant == 0)
     return new SBFInstPrinter(MAI, MII, MRI);
+  if (SyntaxVariant == 1)
+    return new SBFLegacyInstPrinter(MAI, MII, MRI);
+
   return nullptr;
 }
 

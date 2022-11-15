@@ -1,4 +1,4 @@
-# RUN: llvm-mc -triple sbf -filetype=obj -o %t %s
+# RUN: llvm-mc -triple bpfel -mattr=+solana -filetype=obj -o %t %s
 # RUN: llvm-objdump -d -r %t | FileCheck %s
 
 w1 s/= w2   // BPF_SDIV | BPF_X

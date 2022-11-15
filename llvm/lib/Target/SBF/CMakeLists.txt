@@ -4,6 +4,7 @@ set(LLVM_TARGET_DEFINITIONS SBF.td)
 
 tablegen(LLVM SBFGenAsmMatcher.inc -gen-asm-matcher)
 tablegen(LLVM SBFGenAsmWriter.inc -gen-asm-writer)
+tablegen(LLVM SBFGenAsmWriter1.inc -gen-asm-writer -asmwriternum=1)
 tablegen(LLVM SBFGenCallingConv.inc -gen-callingconv)
 tablegen(LLVM SBFGenDAGISel.inc -gen-dag-isel)
 tablegen(LLVM SBFGenDisassemblerTables.inc -gen-disassembler)

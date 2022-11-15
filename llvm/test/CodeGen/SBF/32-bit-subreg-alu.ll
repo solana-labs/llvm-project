@@ -120,21 +120,21 @@
 define dso_local i32 @mov(i32 returned %a) local_unnamed_addr #0 {
 entry:
   ret i32 %a
-; CHECK: w{{[0-9]+}} = w{{[0-9]+}}
+; CHECK: mov32 w{{[0-9]+}}, w{{[0-9]+}}
 }
 
 ; Function Attrs: norecurse nounwind readnone
 define dso_local i32 @mov_ri() local_unnamed_addr #0 {
 entry:
   ret i32 255
-; CHECK: w{{[0-9]+}} = 255
+; CHECK: mov32 w{{[0-9]+}}, 255
 }
 
 ; Function Attrs: norecurse nounwind readnone
 define dso_local i32 @add(i32 %a, i32 %b) local_unnamed_addr #0 {
 entry:
   %add = add nsw i32 %b, %a
-; CHECK: w{{[0-9]+}} += w{{[0-9]+}}
+; CHECK: add32 w{{[0-9]+}}, w{{[0-9]+}}
   ret i32 %add
 }
 
@@ -142,7 +142,7 @@ entry:
 define dso_local i32 @add_i(i32 %a) local_unnamed_addr #0 {
 entry:
   %add = add nsw i32 %a, 2147483647
-; CHECK: w{{[0-9]+}} += 2147483647
+; CHECK: add32 w{{[0-9]+}}, 2147483647
   ret i32 %add
 }
 
@@ -150,7 +150,7 @@ entry:
 define dso_local i32 @sub(i32 %a, i32 %b) local_unnamed_addr #0 {
 entry:
   %sub = sub nsw i32 %a, %b
-; CHECK: w{{[0-9]+}} -= w{{[0-9]+}}
+; CHECK: sub32 w{{[0-9]+}}, w{{[0-9]+}}
   ret i32 %sub
 }
 
@@ -158,7 +158,7 @@ entry:
 define dso_local i32 @sub_i(i32 %a) local_unnamed_addr #0 {
 entry:
   %sub = add i32 %a, 1
-; CHECK: w{{[0-9]+}} += 1
+; CHECK: add32 w{{[0-9]+}}, 1
   ret i32 %sub
 }
 
@@ -166,7 +166,7 @@ entry:
 define dso_local i32 @mul(i32 %a, i32 %b) local_unnamed_addr #0 {
 entry:
   %mul = mul nsw i32 %b, %a
-; CHECK: w{{[0-9]+}} *= w{{[0-9]+}}
+; CHECK: mul32 w{{[0-9]+}}, w{{[0-9]+}}
   ret i32 %mul
 }
 
@@ -174,7 +174,7 @@ entry:
 define dso_local i32 @mul_i(i32 %a) local_unnamed_addr #0 {
 entry:
   %mul = mul nsw i32 %a, 15
-; CHECK: w{{[0-9]+}} *= 15
+; CHECK: mul32 w{{[0-9]+}}, 15
   ret i32 %mul
 }
 
@@ -182,7 +182,7 @@ entry:
 define dso_local i32 @div(i32 %a, i32 %b) local_unnamed_addr #0 {
 entry:
   %div = udiv i32 %a, %b
-; CHECK: w{{[0-9]+}} /= w{{[0-9]+}}
+; CHECK: div32 w{{[0-9]+}}, w{{[0-9]+}}
   ret i32 %div
 }
 
@@ -190,7 +190,7 @@ entry:
 define dso_local i32 @div_i(i32 %a) local_unnamed_addr #0 {
 entry:
   %div = udiv i32 %a, 15
-; CHECK: w{{[0-9]+}} /= 15
+; CHECK: div32 w{{[0-9]+}}, 15
   ret i32 %div
 }
 
@@ -198,7 +198,7 @@ entry:
 define dso_local i32 @or(i32 %a, i32 %b) local_unnamed_addr #0 {
 entry:
   %or = or i32 %b, %a
-; CHECK: w{{[0-9]+}} |= w{{[0-9]+}}
+; CHECK: or32 w{{[0-9]+}}, w{{[0-9]+}}
   ret i32 %or
 }
 
@@ -206,7 +206,7 @@ entry:
 define dso_local i32 @or_i(i32 %a) local_unnamed_addr #0 {
 entry:
   %or = or i32 %a, 255
-; CHECK: w{{[0-9]+}} |= 255
+; CHECK: or32 w{{[0-9]+}}, 255
   ret i32 %or
 }
 
@@ -214,7 +214,7 @@ entry:
 define dso_local i32 @xor(i32 %a, i32 %b) local_unnamed_addr #0 {
 entry:
   %xor = xor i32 %b, %a
-; CHECK: w{{[0-9]+}} ^= w{{[0-9]+}}
+; CHECK: xor32 w{{[0-9]+}}, w{{[0-9]+}}
   ret i32 %xor
 }
 
@@ -222,7 +222,7 @@ entry:
 define dso_local i32 @xor_i(i32 %a) local_unnamed_addr #0 {
 entry:
   %xor = xor i32 %a, 4095
-; CHECK: w{{[0-9]+}} ^= 4095
+; CHECK: xor32 w{{[0-9]+}}, 4095
   ret i32 %xor
 }
 
@@ -230,7 +230,7 @@ entry:
 define dso_local i32 @and(i32 %a, i32 %b) local_unnamed_addr #0 {
 entry:
   %and = and i32 %b, %a
-; CHECK: w{{[0-9]+}} &= w{{[0-9]+}}
+; CHECK: and32 w{{[0-9]+}}, w{{[0-9]+}}
   ret i32 %and
 }
 
@@ -238,7 +238,7 @@ entry:
 define dso_local i32 @and_i(i32 %a) local_unnamed_addr #0 {
 entry:
   %and = and i32 %a, 65535
-; CHECK: w{{[0-9]+}} &= 65535
+; CHECK: and32 w{{[0-9]+}}, 65535
   ret i32 %and
 }
 
@@ -246,7 +246,7 @@ entry:
 define dso_local i32 @sll(i32 %a, i32 %b) local_unnamed_addr #0 {
 entry:
   %shl = shl i32 %a, %b
-; CHECK: w{{[0-9]+}} <<= w{{[0-9]+}}
+; CHECK: lsh32 w{{[0-9]+}}, w{{[0-9]+}}
   ret i32 %shl
 }
 
@@ -254,7 +254,7 @@ entry:
 define dso_local i32 @sll_i(i32 %a) local_unnamed_addr #0 {
 entry:
   %shl = shl i32 %a, 17
-; CHECK: w{{[0-9]+}} <<= 17
+; CHECK: lsh32 w{{[0-9]+}}, 17
   ret i32 %shl
 }
 
@@ -262,7 +262,7 @@ entry:
 define dso_local i32 @srl(i32 %a, i32 %b) local_unnamed_addr #0 {
 entry:
   %shr = lshr i32 %a, %b
-; CHECK: w{{[0-9]+}} >>= w{{[0-9]+}}
+; CHECK: rsh32 w{{[0-9]+}}, w{{[0-9]+}}
   ret i32 %shr
 }
 
@@ -270,7 +270,7 @@ entry:
 define dso_local i32 @srl_i(i32 %a, i32 %b) local_unnamed_addr #0 {
 entry:
   %shr = lshr i32 %a, 31
-; CHECK: w{{[0-9]+}} >>= 31
+; CHECK: rsh32 w{{[0-9]+}}, 31
   ret i32 %shr
 }
 
@@ -278,7 +278,7 @@ entry:
 define dso_local i32 @sra(i32 %a, i32 %b) local_unnamed_addr #0 {
 entry:
   %shr = ashr i32 %a, %b
-; CHECK: w{{[0-9]+}} s>>= w{{[0-9]+}}
+; CHECK: arsh32 w{{[0-9]+}}, w{{[0-9]+}}
   ret i32 %shr
 }
 
@@ -286,7 +286,7 @@ entry:
 define dso_local i32 @sra_i(i32 %a, i32 %b) local_unnamed_addr #0 {
 entry:
   %shr = ashr i32 %a, 7
-; CHECK: w{{[0-9]+}} s>>= 7
+; CHECK: arsh32 w{{[0-9]+}}, 7
   ret i32 %shr
 }
 
@@ -294,6 +294,6 @@ entry:
 define dso_local i32 @neg(i32 %a) local_unnamed_addr #0 {
 entry:
   %sub = sub nsw i32 0, %a
-; CHECK: w{{[0-9]+}} = -w{{[0-9]+}}
+; CHECK: mov32 w{{[0-9]+}}, w{{[0-9]+}}
   ret i32 %sub
 }

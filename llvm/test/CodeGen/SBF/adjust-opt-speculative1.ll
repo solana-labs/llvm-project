@@ -41,20 +41,20 @@ if.end:                                           ; preds = %if.then, %entry
   call void @llvm.lifetime.end.p0i8(i64 8, i8* %5) #3
   ret i8* %4
 }
-; CHECK-COMMON:  [[REG6:r[0-9]+]] = r1
+; CHECK-COMMON:  mov64 [[REG6:r[0-9]+]], r1
 ; CHECK-COMMON:  call foo
 
-; CHECK:         if r0 > 7 goto [[LABEL:.*]]
-; CHECK:         [[REG6]] += r0
+; CHECK:         jgt r0, 7, [[LABEL:.*]]
+; CHECK:         add64 [[REG6]], r0
 ; CHECK:         [[LABEL]]:
-; CHECK:         r0 = [[REG6]]
+; CHECK:         mov64 r0, [[REG6]]
 
-; CHECK-DISABLE: [[REG1:r[0-9]+]] = 8
-; CHECK-DISABLE: if [[REG1]] > r0 goto [[LABEL:.*]]
-; CHECK-DISABLE: r0 = 0
+; CHECK-DISABLE: mov64 [[REG1:r[0-9]+]], 8
+; CHECK-DISABLE: jgt [[REG1]], r0, [[LABEL:.*]]
+; CHECK-DISABLE: mov64 r0, 0
 ; CHECK-DISABLE: [[LABEL]]:
-; CHECK-DISABLE: [[REG6]] += r0
-; CHECK-DISABLE: r0 = [[REG6]]
+; CHECK-DISABLE: add64 [[REG6]], r0
+; CHECK-DISABLE: mov64 r0, [[REG6]]
 
 ; CHECK-COMMON:  exit
 

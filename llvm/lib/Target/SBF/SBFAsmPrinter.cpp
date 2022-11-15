@@ -34,6 +34,8 @@ using namespace llvm;
 
 #define DEBUG_TYPE "asm-printer"
 
+extern cl::opt<unsigned> SBFAsmWriterVariant;
+
 namespace {
 class SBFAsmPrinter : public AsmPrinter {
 public:
@@ -132,10 +134,15 @@ bool SBFAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
   if (ExtraCode)
     return true; // Unknown modifier.
 
+  if (SBFAsmWriterVariant == 1)
+    O << "(";
+  O << SBFInstPrinter::getRegisterName(BaseMO.getReg());
   if (Offset < 0)
-    O << "(" << SBFInstPrinter::getRegisterName(BaseMO.getReg()) << " - " << -Offset << ")";
+    O << " - " << -Offset;
   else
-    O << "(" << SBFInstPrinter::getRegisterName(BaseMO.getReg()) << " + " << Offset << ")";
+    O << " + " << Offset;
+  if (SBFAsmWriterVariant == 1)
+    O << ")";
 
   return false;
 }
