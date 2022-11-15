@@ -22,11 +22,11 @@ start:
   ret void
 }
 
-; CHECK: *(u64 *)(r1 + 24) = r4
-; CHECK: *(u64 *)(r1 + 16) = r4
-; CHECK: *(u64 *)(r1 + 8) = r4
-; CHECK: *(u64 *)(r1 + 0) = r2
-; CHECK: *(u8 *)(r1 + 32) = r3
+; CHECK: stxdw [r1 + 24], r4
+; CHECK: stxdw [r1 + 16], r4
+; CHECK: stxdw [r1 + 8], r4
+; CHECK: stxdw [r1 + 0], r2
+; CHECK: stxb [r1 + 32], r3
 
 attributes #2 = { nofree noinline nounwind willreturn "target-cpu"="generic" }
 

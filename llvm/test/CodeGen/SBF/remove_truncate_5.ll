@@ -24,10 +24,10 @@ define dso_local void @test() local_unnamed_addr #0 {
   %2 = bitcast %struct.test_t* %1 to i8*
   call void @llvm.lifetime.start.p0i8(i64 16, i8* nonnull %2) #3
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* nonnull align 4 %2, i8* align 4 bitcast (%struct.test_t* @test.t to i8*), i64 16, i1 false)
-; CHECK: r1 = 0
-; CHECK: *(u64 *)(r10 - 8) = r1
-; CHECK: r1 = 5
-; CHECK: *(u64 *)(r10 - 16) = r1
+; CHECK: mov64 r1, 0
+; CHECK: stxdw [r10 - 8], r1
+; CHECK: mov64 r1, 5
+; CHECK: stxdw [r10 - 16], r1
   call void @foo(i8* nonnull %2) #3
 ; CHECK: call foo
   call void @llvm.lifetime.end.p0i8(i64 16, i8* nonnull %2) #3

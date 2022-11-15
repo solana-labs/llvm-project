@@ -21,6 +21,6 @@ entry:
 }
 ; CHECK-LABEL: section .data
 ; CHECK-LABEL: g
-; CHECK:       *(u64 *)(r10 - 16) = r1
+; CHECK:       stxdw [r10 - 16], r1
 ; CHECK-LABEL: h
 ; CHECK:       <unknown>

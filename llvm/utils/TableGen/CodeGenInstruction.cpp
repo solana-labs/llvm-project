@@ -486,6 +486,14 @@ FlattenAsmStringVariants(StringRef Cur, unsigned Variant) {
 
     ++VariantsStart; // Skip the '{'.
 
+    char VariantSeparator = '|';
+    // Check for a separator override "{?x?" where x is the new separator.
+    if ((Cur.size() - VariantsStart > 3) &&
+        Cur[VariantsStart] == '?' && Cur[VariantsStart+2] == '?') {
+      VariantSeparator = Cur[VariantsStart+1];
+      VariantsStart += 3;
+    }
+
     // Scan to the end of the variants string.
     size_t VariantsEnd = VariantsStart;
     unsigned NestedBraces = 1;
@@ -500,9 +508,8 @@ FlattenAsmStringVariants(StringRef Cur, unsigned Variant) {
     // Select the Nth variant (or empty).
     StringRef Selection = Cur.slice(VariantsStart, VariantsEnd);
     for (unsigned i = 0; i != Variant; ++i)
-      Selection = Selection.split('|').second;
-    Res += Selection.split('|').first;
-
+      Selection = Selection.split(VariantSeparator).second;
+    Res += Selection.split(VariantSeparator).first;
     assert(VariantsEnd != Cur.size() &&
            "Unterminated variants in assembly string!");
     Cur = Cur.substr(VariantsEnd + 1);

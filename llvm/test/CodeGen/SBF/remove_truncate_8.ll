@@ -27,8 +27,8 @@ entry:
   %cmp = icmp ult i32 %0, %1
   %cmp2 = icmp slt i32 %0, 3
   %or.cond = and i1 %cmp2, %cmp
-; CHECK: r{{[0-9]+}} <<= 32
-; CHECK: r{{[0-9]+}} s>>= 32
+; CHECK: lsh64 r{{[0-9]+}}, 32
+; CHECK: arsh64 r{{[0-9]+}}, 32
   br i1 %or.cond, label %if.then3, label %if.end5
 
 if.then3:                                         ; preds = %entry

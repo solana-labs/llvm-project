@@ -8,8 +8,8 @@ define i16 @sccweqand(i16 %a, i16 %b) nounwind {
   ret i16 %t3
 }
 ; CHECK-LABEL: sccweqand:
-; CHECK-V1: if r1 == 0
-; CHECK-V2: if r1 == 0
+; CHECK-V1: jeq r1, 0
+; CHECK-V2: jeq r1, 0
 
 define i16 @sccwneand(i16 %a, i16 %b) nounwind {
   %t1 = and i16 %a, %b
@@ -18,8 +18,8 @@ define i16 @sccwneand(i16 %a, i16 %b) nounwind {
   ret i16 %t3
 }
 ; CHECK-LABEL: sccwneand:
-; CHECK-V1: if r1 != 0
-; CHECK-V2: if r1 != 0
+; CHECK-V1: jne r1, 0
+; CHECK-V2: jne r1, 0
 
 define i16 @sccwne(i16 %a, i16 %b) nounwind {
   %t1 = icmp ne i16 %a, %b
@@ -27,8 +27,8 @@ define i16 @sccwne(i16 %a, i16 %b) nounwind {
   ret i16 %t2
 }
 ; CHECK-LABEL:sccwne:
-; CHECK-V1: if r1 != r2
-; CHECK-V2: if r1 != r2
+; CHECK-V1: jne r1, r2
+; CHECK-V2: jne r1, r2
 
 define i16 @sccweq(i16 %a, i16 %b) nounwind {
   %t1 = icmp eq i16 %a, %b
@@ -36,8 +36,8 @@ define i16 @sccweq(i16 %a, i16 %b) nounwind {
   ret i16 %t2
 }
 ; CHECK-LABEL:sccweq:
-; CHECK-V1: if r1 == r2
-; CHECK-V2: if r1 == r2
+; CHECK-V1: jeq r1, r2
+; CHECK-V2: jeq r1, r2
 
 define i16 @sccwugt(i16 %a, i16 %b) nounwind {
   %t1 = icmp ugt i16 %a, %b
@@ -45,8 +45,8 @@ define i16 @sccwugt(i16 %a, i16 %b) nounwind {
   ret i16 %t2
 }
 ; CHECK-LABEL:sccwugt:
-; CHECK-V1: if r1 > r2
-; CHECK-V2: if r1 > r2
+; CHECK-V1: jgt r1, r2
+; CHECK-V2: jgt r1, r2
 
 define i16 @sccwuge(i16 %a, i16 %b) nounwind {
   %t1 = icmp uge i16 %a, %b
@@ -54,8 +54,8 @@ define i16 @sccwuge(i16 %a, i16 %b) nounwind {
   ret i16 %t2
 }
 ; CHECK-LABEL:sccwuge:
-; CHECK-V1: if r1 >= r2
-; CHECK-V2: if r1 >= r2
+; CHECK-V1: jge r1, r2
+; CHECK-V2: jge r1, r2
 
 define i16 @sccwult(i16 %a, i16 %b) nounwind {
   %t1 = icmp ult i16 %a, %b
@@ -63,8 +63,8 @@ define i16 @sccwult(i16 %a, i16 %b) nounwind {
   ret i16 %t2
 }
 ; CHECK-LABEL:sccwult:
-; CHECK-V1: if r2 > r1
-; CHECK-V2: if r1 < r2
+; CHECK-V1: jgt r2, r1
+; CHECK-V2: jlt r1, r2
 
 define i16 @sccwule(i16 %a, i16 %b) nounwind {
   %t1 = icmp ule i16 %a, %b
@@ -72,8 +72,8 @@ define i16 @sccwule(i16 %a, i16 %b) nounwind {
   ret i16 %t2
 }
 ; CHECK-LABEL:sccwule:
-; CHECK-V1: if r2 >= r1
-; CHECK-V2: if r1 <= r2
+; CHECK-V1: jge r2, r1
+; CHECK-V2: jle r1, r2
 
 define i16 @sccwsgt(i16 %a, i16 %b) nounwind {
   %t1 = icmp sgt i16 %a, %b
@@ -81,8 +81,8 @@ define i16 @sccwsgt(i16 %a, i16 %b) nounwind {
   ret i16 %t2
 }
 ; CHECK-LABEL:sccwsgt:
-; CHECK-V1: if r1 s> r2
-; CHECK-V2: if r1 s> r2
+; CHECK-V1: jsgt r1, r2
+; CHECK-V2: jsgt r1, r2
 
 define i16 @sccwsge(i16 %a, i16 %b) nounwind {
   %t1 = icmp sge i16 %a, %b
@@ -90,8 +90,8 @@ define i16 @sccwsge(i16 %a, i16 %b) nounwind {
   ret i16 %t2
 }
 ; CHECK-LABEL:sccwsge:
-; CHECK-V1: if r1 s>= r2
-; CHECK-V2: if r1 s>= r2
+; CHECK-V1: jsge r1, r2
+; CHECK-V2: jsge r1, r2
 
 define i16 @sccwslt(i16 %a, i16 %b) nounwind {
   %t1 = icmp slt i16 %a, %b
@@ -99,8 +99,8 @@ define i16 @sccwslt(i16 %a, i16 %b) nounwind {
   ret i16 %t2
 }
 ; CHECK-LABEL:sccwslt:
-; CHECK-V1: if r2 s> r1
-; CHECK-V2: if r1 s< r2
+; CHECK-V1: jsgt r2, r1
+; CHECK-V2: jslt r1, r2
 
 define i16 @sccwsle(i16 %a, i16 %b) nounwind {
   %t1 = icmp sle i16 %a, %b
@@ -108,5 +108,5 @@ define i16 @sccwsle(i16 %a, i16 %b) nounwind {
   ret i16 %t2
 }
 ; CHECK-LABEL:sccwsle:
-; CHECK-V1: if r2 s>= r1
-; CHECK-V2: if r1 s<= r2
+; CHECK-V1: jsge r2, r1
+; CHECK-V2: jsle r1, r2

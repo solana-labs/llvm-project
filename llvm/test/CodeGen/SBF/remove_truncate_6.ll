@@ -42,8 +42,8 @@ for.body:                                         ; preds = %for.body, %for.body
   %e.09 = phi i16 [ %0, %for.body.preheader ], [ %neg, %for.body ]
   %conv = zext i16 %e.09 to i64
   %arrayidx = getelementptr inbounds i64, i64* %b, i64 %indvars.iv
-; CHECK: r{{[0-9]+}} &= 65535
-; CHECK-32: r{{[0-9]+}} &= 65535
+; CHECK: and64 r{{[0-9]+}}, 65535
+; CHECK-32: and64 r{{[0-9]+}}, 65535
   store i64 %conv, i64* %arrayidx, align 8
   %neg = xor i16 %e.09, -1
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
@@ -70,8 +70,8 @@ for.body:                                         ; preds = %for.body, %for.body
   %e.09 = phi i16 [ %0, %for.body.preheader ], [ %neg, %for.body ]
   %conv = zext i16 %e.09 to i32
   %arrayidx = getelementptr inbounds i32, i32* %b, i64 %indvars.iv
-; CHECK: r{{[0-9]+}} &= 65535
-; CHECK-32: w{{[0-9]+}} &= 65535
+; CHECK: and64 r{{[0-9]+}}, 65535
+; CHECK-32: and32 w{{[0-9]+}}, 65535
   store i32 %conv, i32* %arrayidx, align 4
   %neg = xor i16 %e.09, -1
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1

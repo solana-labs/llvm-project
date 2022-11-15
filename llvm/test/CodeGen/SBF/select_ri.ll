@@ -18,9 +18,9 @@ entry:
   %tobool = icmp eq i32 %0, 0
   %1 = load i32, i32* @c, align 4
   %. = select i1 %tobool, i32 0, i32 %1
-; CHECK:  r1 = b
-; CHECK:  r1 = *(u32 *)(r1 + 0)
-; CHECK:  if r1 == 0 goto
+; CHECK:  lddw r1, b
+; CHECK:  ldxw r1, [r1 + 0]
+; CHECK:  jeq r1, 0,
   ret i32 %.
 }
 
@@ -32,7 +32,7 @@ define i32 @foo(i64*) local_unnamed_addr #0 {
   %3 = load i64, i64* %0, align 8
   %4 = add i64 %3, %2
   %5 = icmp ne i64 %4, 8589934591
-; CHECK:  r{{[0-9]+}} = 8589934591 ll
+; CHECK: lddw r{{[0-9]+}}, 8589934591
   %6 = sext i1 %5 to i32
   ret i32 %6
 }
@@ -57,7 +57,7 @@ define i32 @test2() local_unnamed_addr #0 {
 entry:
   %0 = load i32, i32* @m, align 4
   %cmp = icmp slt i32 %0, 6
-; CHECK:  if r{{[0-9]+}} s{{<|>}} 6 goto
+; CHECK:  {{jslt|jsgt}} r{{[0-9]+}}, 6,
   %1 = load i32, i32* @n, align 4
   %spec.select = select i1 %cmp, i32 %1, i32 %0
   ret i32 %spec.select

@@ -1,6 +1,8 @@
 # RUN: llvm-mc -triple sbf -filetype=obj -o %t %s
-# RUN: llvm-objdump --mattr=+alu32 -d -r %t | FileCheck --check-prefix=CHECK-32 %s
-# RUN: llvm-objdump -d -r %t | FileCheck %s
+# RUN: llvm-objdump --output-asm-variant=1 --mattr=+alu32 -d -r %t | FileCheck --check-prefix=CHECK-32 %s
+# RUN: llvm-objdump --output-asm-variant=1 -d -r %t | FileCheck %s
+
+.syntax_old
 
 // ======== BPF_LDX Class ========
   w5 = *(u8 *)(r0 + 0)   // BPF_LDX | BPF_B
