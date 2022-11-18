@@ -22,6 +22,7 @@
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Support/LineIterator.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 
 using namespace llvm;
@@ -909,7 +910,7 @@ void BTFDebug::emitBTFSection() {
   MCContext &Ctx = OS.getContext();
   MCSectionELF *Sec = Ctx.getELFSection(".BTF", ELF::SHT_PROGBITS, 0);
   Sec->setAlignment(Align(4));
-  OS.SwitchSection(Sec);
+  OS.switchSection(Sec);
 
   // Emit header.
   emitCommonHeader();
@@ -949,7 +950,7 @@ void BTFDebug::emitBTFExtSection() {
   MCContext &Ctx = OS.getContext();
   MCSectionELF *Sec = Ctx.getELFSection(".BTF.ext", ELF::SHT_PROGBITS, 0);
   Sec->setAlignment(Align(4));
-  OS.SwitchSection(Sec);
+  OS.switchSection(Sec);
 
   // Emit header.
   emitCommonHeader();
