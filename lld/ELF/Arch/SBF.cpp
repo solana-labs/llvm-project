@@ -120,7 +120,7 @@ uint32_t SBF::calcEFlags() const {
 
   // Ensure that all the object files were compiled with the same flags, as
   // different flags indicate different ABIs.
-  for (InputFile *f : objectFiles) {
+  for (InputFile *f : ctx->objectFiles) {
     uint32_t flags = getEFlags(f);
     if (ret == 0) {
       ret = flags;
