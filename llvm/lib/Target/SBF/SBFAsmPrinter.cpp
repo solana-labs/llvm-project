@@ -148,6 +148,9 @@ bool SBFAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 }
 
 void SBFAsmPrinter::emitInstruction(const MachineInstr *MI) {
+  SBF_MC::verifyInstructionPredicates(MI->getOpcode(),
+                                      getSubtargetInfo().getFeatureBits());
+
   MCInst TmpInst;
 
   if (!BTF || !BTF->InstLower(MI, TmpInst)) {
