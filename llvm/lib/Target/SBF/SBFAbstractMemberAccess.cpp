@@ -148,6 +148,13 @@ private:
   // The base call is not an input of any other preserve_*
   // intrinsics.
   std::map<CallInst *, CallInfo> BaseAICalls;
+  // A map to hold <AnonRecord, TypeDef> relationships
+  std::map<DICompositeType *, DIDerivedType *> AnonRecords;
+
+  void CheckAnonRecordType(DIDerivedType *ParentTy, DIType *Ty);
+  void CheckCompositeType(DIDerivedType *ParentTy, DICompositeType *CTy);
+  void CheckDerivedType(DIDerivedType *ParentTy, DIDerivedType *DTy);
+  void ResetMetadata(struct CallInfo &CInfo);
 
   bool doTransformation(Function &F);
 
@@ -220,8 +227,78 @@ bool SBFAbstractMemberAccess::run(Function &F) {
   if (M->debug_compile_units().empty())
     return false;
 
+  // For each argument/return/local_variable type, trace the type
+  // pattern like '[derived_type]* [composite_type]' to check
+  // and remember (anon record -> typedef) relations where the
+  // anon record is defined as
+  //   typedef [const/volatile/restrict]* [anon record]
+  DISubprogram *SP = F.getSubprogram();
+  if (SP && SP->isDefinition()) {
+    for (DIType *Ty: SP->getType()->getTypeArray())
+      CheckAnonRecordType(nullptr, Ty);
+    for (const DINode *DN : SP->getRetainedNodes()) {
+      if (const auto *DV = dyn_cast<DILocalVariable>(DN))
+        CheckAnonRecordType(nullptr, DV->getType());
+    }
+  }
+
   DL = &M->getDataLayout();
   return doTransformation(F);
+}
+
+void SBFAbstractMemberAccess::ResetMetadata(struct CallInfo &CInfo) {
+  if (auto Ty = dyn_cast<DICompositeType>(CInfo.Metadata)) {
+    if (AnonRecords.find(Ty) != AnonRecords.end()) {
+      if (AnonRecords[Ty] != nullptr)
+        CInfo.Metadata = AnonRecords[Ty];
+    }
+  }
+}
+
+void SBFAbstractMemberAccess::CheckCompositeType(DIDerivedType *ParentTy,
+                                                 DICompositeType *CTy) {
+  if (!CTy->getName().empty() || !ParentTy ||
+      ParentTy->getTag() != dwarf::DW_TAG_typedef)
+    return;
+
+  if (AnonRecords.find(CTy) == AnonRecords.end()) {
+    AnonRecords[CTy] = ParentTy;
+    return;
+  }
+
+  // Two or more typedef's may point to the same anon record.
+  // If this is the case, set the typedef DIType to be nullptr
+  // to indicate the duplication case.
+  DIDerivedType *CurrTy = AnonRecords[CTy];
+  if (CurrTy == ParentTy)
+    return;
+  AnonRecords[CTy] = nullptr;
+}
+
+void SBFAbstractMemberAccess::CheckDerivedType(DIDerivedType *ParentTy,
+                                               DIDerivedType *DTy) {
+  DIType *BaseType = DTy->getBaseType();
+  if (!BaseType)
+    return;
+
+  unsigned Tag = DTy->getTag();
+  if (Tag == dwarf::DW_TAG_pointer_type)
+    CheckAnonRecordType(nullptr, BaseType);
+  else if (Tag == dwarf::DW_TAG_typedef)
+    CheckAnonRecordType(DTy, BaseType);
+  else
+    CheckAnonRecordType(ParentTy, BaseType);
+}
+
+void SBFAbstractMemberAccess::CheckAnonRecordType(DIDerivedType *ParentTy,
+                                                  DIType *Ty) {
+  if (!Ty)
+    return;
+
+  if (auto *CTy = dyn_cast<DICompositeType>(Ty))
+    return CheckCompositeType(ParentTy, CTy);
+  else if (auto *DTy = dyn_cast<DIDerivedType>(Ty))
+    return CheckDerivedType(ParentTy, DTy);
 }
 
 static bool SkipDIDerivedTag(unsigned Tag, bool skipTypedef) {
@@ -297,10 +374,9 @@ bool SBFAbstractMemberAccess::IsPreserveDIAccessIndexCall(const CallInst *Call,
     CInfo.Metadata = Call->getMetadata(LLVMContext::MD_preserve_access_index);
     if (!CInfo.Metadata)
       report_fatal_error("Missing metadata for llvm.preserve.union.access.index intrinsic");
+    ResetMetadata(CInfo);
     CInfo.AccessIndex = getConstant(Call->getArgOperand(1));
     CInfo.Base = Call->getArgOperand(0);
-    CInfo.RecordAlignment =
-        DL->getABITypeAlign(CInfo.Base->getType()->getPointerElementType());
     return true;
   }
   if (GV->getName().startswith("llvm.preserve.struct.access.index")) {
@@ -308,6 +384,7 @@ bool SBFAbstractMemberAccess::IsPreserveDIAccessIndexCall(const CallInst *Call,
     CInfo.Metadata = Call->getMetadata(LLVMContext::MD_preserve_access_index);
     if (!CInfo.Metadata)
       report_fatal_error("Missing metadata for llvm.preserve.struct.access.index intrinsic");
+    ResetMetadata(CInfo);
     CInfo.AccessIndex = getConstant(Call->getArgOperand(2));
     CInfo.Base = Call->getArgOperand(0);
     CInfo.RecordAlignment = DL->getABITypeAlign(getBaseElementType(Call));

@@ -53,12 +53,11 @@ static std::string computeDataLayout(const Triple &TT, StringRef FS) {
   // TOOD: jle; specialize this (and elsewhere) to Solana-only once the new
   // back-end is integrated; e.g. we won't need IsSolana, etc.
   assert(TT.getArch() == Triple::sbf && "expected Triple::sbf");
-  bool IsSolana = true;
   return "e-m:e-p:64:64-i64:64-n32:64-S128";
 }
 
 static Reloc::Model getEffectiveRelocModel(Optional<Reloc::Model> RM) {
-  return RM.getValueOr(Reloc::PIC_);
+  return RM.value_or(Reloc::PIC_);
 }
 
 SBFTargetMachine::SBFTargetMachine(const Target &T, const Triple &TT,
@@ -149,7 +148,7 @@ void SBFPassConfig::addIRPasses() {
 }
 
 TargetTransformInfo
-SBFTargetMachine::getTargetTransformInfo(const Function &F) {
+SBFTargetMachine::getTargetTransformInfo(const Function &F) const {
   return TargetTransformInfo(SBFTTIImpl(this, F));
 }
 
