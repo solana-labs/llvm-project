@@ -62,26 +62,18 @@ public:
   void encodeInstruction(const MCInst &MI, raw_ostream &OS,
                          SmallVectorImpl<MCFixup> &Fixups,
                          const MCSubtargetInfo &STI) const override;
-
-private:
-  FeatureBitset computeAvailableFeatures(const FeatureBitset &FB) const;
-  void
-  verifyInstructionPredicates(const MCInst &MI,
-                              const FeatureBitset &AvailableFeatures) const;
 };
 
 } // end anonymous namespace
 
 MCCodeEmitter *llvm::createSBFMCCodeEmitter(const MCInstrInfo &MCII,
-                                            const MCRegisterInfo &MRI,
                                             MCContext &Ctx) {
-  return new SBFMCCodeEmitter(MCII, MRI, true);
+  return new SBFMCCodeEmitter(MCII, *Ctx.getRegisterInfo(), true);
 }
 
 MCCodeEmitter *llvm::createSBFbeMCCodeEmitter(const MCInstrInfo &MCII,
-                                              const MCRegisterInfo &MRI,
                                               MCContext &Ctx) {
-  return new SBFMCCodeEmitter(MCII, MRI, false);
+  return new SBFMCCodeEmitter(MCII, *Ctx.getRegisterInfo(), false);
 }
 
 unsigned SBFMCCodeEmitter::getMachineOpValue(const MCInst &MI,
@@ -119,9 +111,6 @@ static uint8_t SwapBits(uint8_t Val)
 void SBFMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
                                          SmallVectorImpl<MCFixup> &Fixups,
                                          const MCSubtargetInfo &STI) const {
-  verifyInstructionPredicates(MI,
-                              computeAvailableFeatures(STI.getFeatureBits()));
-
   unsigned Opcode = MI.getOpcode();
   support::endian::Writer OSE(OS,
                               IsLittleEndian ? support::little : support::big);
@@ -176,5 +165,4 @@ uint64_t SBFMCCodeEmitter::getMemoryOpValue(const MCInst &MI, unsigned Op,
   return Encoding;
 }
 
-#define ENABLE_INSTR_PREDICATE_VERIFIER
 #include "SBFGenMCCodeEmitter.inc"

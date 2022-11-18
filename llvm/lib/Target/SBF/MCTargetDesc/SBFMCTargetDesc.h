@@ -14,6 +14,7 @@
 #define LLVM_LIB_TARGET_SBF_MCTARGETDESC_SBFMCTARGETDESC_H
 
 #include "llvm/Config/config.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/Support/DataTypes.h"
 
 #include <memory>
@@ -30,10 +31,8 @@ class MCTargetOptions;
 class Target;
 
 MCCodeEmitter *createSBFMCCodeEmitter(const MCInstrInfo &MCII,
-                                      const MCRegisterInfo &MRI,
                                       MCContext &Ctx);
 MCCodeEmitter *createSBFbeMCCodeEmitter(const MCInstrInfo &MCII,
-                                        const MCRegisterInfo &MRI,
                                         MCContext &Ctx);
 
 MCAsmBackend *createSBFAsmBackend(const Target &T, const MCSubtargetInfo &STI,
@@ -56,6 +55,7 @@ createSBFELFObjectWriter(uint8_t OSABI, bool isSolana, bool useRelocAbs64);
 // Defines symbolic names for the SBF instructions.
 //
 #define GET_INSTRINFO_ENUM
+#define GET_INSTRINFO_MC_HELPER_DECLS
 #include "SBFGenInstrInfo.inc"
 
 #define GET_SUBTARGETINFO_ENUM

@@ -16,6 +16,7 @@
 #include "TargetInfo/SBFTargetInfo.h"
 #include "llvm/BinaryFormat/ELF.h"
 #include "llvm/MC/MCAsmBackend.h"
+#include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCELFStreamer.h"
@@ -28,6 +29,7 @@
 #include "llvm/Support/Host.h"
 
 #define GET_INSTRINFO_MC_DESC
+#define ENABLE_INSTR_PREDICATE_VERIFIER
 #include "SBFGenInstrInfo.inc"
 
 #define GET_SUBTARGETINFO_MC_DESC
@@ -62,15 +64,12 @@ static MCStreamer *createSBFMCStreamer(const Triple &T, MCContext &Ctx,
                                        bool RelaxAll) {
   MCELFStreamer *S =
       new MCELFStreamer(Ctx, std::move(MAB), std::move(OW), std::move(Emitter));
-  MCAssembler &A = S->getAssembler();
   if (RelaxAll)
-    A.setRelaxAll(true);
-
+    S->getAssembler().setRelaxAll(true);
   const MCSubtargetInfo *STI = Ctx.getSubtargetInfo();
   if (STI->getCPU() == "sbfv2") {
-    A.setELFHeaderEFlags(llvm::ELF::EF_SBF_V2);
+    S->getAssembler().setELFHeaderEFlags(llvm::ELF::EF_SBF_V2);
   }
-
   return S;
 }
 
