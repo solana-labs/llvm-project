@@ -6,16 +6,18 @@ permissions:
 on:
   workflow_dispatch:
   push:
-    branches:
-      - 'release/**'
+    ignore-forks: true
+    #branches:
+    #  - 'release/**'
     paths:
       - 'lld/**'
       - '.github/workflows/lld-tests.yml'
       - '.github/workflows/llvm-project-tests.yml'
       - '!llvm/**'
   pull_request:
-    branches:
-      - 'release/**'
+    ignore-forks: true
+    #branches:
+    #  - 'release/**'
     paths:
       - 'lld/**'
       - '.github/workflows/lld-tests.yml'
@@ -30,7 +32,7 @@ concurrency:
 
 jobs:
   check_lld:
-    if: github.repository_owner == 'llvm'
+    #if: github.repository_owner == 'llvm'
     name: Test lld
     uses: ./.github/workflows/llvm-project-tests.yml
     with:
