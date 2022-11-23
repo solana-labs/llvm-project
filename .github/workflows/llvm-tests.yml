@@ -4,16 +4,16 @@ on:
   workflow_dispatch:
   push:
     ignore-forks: true
-    branches:
-      - 'release/**'
+    #branches:
+    #  - 'release/**'
     paths:
       - 'llvm/**'
       - '.github/workflows/llvm-tests.yml'
       - '.github/workflows/llvm-project-tests.yml'
   pull_request:
     ignore-forks: true
-    branches:
-      - 'release/**'
+    #branches:
+    #  - 'release/**'
     paths:
       - 'llvm/**'
       - '.github/workflows/llvm-tests.yml'
@@ -28,7 +28,7 @@ concurrency:
 
 jobs:
   check_all:
-    if: github.repository_owner == 'llvm'
+    #if: github.repository_owner == 'llvm'
     name: Test llvm,clang,libclc
     uses: ./.github/workflows/llvm-project-tests.yml
     with:
@@ -46,7 +46,7 @@ jobs:
       projects: clang;lldb
 
   check_lld:
-    if: github.repository_owner == 'llvm'
+    #if: github.repository_owner == 'llvm'
     name: Test lld
     uses: ./.github/workflows/llvm-project-tests.yml
     with:
@@ -54,7 +54,7 @@ jobs:
       projects: lld
 
   abi-dump-setup:
-    if: github.repository_owner == 'llvm'
+    #if: github.repository_owner == 'llvm'
     runs-on: ubuntu-latest
     outputs:
       BASELINE_REF: ${{ steps.vars.outputs.BASELINE_REF }}
@@ -85,7 +85,7 @@ jobs:
           fi
 
   abi-dump:
-    if: github.repository_owner == 'llvm'
+    #if: github.repository_owner == 'llvm'
     needs: abi-dump-setup
     runs-on: ubuntu-latest
     strategy:
@@ -156,7 +156,7 @@ jobs:
         path: llvm.symbols
 
   abi-compare:
-    if: github.repository_owner == 'llvm'
+    #if: github.repository_owner == 'llvm'
     runs-on: ubuntu-latest
     needs:
       - abi-dump-setup
