@@ -1,4 +1,4 @@
-; RUN: not --crash llc -march=sbf <%s 2>&1 | FileCheck --check-prefix=CHECK-SBF %s
+; RUN: not llc < %s -march=sbf 2>&1 | FileCheck --check-prefix=CHECK-SBF %s
 
 ; CHECK-SBF: LLVM ERROR: llvm.bpf.load.* intrinsics are not supported in SBF
 

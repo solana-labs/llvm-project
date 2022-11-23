@@ -34,8 +34,8 @@ entry:
 }
 ; CHECK-NOT:    ldxh w{{[0-9]+}},
 ; CHECK-NOT:    ldxb w{{[0-9]+}},
-; CHECK:        stxb [r10 - 2], w{{[0-9]+}}
 ; CHECK:        stxh [r10 - 4], w{{[0-9]+}}
+; CHECK:        stxb [r10 - 2], w{{[0-9]+}}
 
 ; Function Attrs: argmemonly nounwind willreturn
 declare void @llvm.lifetime.start.p0i8(i64 immarg, i8* nocapture)
