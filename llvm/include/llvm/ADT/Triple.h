@@ -178,7 +178,7 @@ public:
     SUSE,
     OpenEmbedded,
     Solana,
-    LastVendorType = OpenEmbedded
+    LastVendorType = Solana
   };
   enum OSType {
     UnknownOS,
@@ -681,6 +681,11 @@ public:
   /// Tests whether the OS uses the XCOFF binary format.
   bool isOSBinFormatXCOFF() const {
     return getObjectFormat() == Triple::XCOFF;
+  }
+
+  /// Tests whether the OS is Solana.
+  bool isOSSolana() const {
+    return getOS() == Triple::SolanaOS;
   }
 
   /// Tests whether the target is the PS4 platform.

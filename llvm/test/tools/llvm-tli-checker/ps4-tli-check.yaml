@@ -1,4 +1,3 @@
-# XFAIL: *
 # REQUIRES: x86-registered-target
 #
 ## This produces the object that matches expectations for PS4/PS5.
