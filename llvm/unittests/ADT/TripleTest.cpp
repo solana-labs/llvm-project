@@ -904,6 +904,8 @@ TEST(TripleTest, Normalization) {
   }
   for (int Vendor = FirstVendorType; Vendor <= Triple::LastVendorType;
        ++Vendor) {
+    if (Vendor == Triple::Solana)
+      continue;
     StringRef C[] = {InitialC[0], InitialC[1], InitialC[2], InitialC[3]};
     C[1] = Triple::getVendorTypeName(Triple::VendorType(Vendor));
     std::string E = Join(C[0], C[1], C[2]);
@@ -918,7 +920,7 @@ TEST(TripleTest, Normalization) {
     } while (std::next_permutation(std::begin(J), std::end(J)));
   }
   for (int OS = FirstOSType; OS <= Triple::LastOSType; ++OS) {
-    if (OS == Triple::Win32)
+    if (OS == Triple::Win32 || OS == Triple::SolanaOS)
       continue;
     StringRef C[] = {InitialC[0], InitialC[1], InitialC[2], InitialC[3]};
     C[2] = Triple::getOSTypeName(Triple::OSType(OS));
