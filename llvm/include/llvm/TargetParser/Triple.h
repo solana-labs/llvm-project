@@ -180,8 +180,8 @@ public:
     AMD,
     Mesa,
     SUSE,
-    OpenEmbedded,
     Solana,
+    OpenEmbedded,
     LastVendorType = OpenEmbedded
   };
   enum OSType {
@@ -711,6 +711,11 @@ public:
   /// Tests whether the OS uses the DXContainer binary format.
   bool isOSBinFormatDXContainer() const {
     return getObjectFormat() == Triple::DXContainer;
+  }
+
+  /// Tests whether the OS is Solana.
+  bool isOSSolana() const {
+    return getOS() == Triple::SolanaOS;
   }
 
   /// Tests whether the target is the PS4 platform.
