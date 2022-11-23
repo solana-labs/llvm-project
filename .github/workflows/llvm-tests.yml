@@ -6,15 +6,17 @@ permissions:
 on:
   workflow_dispatch:
   push:
-    branches:
-      - 'release/**'
+    ignore-forks: true
+    #branches:
+    #  - 'release/**'
     paths:
       - 'llvm/**'
       - '.github/workflows/llvm-tests.yml'
       - '.github/workflows/llvm-project-tests.yml'
   pull_request:
-    branches:
-      - 'release/**'
+    ignore-forks: true
+    #branches:
+    #  - 'release/**'
     paths:
       - 'llvm/**'
       - '.github/workflows/llvm-tests.yml'
@@ -27,16 +29,34 @@ concurrency:
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
 jobs:
-  check-all:
-    if: github.repository_owner == 'llvm'
-    name: Build and Test
+  check_all:
+    #if: github.repository_owner == 'llvm'
+    name: Test llvm,clang,libclc
     uses: ./.github/workflows/llvm-project-tests.yml
     with:
       build_target: check-all
-      projects: clang;lld;libclc;lldb
+      projects: clang;libclc
+
+  # These need to be separate from the check_all job, becuase there is not enough disk
+  # space to build all these projects on Windows.
+  build_lldb:
+    if: github.repository_owner == 'llvm'
+    name: Build lldb
+    uses: ./.github/workflows/llvm-project-tests.yml
+    with:
+      build_target: ''
+      projects: clang;lldb
+
+  check_lld:
+    #if: github.repository_owner == 'llvm'
+    name: Test lld
+    uses: ./.github/workflows/llvm-project-tests.yml
+    with:
+      build_target: check-lld
+      projects: lld
 
   abi-dump-setup:
-    if: github.repository_owner == 'llvm'
+    #if: github.repository_owner == 'llvm'
     runs-on: ubuntu-latest
     outputs:
       BASELINE_REF: ${{ steps.vars.outputs.BASELINE_REF }}
@@ -79,7 +99,7 @@ jobs:
           fi
 
   abi-dump:
-    if: github.repository_owner == 'llvm'
+    #if: github.repository_owner == 'llvm'
     needs: abi-dump-setup
     runs-on: ubuntu-latest
     strategy:
@@ -150,7 +170,7 @@ jobs:
           path: llvm.symbols
 
   abi-compare:
-    if: github.repository_owner == 'llvm'
+    #if: github.repository_owner == 'llvm'
     runs-on: ubuntu-latest
     needs:
       - abi-dump-setup
