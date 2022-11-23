@@ -39,10 +39,9 @@ entry:
 ; CHECK: stxb [r1 + 2], r2
 ; CHECK: mov64 r3, 0
 ; CHECK: stxh [r1 + 0], r3
-
 ; CHECK: lddw r1, g2
-; CHECK: stxdw [r1 + 0], r3
 ; CHECK: stxdw [r1 + 8], r2
+; CHECK: stxdw [r1 + 0], r3
 ; CHECK: stxw [r1 + 16], r3
 
     ret i32 0
