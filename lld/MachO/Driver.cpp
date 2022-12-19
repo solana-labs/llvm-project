@@ -1698,5 +1698,6 @@ bool macho::link(ArrayRef<const char *> argsArr, llvm::raw_ostream &stdoutOS,
 
     timeTraceProfilerCleanup();
   }
+  ctx->e.handleEarlyExit();
   return errorCount() == 0;
 }
