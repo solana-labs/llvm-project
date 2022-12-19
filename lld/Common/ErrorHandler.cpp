@@ -51,6 +51,12 @@ void ErrorHandler::flushStreams() {
   errs().flush();
 }
 
+void ErrorHandler::handleEarlyExit() {
+  if (!exitEarly) {
+    cleanupCallback();
+  }
+}
+
 ErrorHandler &lld::errorHandler() { return context().e; }
 
 void lld::error(const Twine &msg) { errorHandler().error(msg); }

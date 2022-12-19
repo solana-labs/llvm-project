@@ -117,6 +117,7 @@ public:
   raw_ostream &outs();
   raw_ostream &errs();
   void flushStreams();
+  void handleEarlyExit();
 
   std::unique_ptr<llvm::FileOutputBuffer> outputBuffer;
 
