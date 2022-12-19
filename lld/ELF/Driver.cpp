@@ -161,6 +161,7 @@ bool link(ArrayRef<const char *> args, llvm::raw_ostream &stdoutOS,
 
   elf::ctx.driver.linkerMain(args);
 
+  ctx->e.handleEarlyExit();
   return errorCount() == 0;
 }
 } // namespace elf
