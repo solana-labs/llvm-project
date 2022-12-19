@@ -1968,6 +1968,7 @@ bool link(ArrayRef<const char *> argsArr, llvm::raw_ostream &stdoutOS,
     for (const auto &warning : missingAutolinkWarnings)
       warn(warning);
 
+  ctx->e.handleEarlyExit();
   return errorCount() == 0;
 }
 } // namespace macho
