@@ -108,9 +108,9 @@ public:
     eBPF_abi_sbf_v2 = 0x00000020,
   };
 
-  enum BPFSubType {
-    eBPFSubType_sbf,
-    eBPFSubType_sbfv2,
+  enum SBFSubType {
+    eSBFSubType_sbf,
+    eSBFSubType_sbfv2,
   };
 
   enum RISCVSubType {

@@ -412,9 +412,9 @@ static const ArchDefinitionEntry g_elf_arch_entries[] = {
      ArchSpec::eRISCVSubType_riscv32, 0xFFFFFFFFu, 0xFFFFFFFFu}, // riscv32
     {ArchSpec::eCore_riscv64, llvm::ELF::EM_RISCV,
      ArchSpec::eRISCVSubType_riscv64, 0xFFFFFFFFu, 0xFFFFFFFFu}, // riscv64
-    {ArchSpec::eCore_sbf, llvm::ELF::EM_BPF, ArchSpec::eBPFSubType_sbf,
+    {ArchSpec::eCore_sbf, llvm::ELF::EM_SBF, ArchSpec::eSBFSubType_sbf,
      0xFFFFFFFFu, 0xFFFFFFFFu}, // sbf
-    {ArchSpec::eCore_sbfv2, llvm::ELF::EM_BPF, ArchSpec::eBPFSubType_sbfv2,
+    {ArchSpec::eCore_sbfv2, llvm::ELF::EM_SBF, ArchSpec::eSBFSubType_sbfv2,
      0xFFFFFFFFu, 0xFFFFFFFFu}, // sbfv2
 };
 
