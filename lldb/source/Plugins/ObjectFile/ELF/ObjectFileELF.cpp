@@ -245,10 +245,10 @@ bool ELFNote::Parse(const DataExtractor &data, lldb::offset_t *offset) {
   return true;
 }
 
-static uint32_t bpfVariantFromElfFlags(const elf::ELFHeader &header) {
+static uint32_t sbfVariantFromElfFlags(const elf::ELFHeader &header) {
   if (header.e_flags & llvm::ELF::EF_SBF_V2)
-      return ArchSpec::eBPFSubType_sbfv2;
-  return ArchSpec::eBPFSubType_sbf;
+      return ArchSpec::eSBFSubType_sbfv2;
+  return ArchSpec::eSBFSubType_sbf;
 }
 
 static uint32_t mipsVariantFromElfFlags (const elf::ELFHeader &header) {
@@ -331,8 +331,8 @@ static uint32_t subTypeFromElfHeader(const elf::ELFHeader &header) {
     return ppc64VariantFromElfFlags(header);
   else if (header.e_machine == llvm::ELF::EM_RISCV)
     return riscvVariantFromElfFlags(header);
-  else if (header.e_machine == llvm::ELF::EM_BPF)
-    return bpfVariantFromElfFlags(header);
+  else if (header.e_machine == llvm::ELF::EM_SBF)
+    return sbfVariantFromElfFlags(header);
 
   return LLDB_INVALID_CPUTYPE;
 }
