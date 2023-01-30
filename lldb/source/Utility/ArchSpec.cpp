@@ -430,9 +430,9 @@ static const ArchDefinitionEntry g_elf_arch_entries[] = {
     {ArchSpec::eCore_loongarch64, llvm::ELF::EM_LOONGARCH,
      ArchSpec::eLoongArchSubType_loongarch64, 0xFFFFFFFFu,
      0xFFFFFFFFu}, // loongarch64
-    {ArchSpec::eCore_sbf, llvm::ELF::EM_BPF, ArchSpec::eBPFSubType_sbf,
+    {ArchSpec::eCore_sbf, llvm::ELF::EM_SBF, ArchSpec::eSBFSubType_sbf,
      0xFFFFFFFFu, 0xFFFFFFFFu}, // sbf
-    {ArchSpec::eCore_sbfv2, llvm::ELF::EM_BPF, ArchSpec::eBPFSubType_sbfv2,
+    {ArchSpec::eCore_sbfv2, llvm::ELF::EM_SBF, ArchSpec::eSBFSubType_sbfv2,
      0xFFFFFFFFu, 0xFFFFFFFFu}, // sbfv2
 };
 
