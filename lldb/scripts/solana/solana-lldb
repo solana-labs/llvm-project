@@ -2,7 +2,8 @@
 
 set -e
 
-lldb=./lldb
+here=$(dirname "$0")
+lldb=${here}/lldb
 if ! command -v "$lldb" > /dev/null; then
     echo "LLDB not found!" >&2
     exit 1
@@ -18,10 +19,10 @@ EOF
     fi
 fi
 
-script_import_rust="command script import \"lldb_lookup.py\""
-script_import_solana="command script import \"solana_lookup.py\""
-commands_file_rust="lldb_commands"
-commands_file_solana="solana_commands"
+script_import_rust="command script import \"${here}/lldb_lookup.py\""
+script_import_solana="command script import \"${here}/solana_lookup.py\""
+commands_file_rust="${here}/lldb_commands"
+commands_file_solana="${here}/solana_commands"
 
 # Call LLDB with the commands added to the argument list
 "$lldb" --one-line-before-file "$script_import_rust" --one-line-before-file "$script_import_solana" --source-before-file "$commands_file_rust" --source-before-file "$commands_file_solana" "$@"
