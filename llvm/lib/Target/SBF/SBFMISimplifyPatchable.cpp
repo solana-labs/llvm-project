@@ -34,6 +34,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/Debug.h"
+#include <set>
 
 using namespace llvm;
 
@@ -52,9 +53,12 @@ struct SBFMISimplifyPatchable : public MachineFunctionPass {
   }
 
 private:
+  std::set<MachineInstr *> SkipInsts;
+
   // Initialize class variables.
   void initialize(MachineFunction &MFParm);
 
+  bool isLoadInst(unsigned Opcode);
   bool removeLD();
   void processCandidate(MachineRegisterInfo *MRI, MachineBasicBlock &MBB,
                         MachineInstr &MI, Register &SrcReg, Register &DstReg,
@@ -86,6 +90,12 @@ void SBFMISimplifyPatchable::initialize(MachineFunction &MFParm) {
   MF = &MFParm;
   TII = MF->getSubtarget<SBFSubtarget>().getInstrInfo();
   LLVM_DEBUG(dbgs() << "*** SBF simplify patchable insts pass ***\n\n");
+}
+
+bool SBFMISimplifyPatchable::isLoadInst(unsigned Opcode) {
+  return Opcode == SBF::LDD || Opcode == SBF::LDW || Opcode == SBF::LDH ||
+         Opcode == SBF::LDB || Opcode == SBF::LDW32 || Opcode == SBF::LDH32 ||
+         Opcode == SBF::LDB32;
 }
 
 void SBFMISimplifyPatchable::checkADDrr(MachineRegisterInfo *MRI,
@@ -229,6 +239,11 @@ void SBFMISimplifyPatchable::processDstReg(MachineRegisterInfo *MRI,
 void SBFMISimplifyPatchable::processInst(MachineRegisterInfo *MRI,
     MachineInstr *Inst, MachineOperand *RelocOp, const GlobalValue *GVal) {
   unsigned Opcode = Inst->getOpcode();
+  if (isLoadInst(Opcode)) {
+    SkipInsts.insert(Inst);
+    return;
+  }
+
   if (Opcode == SBF::ADD_rr)
     checkADDrr(MRI, RelocOp, GVal);
   else if (Opcode == SBF::SLL_rr)
@@ -253,10 +268,10 @@ bool SBFMISimplifyPatchable::removeLD() {
       }
 
       // Ensure the register format is LOAD <reg>, <reg>, 0
-      if (MI.getOpcode() != SBF::LDD && MI.getOpcode() != SBF::LDW &&
-          MI.getOpcode() != SBF::LDH && MI.getOpcode() != SBF::LDB &&
-          MI.getOpcode() != SBF::LDW32 && MI.getOpcode() != SBF::LDH32 &&
-          MI.getOpcode() != SBF::LDB32)
+      if (!isLoadInst(MI.getOpcode()))
+        continue;
+
+      if (SkipInsts.find(&MI) != SkipInsts.end())
         continue;
 
       if (!MI.getOperand(0).isReg() || !MI.getOperand(1).isReg())
