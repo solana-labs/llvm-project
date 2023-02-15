@@ -41,6 +41,4 @@ SBFMCAsmInfo::SBFMCAsmInfo(const Triple &TT, const MCTargetOptions &Options) {
   // section will be parsable, but with odd offsets and
   // line numbers, etc.
   CodePointerSize = 8;
-
-  UseIntegratedAssembler = false;
 }

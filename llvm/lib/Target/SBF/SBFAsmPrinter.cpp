@@ -35,6 +35,9 @@ using namespace llvm;
 #define DEBUG_TYPE "asm-printer"
 
 extern cl::opt<unsigned> SBFAsmWriterVariant;
+static cl::opt<bool> SBFEnableBTFEmission(
+    "sbf-enable-btf-emission", cl::Hidden, cl::init(false),
+    cl::desc("Enable BTF debuginfo sections to be emitted"));
 
 namespace {
 class SBFAsmPrinter : public AsmPrinter {
@@ -62,9 +65,10 @@ bool SBFAsmPrinter::doInitialization(Module &M) {
   AsmPrinter::doInitialization(M);
 
   // Only emit BTF when debuginfo available.
-  // Unsupported for Solana: https://github.com/solana-labs/llvm-project/issues/37
+  // Unsupported for Solana:
+  // https://github.com/solana-labs/llvm-project/issues/37
   if (MAI->doesSupportDebugInformation() && !M.debug_compile_units().empty() &&
-      !TM.getMCSubtargetInfo()->hasFeature(SBF::FeatureSolana) && TM.getTargetTriple().getArch() != Triple::sbf) {
+      SBFEnableBTFEmission) {
     BTF = new BTFX::BTFDebug(this);
     Handlers.push_back(HandlerInfo(std::unique_ptr<BTFX::BTFDebug>(BTF), "emit",
                                    "Debug Info Emission", "BTF",

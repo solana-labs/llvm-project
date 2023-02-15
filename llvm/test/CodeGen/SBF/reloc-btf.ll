@@ -1,4 +1,4 @@
-; RUN: llc -march=bpfel -filetype=obj < %s | llvm-objdump -r - | FileCheck --check-prefix=CHECK-RELOC %s
+; RUN: llc -sbf-enable-btf-emission -march=sbf -filetype=obj < %s | llvm-objdump -r - | FileCheck --check-prefix=CHECK-RELOC %s
 
 ; Function Attrs: norecurse nounwind readnone
 define dso_local i32 @test() local_unnamed_addr #0 !dbg !7 {
@@ -6,12 +6,12 @@ entry:
   ret i32 0, !dbg !11
 }
 
-; CHECK-RELOC: file format elf64-bpf
+; CHECK-RELOC: file format elf64-sbf
 ; CHECK-RELOC: RELOCATION RECORDS FOR [.debug_info]:
-; CHECK-RELOC: R_BPF_64_ABS32 .debug_abbrev
-; CHECK-RELOC: R_BPF_64_ABS64 .text
+; CHECK-RELOC: R_SBF_64_ABS32 .debug_abbrev
+; CHECK-RELOC: R_SBF_64_64
 ; CHECK-RELOC: RELOCATION RECORDS FOR [.BTF.ext]:
-; CHECK-RELOC: R_BPF_64_NODYLD32 .text
+; CHECK-RELOC: R_SBF_64_NODYLD32
 
 attributes #0 = { norecurse nounwind readnone "correctly-rounded-divide-sqrt-fp-math"="false" "disable-tail-calls"="false" "less-precise-fpmad"="false" "min-legal-vector-width"="0" "frame-pointer"="all" "no-infs-fp-math"="false" "no-jump-tables"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 
