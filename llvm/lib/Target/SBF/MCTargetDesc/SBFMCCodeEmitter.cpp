@@ -31,14 +31,13 @@ using namespace llvm;
 namespace {
 
 class SBFMCCodeEmitter : public MCCodeEmitter {
-  const MCInstrInfo &MCII;
   const MCRegisterInfo &MRI;
   bool IsLittleEndian;
 
 public:
-  SBFMCCodeEmitter(const MCInstrInfo &mcii, const MCRegisterInfo &mri,
+  SBFMCCodeEmitter(const MCInstrInfo &, const MCRegisterInfo &mri,
                    bool IsLittleEndian)
-      : MCII(mcii), MRI(mri), IsLittleEndian(IsLittleEndian) {}
+      : MRI(mri), IsLittleEndian(IsLittleEndian) {}
   SBFMCCodeEmitter(const SBFMCCodeEmitter &) = delete;
   void operator=(const SBFMCCodeEmitter &) = delete;
   ~SBFMCCodeEmitter() override = default;
