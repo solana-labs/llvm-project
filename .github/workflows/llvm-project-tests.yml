@@ -39,7 +39,7 @@ jobs:
           - windows-2019
           # We're using a specific version of macOS due to:
           # https://github.com/actions/virtual-environments/issues/5900
-          - macOS-11
+          - macOS-latest
     steps:
       - name: Setup Windows
         if: startsWith(matrix.os, 'windows')
@@ -54,6 +54,12 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+      - name: Install homebrew packages
+        if: startsWith(matrix.os, 'macOS')
+        run: |
+          brew rm swig
+          brew install swig@3
+          brew link swig@3
       - name: Install Ninja
         uses: llvm/actions/install-ninja@main
       # actions/checkout deletes any existing files in the new git directory,
@@ -76,7 +82,7 @@ jobs:
           key: sccache-${{ matrix.os }}
           variant: sccache
       - name: Build and Test
-        if: "!startsWith(matrix.os, 'windows') || inputs.projects != 'lld'"
+        if: "!startsWith(matrix.os, 'windows')"
         uses: llvm/actions/build-test-llvm-project@main
         env:
           # Workaround for https://github.com/actions/virtual-environments/issues/5900.
@@ -87,7 +93,7 @@ jobs:
           build_target:  '${{ inputs.build_target }}'
 
       - name: Build and Test libclc
-        if: "!startsWith(matrix.os, 'windows') && contains(inputs.projects, 'libclc')"
+        if: "!startsWith(matrix.os, 'windows') && !startsWith(matrix.os, 'macOS') && contains(inputs.projects, 'libclc')"
         run: |
           # Make sure all of LLVM libraries that llvm-config needs are built.
           ninja -C build
