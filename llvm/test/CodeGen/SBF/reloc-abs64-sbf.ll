@@ -1,4 +1,4 @@
-; RUN: llc -march=sbf -filetype=obj < %s | llvm-objdump -r - | tee -i /tmp/foo | FileCheck --check-prefix=CHECK-RELOC-SBF %s
+; RUN: llc -march=sbf -filetype=obj < %s | llvm-objdump -r - | tee -i /tmp/foo | FileCheck --check-prefix=CHECK-RELOC-BPF %s
 ; RUN: llc -march=sbf -mcpu=sbfv2 -filetype=obj < %s | llvm-objdump -r - | tee -i /tmp/foo | FileCheck --check-prefix=CHECK-RELOC-SBFv2 %s
 
 @.str = private unnamed_addr constant [25 x i8] c"reloc_64_relative_data.c\00", align 1
@@ -13,8 +13,8 @@ entry:
   ret i64 %0
 }
 
-; CHECK-RELOC-SBF:   RELOCATION RECORDS FOR [.data.rel.ro]:
-; CHECK-RELOC-SBF:   0000000000000000 R_SBF_64_64 .L.str
+; CHECK-RELOC-BPF:   RELOCATION RECORDS FOR [.data.rel.ro]:
+; CHECK-RELOC-BPF:   0000000000000000 R_BPF_64_64 .L.str
 
 ; CHECK-RELOC-SBFv2: RELOCATION RECORDS FOR [.data.rel.ro]:
 ; CHECK-RELOC-SBFv2: 0000000000000000 R_SBF_64_ABS64 .L.str

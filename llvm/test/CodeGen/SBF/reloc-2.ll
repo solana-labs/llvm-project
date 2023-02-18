@@ -1,4 +1,4 @@
-; RUN: llc -march=sbf -filetype=obj -o %t.el < %s
+; RUN: llc -march=sbf -mcpu=sbfv2 -filetype=obj -o %t.el < %s
 ; RUN: llvm-objdump -r %t.el | FileCheck --check-prefix=RELOC %s
 ; RUN: llvm-objdump -d --no-show-raw-insn %t.el | FileCheck --check-prefix=DUMP %s
 
@@ -50,7 +50,7 @@ entry:
 ; DUMP-NEXT:  <add>
 
 ; RELOC:      RELOCATION RECORDS FOR [.text]:
-; RELOC:      R_SBF_64_32            add 
+; RELOC:      R_SBF_64_32            add
 ; RELOC-NOT:  R_SBF_64_32            sec1
 ; RELOC-NOT:  R_SBF_64_32
 

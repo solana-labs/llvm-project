@@ -1,17 +1,17 @@
-# RUN: llvm-mc %s -triple=sbf-solana-solana --show-encoding \
+# RUN: llvm-mc %s -triple=sbf-solana-solana --mcpu=sbfv2 --show-encoding \
 # RUN:     | FileCheck %s --check-prefix=CHECK-ASM-NEW
-# RUN: llvm-mc %s -triple=sbf-solana-solana -filetype=obj \
+# RUN: llvm-mc %s -triple=sbf-solana-solana --mcpu=sbfv2 -filetype=obj \
 # RUN:     | llvm-objdump -d -r - \
 # RUN:     | FileCheck --check-prefix=CHECK-OBJ-NEW %s
-# RUN: llvm-mc %s -triple=sbf-solana-solana -filetype=obj \
+# RUN: llvm-mc %s -triple=sbf-solana-solana --mcpu=sbfv2 -filetype=obj \
 # RUN:     | llvm-objdump --output-asm-variant=1 -d -r - \
 # RUN:     | FileCheck --check-prefix=CHECK-OBJ-OLD %s
-# RUN: llvm-mc %s -triple=sbf-solana-solana --show-encoding \
+# RUN: llvm-mc %s -triple=sbf-solana-solana --mcpu=sbfv2 --show-encoding \
 # RUN:     | FileCheck %s --check-prefix=CHECK32-ASM-NEW
-# RUN: llvm-mc %s -triple=sbf-solana-solana -filetype=obj \
+# RUN: llvm-mc %s -triple=sbf-solana-solana --mcpu=sbfv2 -filetype=obj \
 # RUN:     | llvm-objdump --mattr=+alu32 -d -r - \
 # RUN:     | FileCheck --check-prefix=CHECK32-OBJ-NEW %s
-# RUN: llvm-mc %s -triple=sbf-solana-solana -filetype=obj \
+# RUN: llvm-mc %s -triple=sbf-solana-solana --mcpu=sbfv2 -filetype=obj \
 # RUN:     | llvm-objdump --mattr=+alu32 --output-asm-variant=1 -d -r - \
 # RUN:     | FileCheck --check-prefix=CHECK32-OBJ-OLD %s
 
@@ -124,10 +124,10 @@ stxw [r3 + 64], w4
 
 
 # XADDW (NoALU32).
-# CHECK-OBJ-NEW: stxxaddw [r8 + 4], r2 
+# CHECK-OBJ-NEW: stxxaddw [r8 + 4], r2
 # CHECK-OBJ-OLD: lock *(u32 *)(r8 + 4) += r2
 # CHECK-ASM-NEW: encoding: [0xc3,0x28,0x04,0x00,0x00,0x00,0x00,0x00]
-stxxaddw [r8 + 4], r2 
+stxxaddw [r8 + 4], r2
 
 
 
@@ -225,7 +225,7 @@ stxxchgw [r8 - 16], w0
 
 # CMPXCHGD, CMPXCHGW32
 # CHECK-OBJ-NEW: stxcmpxchgdw [r8 - 16], r5
-# CHECK-OBJ-OLD: r0 = cmpxchg_64(r8 - 16, r0, r5) 
+# CHECK-OBJ-OLD: r0 = cmpxchg_64(r8 - 16, r0, r5)
 # CHECK32-OBJ-NEW: stxcmpxchgw [r8 - 16], w5
 # CHECK32-OBJ-OLD: w0 = cmpxchg32_32(r8 - 16, w0, w5)
 # CHECK-ASM-NEW: encoding: [0xdb,0x58,0xf0,0xff,0xf1,0x00,0x00,0x00]
@@ -236,8 +236,8 @@ stxcmpxchgw [r8 - 16], w5
 
 
 # Obsolete ldabs/ldind for completeness.
-# CHECK-OBJ-NEW: ldabsb 64 
-# CHECK-OBJ-NEW: ldabsh 128 
+# CHECK-OBJ-NEW: ldabsb 64
+# CHECK-OBJ-NEW: ldabsh 128
 # CHECK-OBJ-NEW: ldabsw 0
 # CHECK-OBJ-NEW: ldindb r5
 # CHECK-OBJ-NEW: ldindh r9
@@ -254,8 +254,8 @@ stxcmpxchgw [r8 - 16], w5
 # CHECK-ASM-NEW: encoding: [0x50,0x50,0x00,0x00,0x00,0x00,0x00,0x00]
 # CHECK-ASM-NEW: encoding: [0x48,0x90,0x00,0x00,0x00,0x00,0x00,0x00]
 # CHECK-ASM-NEW: encoding: [0x40,0x70,0x00,0x00,0x00,0x00,0x00,0x00]
-ldabsb 64 
-ldabsh 128 
+ldabsb 64
+ldabsh 128
 ldabsw 0
 ldindb r5
 ldindh r9

@@ -1,4 +1,4 @@
-; RUN: llc -march=sbf -filetype=obj -o - %s | llvm-objdump -d - | FileCheck %s
+; RUN: llc -march=sbf -mcpu=sbfv2 -filetype=obj -o - %s | llvm-objdump -d - | FileCheck %s
 
 ; CHECK-LABEL: test_load_add_32
 ; CHECK: ldxw r3, [r1 + 0]

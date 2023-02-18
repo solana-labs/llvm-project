@@ -1,4 +1,4 @@
-# RUN: llvm-mc %s -filetype=obj -triple=sbf-solana-solana | llvm-readobj -h - \
+# RUN: llvm-mc %s -filetype=obj -triple=sbf-solana-solana --mcpu=sbfv2 | llvm-readobj -h - \
 # RUN:     | FileCheck %s
 
 # CHECK: Format: elf64-sbf
@@ -16,6 +16,7 @@
 # CHECK:   Type: Relocatable (0x1)
 # CHECK:   Machine: EM_SBF (0x107)
 # CHECK:   Version: 1
-# CHECK:   Flags [ (0x0)
+# CHECK:   Flags [ (0x20)
+# CHECK:     0x20
 # CHECK:   ]
 # CHECK: }
