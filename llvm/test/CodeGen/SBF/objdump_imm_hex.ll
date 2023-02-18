@@ -1,5 +1,5 @@
-; RUN: llc -march=sbf -filetype=obj -o - %s | llvm-objdump -d - | FileCheck --check-prefix=CHECK-DEC %s
-; RUN: llc -march=sbf -filetype=obj -o - %s | llvm-objdump -d --print-imm-hex - | FileCheck --check-prefix=CHECK-HEX %s
+; RUN: llc -march=sbf -mcpu=sbfv2 -filetype=obj -o - %s | llvm-objdump -d - | FileCheck --check-prefix=CHECK-DEC %s
+; RUN: llc -march=sbf -mcpu=sbfv2 -filetype=obj -o - %s | llvm-objdump -d --print-imm-hex - | FileCheck --check-prefix=CHECK-HEX %s
 
 ; Source Code:
 ; int gbl;
