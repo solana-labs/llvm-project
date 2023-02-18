@@ -1,4 +1,4 @@
-; RUN: llc -sbf-enable-btf-emission -march=sbf -filetype=obj < %s | llvm-objdump -r - | FileCheck --check-prefix=CHECK-RELOC %s
+; RUN: llc -sbf-enable-btf-emission -march=sbf -mcpu=sbfv2 -filetype=obj < %s | llvm-objdump -r - | FileCheck --check-prefix=CHECK-RELOC %s
 
 ; Function Attrs: norecurse nounwind readnone
 define dso_local i32 @test() local_unnamed_addr #0 !dbg !7 {
@@ -9,7 +9,7 @@ entry:
 ; CHECK-RELOC: file format elf64-sbf
 ; CHECK-RELOC: RELOCATION RECORDS FOR [.debug_info]:
 ; CHECK-RELOC: R_SBF_64_ABS32 .debug_abbrev
-; CHECK-RELOC: R_SBF_64_64
+; CHECK-RELOC: R_SBF_64_ABS64
 ; CHECK-RELOC: RELOCATION RECORDS FOR [.BTF.ext]:
 ; CHECK-RELOC: R_SBF_64_NODYLD32
 
