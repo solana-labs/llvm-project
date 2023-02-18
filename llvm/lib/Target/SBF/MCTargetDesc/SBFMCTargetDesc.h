@@ -43,7 +43,7 @@ MCAsmBackend *createSBFbeAsmBackend(const Target &T, const MCSubtargetInfo &STI,
                                     const MCTargetOptions &Options);
 
 std::unique_ptr<MCObjectTargetWriter>
-createSBFELFObjectWriter(uint8_t OSABI, bool isSolana, bool useRelocAbs64);
+createSBFELFObjectWriter(uint8_t OSABI, bool isSolana, bool useRelocAbs64, bool isSBFv2);
 } // namespace llvm
 
 // Defines symbolic names for SBF registers.  This defines a mapping from

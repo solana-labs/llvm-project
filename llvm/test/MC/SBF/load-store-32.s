@@ -1,4 +1,4 @@
-# RUN: llvm-mc -triple sbf -filetype=obj -o %t %s
+# RUN: llvm-mc -triple sbf --mcpu=sbfv2 -filetype=obj -o %t %s
 # RUN: llvm-objdump --output-asm-variant=1 --mattr=+alu32 -d -r %t | FileCheck --check-prefix=CHECK-32 %s
 # RUN: llvm-objdump --output-asm-variant=1 -d -r %t | FileCheck %s
 

@@ -1,9 +1,9 @@
-# RUN: llvm-mc %s -triple=sbf-solana-solana --show-encoding \
+# RUN: llvm-mc %s -triple=sbf-solana-solana --mcpu=sbfv2 --show-encoding \
 # RUN:     | FileCheck %s --check-prefix=CHECK-ASM-NEW
-# RUN: llvm-mc %s -triple=sbf-solana-solana -filetype=obj \
+# RUN: llvm-mc %s -triple=sbf-solana-solana --mcpu=sbfv2 -filetype=obj \
 # RUN:     | llvm-objdump -d -r - \
 # RUN:     | FileCheck --check-prefix=CHECK-OBJ-NEW %s
-# RUN: llvm-mc %s -triple=sbf-solana-solana -filetype=obj \
+# RUN: llvm-mc %s -triple=sbf-solana-solana --mcpu=sbfv2 -filetype=obj \
 # RUN:     | llvm-objdump --output-asm-variant=1 -d -r - \
 # RUN:     | FileCheck --check-prefix=CHECK-OBJ-OLD %s
 
@@ -152,16 +152,16 @@ jsge r3, 123, +8
 jslt r3, 123, +8
 jsle r3, 123, +8
 
-# CHECK-OBJ-NEW: jeq r5, -123, +8 
-# CHECK-OBJ-NEW: jne r5, -123, +8 
-# CHECK-OBJ-NEW: jgt r5, -123, +8 
-# CHECK-OBJ-NEW: jge r5, -123, +8 
-# CHECK-OBJ-NEW: jlt r5, -123, +8 
-# CHECK-OBJ-NEW: jle r5, -123, +8 
-# CHECK-OBJ-NEW: jsgt r5, -123, +8 
-# CHECK-OBJ-NEW: jsge r5, -123, +8 
-# CHECK-OBJ-NEW: jslt r5, -123, +8 
-# CHECK-OBJ-NEW: jsle r5, -123, +8 
+# CHECK-OBJ-NEW: jeq r5, -123, +8
+# CHECK-OBJ-NEW: jne r5, -123, +8
+# CHECK-OBJ-NEW: jgt r5, -123, +8
+# CHECK-OBJ-NEW: jge r5, -123, +8
+# CHECK-OBJ-NEW: jlt r5, -123, +8
+# CHECK-OBJ-NEW: jle r5, -123, +8
+# CHECK-OBJ-NEW: jsgt r5, -123, +8
+# CHECK-OBJ-NEW: jsge r5, -123, +8
+# CHECK-OBJ-NEW: jslt r5, -123, +8
+# CHECK-OBJ-NEW: jsle r5, -123, +8
 # CHECK-OBJ-OLD: if r5 == -123 goto +8
 # CHECK-OBJ-OLD: if r5 != -123 goto +8
 # CHECK-OBJ-OLD: if r5 > -123 goto +8
@@ -182,16 +182,16 @@ jsle r3, 123, +8
 # CHECK-ASM-NEW: encoding: [0x75,0x05,0x08,0x00,0x85,0xff,0xff,0xff]
 # CHECK-ASM-NEW: encoding: [0xc5,0x05,0x08,0x00,0x85,0xff,0xff,0xff]
 # CHECK-ASM-NEW: encoding: [0xd5,0x05,0x08,0x00,0x85,0xff,0xff,0xff]
-jeq r5, -123, +8 
-jne r5, -123, +8 
-jgt r5, -123, +8 
-jge r5, -123, +8 
-jlt r5, -123, +8 
-jle r5, -123, +8 
-jsgt r5, -123, +8 
-jsge r5, -123, +8 
-jslt r5, -123, +8 
-jsle r5, -123, +8 
+jeq r5, -123, +8
+jne r5, -123, +8
+jgt r5, -123, +8
+jge r5, -123, +8
+jlt r5, -123, +8
+jle r5, -123, +8
+jsgt r5, -123, +8
+jsge r5, -123, +8
+jslt r5, -123, +8
+jsle r5, -123, +8
 
 # CHECK-OBJ-NEW: jeq w6, w2, +8
 # CHECK-OBJ-NEW: jne w6, w2, +8
@@ -286,4 +286,3 @@ callx r4
 # CHECK-OBJ-OLD: exit
 # CHECK-ASM-NEW: encoding: [0x95,0x00,0x00,0x00,0x00,0x00,0x00,0x00]
 exit
-

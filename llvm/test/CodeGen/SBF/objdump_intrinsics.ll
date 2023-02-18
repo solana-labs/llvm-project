@@ -1,4 +1,4 @@
-; RUN: llc -march=sbf -filetype=obj -o - %s | llvm-objdump -d - | FileCheck --check-prefix=CHECK-EL %s
+; RUN: llc -march=sbf -mcpu=sbfv2 -filetype=obj -o - %s | llvm-objdump -d - | FileCheck --check-prefix=CHECK-EL %s
 
 define i32 @ld_pseudo() #0 {
 entry:

@@ -1,4 +1,4 @@
-; RUN: llc -sbf-enable-btf-emission -march=sbf -filetype=obj < %s | llvm-objdump -r - | FileCheck --check-prefix=CHECK-RELOC %s
+; RUN: llc -sbf-enable-btf-emission -march=sbf -mcpu=sbfv2 -filetype=obj < %s | llvm-objdump -r - | FileCheck --check-prefix=CHECK-RELOC %s
 
 ; source code:
 ;   int g __attribute__((section("ids"))) = 4;
