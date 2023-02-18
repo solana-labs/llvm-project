@@ -1,4 +1,4 @@
-; RUN: llc -march=sbf -filetype=obj -o %t.el < %s
+; RUN: llc -march=sbf -mcpu=sbfv2 -filetype=obj -o %t.el < %s
 ; RUN: llvm-readelf -r %t.el | FileCheck %s
 
 ; source code:
@@ -12,7 +12,7 @@
 @gbl = dso_local local_unnamed_addr global %struct.t { i8* bitcast (i32 ()* @g to i8*) }, align 8
 
 ; CHECK: '.rel.data'
-; CHECK: 0000000000000000 0000000200000001 R_SBF_64_64 0000000000000000 g
+; CHECK: 0000000000000000 0000000200000002 R_SBF_64_ABS64 0000000000000000 g
 
 ; Function Attrs: nofree norecurse nosync nounwind readnone willreturn mustprogress
 define dso_local i32 @g() #0 {

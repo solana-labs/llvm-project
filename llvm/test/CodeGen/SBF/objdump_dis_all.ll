@@ -1,4 +1,4 @@
-; RUN: llc -march=sbf -filetype=obj -o - %s | llvm-objdump -D - | FileCheck %s
+; RUN: llc -march=sbf -mcpu=sbfv2 -filetype=obj -o - %s | llvm-objdump -D - | FileCheck %s
 ;
 ; Source:
 ;   /* *(u64 *)(r10 - 16) = r1 */
