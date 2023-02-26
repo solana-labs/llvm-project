@@ -72,6 +72,12 @@ RelType SBF::getDynRel(RelType type) const {
 }
 
 int64_t SBF::getImplicitAddend(const uint8_t *buf, RelType type) const {
+  switch (type) {
+  case R_SBF_64_ABS32:
+    return SignExtend64<32>(read32le(buf));
+  default:
+    return 0;
+  }
   return 0;
 }
 
