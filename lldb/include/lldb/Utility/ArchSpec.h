@@ -233,6 +233,7 @@ public:
 
     eCore_wasm32,
 
+    eCore_bpf,
     eCore_sbf,
     eCore_sbfv2,
 
