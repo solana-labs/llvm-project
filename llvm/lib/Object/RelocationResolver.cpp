@@ -106,6 +106,7 @@ static uint64_t resolveAArch64(uint64_t Type, uint64_t Offset, uint64_t S,
 
 static bool supportsBPF(uint64_t Type) {
   switch (Type) {
+  case ELF::R_BPF_64_64:
   case ELF::R_BPF_64_ABS32:
   case ELF::R_BPF_64_ABS64:
     return true;
@@ -117,6 +118,8 @@ static bool supportsBPF(uint64_t Type) {
 static uint64_t resolveBPF(uint64_t Type, uint64_t Offset, uint64_t S,
                            uint64_t LocData, int64_t /*Addend*/) {
   switch (Type) {
+  case ELF::R_BPF_64_64:
+    return S + LocData;
   case ELF::R_BPF_64_ABS32:
     return (S + LocData) & 0xFFFFFFFF;
   case ELF::R_BPF_64_ABS64:
@@ -128,6 +131,7 @@ static uint64_t resolveBPF(uint64_t Type, uint64_t Offset, uint64_t S,
 
 static bool supportsSBF(uint64_t Type) {
   switch (Type) {
+  case ELF::R_SBF_64_64:
   case ELF::R_SBF_64_ABS32:
   case ELF::R_SBF_64_ABS64:
     return true;
@@ -139,6 +143,8 @@ static bool supportsSBF(uint64_t Type) {
 static uint64_t resolveSBF(uint64_t Type, uint64_t Offset, uint64_t S,
                            uint64_t LocData, int64_t /*Addend*/) {
   switch (Type) {
+  case ELF::R_SBF_64_64:
+    return S + LocData;
   case ELF::R_SBF_64_ABS32:
     return (S + LocData) & 0xFFFFFFFF;
   case ELF::R_SBF_64_ABS64:
