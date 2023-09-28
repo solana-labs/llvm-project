@@ -57,12 +57,6 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      - name: Install homebrew packages
-        if: startsWith(matrix.os, 'macOS')
-        run: |
-          brew rm swig
-          brew install swig@3
-          brew link swig@3
       - name: Install Ninja
         uses: llvm/actions/install-ninja@main
       # actions/checkout deletes any existing files in the new git directory,

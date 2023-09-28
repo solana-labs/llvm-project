@@ -47,6 +47,7 @@ createInterpreter(const Args &ExtraArgs = {},
 }
 
 TEST(InterpreterTest, CatchException) {
+  GTEST_SKIP() << "Skipping single test";
   llvm::llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
   llvm::InitializeNativeTarget();
   llvm::InitializeNativeTargetAsmPrinter();

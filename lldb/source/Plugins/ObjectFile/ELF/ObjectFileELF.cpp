@@ -349,7 +349,7 @@ static uint32_t subTypeFromElfHeader(const elf::ELFHeader &header) {
   else if (header.e_machine == llvm::ELF::EM_LOONGARCH)
     return loongarchVariantFromElfFlags(header);
   else if (header.e_machine == llvm::ELF::EM_BPF)
-    return bpfVariantFromElfFlags(header);
+    return sbfVariantFromElfFlags(header);
   else if (header.e_machine == llvm::ELF::EM_SBF)
     return sbfVariantFromElfFlags(header);
 

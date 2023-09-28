@@ -224,13 +224,13 @@ BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
 }
 
 bool BPFTargetLowering::allowsMisalignedMemoryAccesses(
-    EVT VT, unsigned, Align, MachineMemOperand::Flags, bool *Fast) const {
+    EVT VT, unsigned, Align, MachineMemOperand::Flags, unsigned *Fast) const {
   if (!VT.isSimple()) {
     return false;
   }
   bool isSolana = Subtarget->isSolana();
   if (isSolana && Fast) {
-    *Fast = true;
+    *Fast = 1;
   }
   return isSolana;
 }
@@ -835,7 +835,7 @@ SDValue BPFTargetLowering::LowerATOMICRMW(SDValue Op, SelectionDAG &DAG) const {
   // Load the current value
   SDValue Load =
       DAG.getExtLoad(ISD::EXTLOAD, DL, RetVT, Chain, Ptr, MachinePointerInfo(),
-                     PtrVT, AN->getAlignment());
+                     PtrVT, AN->getAlign());
   Chain = Load.getValue(1);
 
   // Most ops return the current value, except CMP_SWAP_WITH_SUCCESS see below

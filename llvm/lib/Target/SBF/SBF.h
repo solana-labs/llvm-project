@@ -12,11 +12,11 @@
 #include "MCTargetDesc/SBFMCTargetDesc.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Pass.h"
-#include "llvm/PassRegistry.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
 class SBFTargetMachine;
+class PassRegistry;
 
 ModulePass *createSBFAdjustOpt();
 ModulePass *createSBFCheckAndAdjustIR();
@@ -31,17 +31,17 @@ FunctionPass *createSBFMIPeepholeTruncElimPass();
 FunctionPass *createSBFMIPreEmitPeepholePass();
 FunctionPass *createSBFMIPreEmitCheckingPass();
 
+void initializeSBFAbstractMemberAccessLegacyPassPass(PassRegistry &);
 void initializeSBFAdjustOptPass(PassRegistry&);
 void initializeSBFCheckAndAdjustIRPass(PassRegistry&);
-
-void initializeSBFAbstractMemberAccessLegacyPassPass(PassRegistry &);
-void initializeSBFPreserveDITypePass(PassRegistry&);
-void initializeSBFIRPeepholePass(PassRegistry&);
-void initializeSBFMISimplifyPatchablePass(PassRegistry&);
+void initializeSBFDAGToDAGISelPass(PassRegistry &);
+void initializeSBFIRPeepholePass(PassRegistry &);
 void initializeSBFMIPeepholePass(PassRegistry&);
-void initializeSBFMIPeepholeTruncElimPass(PassRegistry&);
-void initializeSBFMIPreEmitPeepholePass(PassRegistry&);
+void initializeSBFMIPeepholeTruncElimPass(PassRegistry &);
 void initializeSBFMIPreEmitCheckingPass(PassRegistry&);
+void initializeSBFMIPreEmitPeepholePass(PassRegistry &);
+void initializeSBFMISimplifyPatchablePass(PassRegistry &);
+void initializeSBFPreserveDITypePass(PassRegistry &);
 
 class SBFAbstractMemberAccessPass
     : public PassInfoMixin<SBFAbstractMemberAccessPass> {
