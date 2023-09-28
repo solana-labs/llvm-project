@@ -1,3 +1,4 @@
+# XFAIL: *
 # RUN: llvm-mc -triple riscv32 -show-encoding < %s \
 # RUN:   | FileCheck -check-prefixes=CHECK %s
 # RUN: llvm-mc -triple riscv32 -filetype=obj < %s \

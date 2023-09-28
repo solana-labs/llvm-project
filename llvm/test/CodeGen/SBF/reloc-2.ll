@@ -43,7 +43,7 @@ entry:
 ; DUMP-NEXT:  <test>
 ; DUMP-NEXT:  mov64 r[[#]], r[[#]]
 ; DUMP-NEXT:  mov64 r[[#]], r[[#]]
-; DUMP-NEXT:  call -1
+; DUMP-NEXT:  call -0x1
 
 ; DUMP:       sec1:
 ; DUMP-EMPTY:
