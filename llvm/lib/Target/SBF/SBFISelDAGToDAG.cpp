@@ -34,6 +34,7 @@
 using namespace llvm;
 
 #define DEBUG_TYPE "sbf-isel"
+#define PASS_NAME "SBF DAG->DAG Pattern Instruction Selection"
 
 // Instruction Selector Implementation
 namespace {
@@ -45,12 +46,12 @@ class SBFDAGToDAGISel : public SelectionDAGISel {
   const SBFSubtarget *Subtarget;
 
 public:
-  explicit SBFDAGToDAGISel(SBFTargetMachine &TM)
-      : SelectionDAGISel(TM), Subtarget(nullptr) {}
+  static char ID;
 
-  StringRef getPassName() const override {
-    return "SBF DAG->DAG Pattern Instruction Selection";
-  }
+  SBFDAGToDAGISel() = delete;
+
+  explicit SBFDAGToDAGISel(SBFTargetMachine &TM)
+      : SelectionDAGISel(ID, TM), Subtarget(nullptr) {}
 
   bool runOnMachineFunction(MachineFunction &MF) override {
     // Reset the subtarget each time through.
@@ -95,6 +96,10 @@ private:
   std::map<const void *, val_vec_type> cs_vals_;
 };
 } // namespace
+
+char SBFDAGToDAGISel::ID = 0;
+
+INITIALIZE_PASS(SBFDAGToDAGISel, DEBUG_TYPE, PASS_NAME, false, false)
 
 // ComplexPattern used on SBF Load/Store instructions
 bool SBFDAGToDAGISel::SelectAddr(SDValue Addr, SDValue &Base, SDValue &Offset) {

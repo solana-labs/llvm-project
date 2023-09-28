@@ -55,8 +55,8 @@ entry:
   br label %for.cond
 
 ; CHECK-LABEL:    entry
-; CHECK:          %{{[0-9]+}} = load i8*, i8** %frame_ptr, align 8
-; CHECK:          %{{[0-9a-z.]+}} = icmp eq i8* %2, null
+; CHECK:          %{{[0-9]+}} = load ptr, ptr %frame_ptr, align 8, {{[ !a-z0-9]+}}
+; CHECK:          %{{[0-9a-z.]+}} = icmp eq ptr %{{[0-9]+}}, null
 ; CHECK:          br label
 
 for.cond:                                         ; preds = %for.inc, %entry
