@@ -40,8 +40,8 @@ entry:
 ; CHECK: r2 = 1
 ; CHECK: *(u32 *)(r1 + 16) = r2
 ; CHECK: r2 = 0
-; CHECK: *(u64 *)(r1 + 8) = r2
-; CHECK: *(u64 *)(r1 + 0) = r2
+; CHECK: *(u32 *)(r1 + 8) = r2
+; CHECK: *(u32 *)(r1 + 0) = r2
       ret i32 0
 }
 ; CHECK: .section  .rodata.cst32,"aM",@progbits,32

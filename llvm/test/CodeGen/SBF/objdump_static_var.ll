@@ -10,13 +10,13 @@
 ; Function Attrs: norecurse nounwind
 define dso_local i32 @test() local_unnamed_addr #0 {
   %1 = load volatile i64, i64* @a, align 8, !tbaa !2
-; CHECK: lddw r1, 0
+; CHECK: lddw r1, 0x0
 ; CHECK: R_SBF_64_64	a
-; CHECK: ldxdw r1, [r1 + 0]
+; CHECK: ldxdw r1, [r1 + 0x0]
   %2 = load volatile i32, i32* @b, align 4, !tbaa !6
-; CHECK: lddw r2, 0
+; CHECK: lddw r2, 0x0
 ; CHECK: R_SBF_64_64	b
-; CHECK: ldxw r0, [r2 + 0]
+; CHECK: ldxw r0, [r2 + 0x0]
   %3 = trunc i64 %1 to i32
   %4 = add i32 %2, %3
 ; CHECK: add64 r0, r1
