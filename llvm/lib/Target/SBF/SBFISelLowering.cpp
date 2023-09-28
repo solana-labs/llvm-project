@@ -203,6 +203,7 @@ SBFTargetLowering::SBFTargetLowering(const TargetMachine &TM,
     MaxStoresPerMemset = MaxStoresPerMemsetOptSize = 0;
     MaxStoresPerMemcpy = MaxStoresPerMemcpyOptSize = 0;
     MaxStoresPerMemmove = MaxStoresPerMemmoveOptSize = 0;
+    MaxLoadsPerMemcmp = 0;
   } else {
     auto SelectionDAGInfo = STI.getSelectionDAGInfo();
     SelectionDAGInfo->setSolanaFlag(STI.isSolana());
@@ -213,6 +214,7 @@ SBFTargetLowering::SBFTargetLowering(const TargetMachine &TM,
     MaxStoresPerMemset = MaxStoresPerMemsetOptSize = CommonMaxStores;
     MaxStoresPerMemcpy = MaxStoresPerMemcpyOptSize = CommonMaxStores;
     MaxStoresPerMemmove = MaxStoresPerMemmoveOptSize = CommonMaxStores;
+    MaxLoadsPerMemcmp = MaxLoadsPerMemcmpOptSize = CommonMaxStores;
   }
 
   // CPU/Feature control
@@ -223,13 +225,13 @@ SBFTargetLowering::SBFTargetLowering(const TargetMachine &TM,
 }
 
 bool SBFTargetLowering::allowsMisalignedMemoryAccesses(
-    EVT VT, unsigned, Align, MachineMemOperand::Flags, bool *Fast) const {
+    EVT VT, unsigned, Align, MachineMemOperand::Flags, unsigned *Fast) const {
   if (!VT.isSimple()) {
     return false;
   }
   bool isSolana = Subtarget->isSolana();
   if (isSolana && Fast) {
-    *Fast = true;
+    *Fast = 1;
   }
   return isSolana;
 }
@@ -482,6 +484,7 @@ SDValue SBFTargetLowering::LowerFormalArguments(
   if (Subtarget->isSolana()) {
     if (IsVarArg) {
       fail(DL, DAG, "Functions with VarArgs are not supported");
+      assert(false);
     }
   } else if (IsVarArg || MF.getFunction().hasStructRetAttr()) {
     fail(DL, DAG, "functions with VarArgs or StructRet are not supported");
@@ -658,9 +661,7 @@ SDValue SBFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   InFlag = Chain.getValue(1);
 
   // Create the CALLSEQ_END node.
-  Chain = DAG.getCALLSEQ_END(
-      Chain, DAG.getConstant(NumBytes, CLI.DL, PtrVT, true),
-      DAG.getConstant(0, CLI.DL, PtrVT, true), InFlag, CLI.DL);
+  Chain = DAG.getCALLSEQ_END(Chain, NumBytes, 0, InFlag, CLI.DL);
   InFlag = Chain.getValue(1);
 
   // Handle result values, copying them out of physregs into vregs that we
@@ -833,7 +834,7 @@ SDValue SBFTargetLowering::LowerATOMICRMW(SDValue Op, SelectionDAG &DAG) const {
   // Load the current value
   SDValue Load =
       DAG.getExtLoad(ISD::EXTLOAD, DL, RetVT, Chain, Ptr, MachinePointerInfo(),
-                     PtrVT, AN->getAlignment());
+                     PtrVT, AN->getAlign());
   Chain = Load.getValue(1);
 
   // Most ops return the current value, except CMP_SWAP_WITH_SUCCESS see below

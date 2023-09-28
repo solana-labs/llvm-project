@@ -73,7 +73,7 @@ static void WarnSize(int Offset, MachineFunction &MF, DebugLoc& DL)
   }
 }
 
-void SBFRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
+bool SBFRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                           int SPAdj, unsigned FIOperandNum,
                                           RegScavenger *RS) const {
   assert(SPAdj == 0 && "Unexpected");
@@ -112,7 +112,7 @@ void SBFRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     BuildMI(MBB, ++II, DL, TII.get(SBF::ADD_ri), reg)
         .addReg(reg)
         .addImm(Offset);
-    return;
+    return false;
   }
 
   int Offset = MF.getFrameInfo().getObjectOffset(FrameIndex) +
@@ -143,6 +143,7 @@ void SBFRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     MI.getOperand(i).ChangeToRegister(FrameReg, false);
     MI.getOperand(i + 1).ChangeToImmediate(Offset);
   }
+  return false;
 }
 
 Register SBFRegisterInfo::getFrameRegister(const MachineFunction &MF) const {

@@ -24,7 +24,6 @@ namespace targets {
 class LLVM_LIBRARY_VISIBILITY BPFTargetInfo : public TargetInfo {
   bool HasSolanaFeature = false;
   bool HasAlu32 = false;
-  static const Builtin::Info BuiltinInfo[];
 
 public:
   BPFTargetInfo(const llvm::Triple &Triple, const TargetOptions &Opts)

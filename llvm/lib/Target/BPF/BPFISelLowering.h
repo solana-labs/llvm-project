@@ -39,7 +39,7 @@ public:
 
   bool allowsMisalignedMemoryAccesses(EVT VT, unsigned, Align,
                                       MachineMemOperand::Flags,
-                                      bool *) const override;
+                                      unsigned *) const override;
 
   // Provide custom lowering hooks for some operations.
   SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;

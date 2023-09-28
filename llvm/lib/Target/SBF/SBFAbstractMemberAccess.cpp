@@ -106,7 +106,7 @@ Instruction *SBFCoreSharedInfo::insertPassThrough(Module *M, BasicBlock *BB,
                                          SBFCoreSharedInfo::SeqNum++);
 
   auto *NewInst = CallInst::Create(Fn, {SeqNumVal, Input});
-  BB->getInstList().insert(Before->getIterator(), NewInst);
+  NewInst->insertBefore(Before);
   return NewInst;
 }
 } // namespace llvm
@@ -125,7 +125,7 @@ public:
     uint32_t AccessIndex;
     MaybeAlign RecordAlignment;
     MDNode *Metadata;
-    Value *Base;
+    WeakTrackingVH Base;
   };
   typedef std::stack<std::pair<CallInst *, CallInfo>> CallInfoStack;
 
@@ -347,7 +347,7 @@ static uint32_t calcArraySize(const DICompositeType *CTy, uint32_t StartDim) {
 
 static Type *getBaseElementType(const CallInst *Call) {
   // Element type is stored in an elementtype() attribute on the first param.
-  return Call->getAttributes().getParamElementType(0);
+  return Call->getParamElementType(0);
 }
 
 /// Check whether a call is a preserve_*_access_index intrinsic call or not.
@@ -437,7 +437,7 @@ bool SBFAbstractMemberAccess::IsPreserveDIAccessIndexCall(const CallInst *Call,
 void SBFAbstractMemberAccess::replaceWithGEP(std::vector<CallInst *> &CallList,
                                              uint32_t DimensionIndex,
                                              uint32_t GEPIndex) {
-  for (auto Call : CallList) {
+  for (auto *Call : CallList) {
     uint32_t Dimension = 1;
     if (DimensionIndex > 0)
       Dimension = getConstant(Call->getArgOperand(DimensionIndex));
@@ -490,7 +490,7 @@ bool SBFAbstractMemberAccess::removePreserveAccessIndexIntrinsic(Function &F) {
   //     addr = GEP(base, 0, gep_index)
   replaceWithGEP(PreserveArrayIndexCalls, 1, 2);
   replaceWithGEP(PreserveStructIndexCalls, 0, 1);
-  for (auto Call : PreserveUnionIndexCalls) {
+  for (auto *Call : PreserveUnionIndexCalls) {
     Call->replaceAllUsesWith(Call->getArgOperand(0));
     Call->eraseFromParent();
   }
@@ -1134,16 +1134,16 @@ bool SBFAbstractMemberAccess::transformGEPChain(CallInst *Call,
 
   // Generate a BitCast
   auto *BCInst = new BitCastInst(Base, Type::getInt8PtrTy(BB->getContext()));
-  BB->getInstList().insert(Call->getIterator(), BCInst);
+  BCInst->insertBefore(Call);
 
   // Generate a GetElementPtr
   auto *GEP = GetElementPtrInst::Create(Type::getInt8Ty(BB->getContext()),
                                         BCInst, LDInst);
-  BB->getInstList().insert(Call->getIterator(), GEP);
+  GEP->insertBefore(Call);
 
   // Generate a BitCast
   auto *BCInst2 = new BitCastInst(GEP, Call->getType());
-  BB->getInstList().insert(Call->getIterator(), BCInst2);
+  BCInst2->insertBefore(Call);
 
   // For the following code,
   //    Block0:

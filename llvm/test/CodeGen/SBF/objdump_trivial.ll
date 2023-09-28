@@ -1,9 +1,9 @@
 ; RUN: llc -march=sbf -mcpu=sbfv2 -filetype=obj -o - %s | llvm-objdump -d - | FileCheck %s
 
 ; CHECK: jsgt r2, r1,
-; CHECK: call 1
+; CHECK: call 0x1
 ; CHECK: exit
-; CHECK: call 2
+; CHECK: call 0x2
 ; CHECK: exit
 
 define void @foo(i32 %a) {

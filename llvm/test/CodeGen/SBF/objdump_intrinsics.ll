@@ -6,7 +6,7 @@ entry:
   tail call void inttoptr (i64 4 to void (i64, i32)*)(i64 %call, i32 4) #2
   ret i32 0
 ; CHECK-LABEL: ld_pseudo:
-; CHECK-EL: ld_pseudo r1, 2, 3
+; CHECK-EL: ld_pseudo r1, 0x2, 0x3
 }
 
 declare i64 @llvm.bpf.pseudo(i64, i64) #2

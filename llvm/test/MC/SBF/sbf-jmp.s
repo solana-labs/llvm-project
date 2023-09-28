@@ -12,12 +12,12 @@
 # TODO: Test immediate field ranges, etc.
 
 mylabelback:
-# CHECK-OBJ-NEW: ja +8
-# CHECK-OBJ-NEW: ja -2 <mylabelback>
-# CHECK-OBJ-NEW: ja +0 <mylabelfwd>
-# CHECK-OBJ-OLD: goto +8
-# CHECK-OBJ-OLD: goto -2
-# CHECK-OBJ-OLD: goto +0
+# CHECK-OBJ-NEW: ja +0x8
+# CHECK-OBJ-NEW: ja -0x2 <mylabelback>
+# CHECK-OBJ-NEW: ja +0x0 <mylabelfwd>
+# CHECK-OBJ-OLD: goto +0x8
+# CHECK-OBJ-OLD: goto -0x2
+# CHECK-OBJ-OLD: goto +0x0
 # CHECK-ASM-NEW: encoding: [0x05,0x00,0x08,0x00,0x00,0x00,0x00,0x00]
 # CHECK-ASM-NEW: encoding: [0x05'A',A,0x00,0x00,0x00,0x00,0x00,0x00]
 # CHECK-ASM-NEW: # fixup A - offset: 0, value: mylabelback, kind: FK_PCRel_2
@@ -29,26 +29,26 @@ ja mylabelfwd
 
 mylabelfwd:
 
-# CHECK-OBJ-NEW: jeq r0, r9, +1
-# CHECK-OBJ-NEW: jne r0, r9, +1
-# CHECK-OBJ-NEW: jgt r0, r9, +1
-# CHECK-OBJ-NEW: jge r0, r9, +1
-# CHECK-OBJ-NEW: jlt r0, r9, +1
-# CHECK-OBJ-NEW: jle r0, r9, +1
-# CHECK-OBJ-NEW: jsgt r0, r9, +1
-# CHECK-OBJ-NEW: jsge r0, r9, +1
-# CHECK-OBJ-NEW: jslt r0, r9, +1
-# CHECK-OBJ-NEW: jsle r0, r9, +1
-# CHECK-OBJ-OLD: if r0 == r9 goto +1
-# CHECK-OBJ-OLD: if r0 != r9 goto +1
-# CHECK-OBJ-OLD: if r0 > r9 goto +1
-# CHECK-OBJ-OLD: if r0 >= r9 goto +1
-# CHECK-OBJ-OLD: if r0 < r9 goto +1
-# CHECK-OBJ-OLD: if r0 <= r9 goto +1
-# CHECK-OBJ-OLD: if r0 s> r9 goto +1
-# CHECK-OBJ-OLD: if r0 s>= r9 goto +1
-# CHECK-OBJ-OLD: if r0 s< r9 goto +1
-# CHECK-OBJ-OLD: if r0 s<= r9 goto +1
+# CHECK-OBJ-NEW: jeq r0, r9, +0x1
+# CHECK-OBJ-NEW: jne r0, r9, +0x1
+# CHECK-OBJ-NEW: jgt r0, r9, +0x1
+# CHECK-OBJ-NEW: jge r0, r9, +0x1
+# CHECK-OBJ-NEW: jlt r0, r9, +0x1
+# CHECK-OBJ-NEW: jle r0, r9, +0x1
+# CHECK-OBJ-NEW: jsgt r0, r9, +0x1
+# CHECK-OBJ-NEW: jsge r0, r9, +0x1
+# CHECK-OBJ-NEW: jslt r0, r9, +0x1
+# CHECK-OBJ-NEW: jsle r0, r9, +0x1
+# CHECK-OBJ-OLD: if r0 == r9 goto +0x1
+# CHECK-OBJ-OLD: if r0 != r9 goto +0x1
+# CHECK-OBJ-OLD: if r0 > r9 goto +0x1
+# CHECK-OBJ-OLD: if r0 >= r9 goto +0x1
+# CHECK-OBJ-OLD: if r0 < r9 goto +0x1
+# CHECK-OBJ-OLD: if r0 <= r9 goto +0x1
+# CHECK-OBJ-OLD: if r0 s> r9 goto +0x1
+# CHECK-OBJ-OLD: if r0 s>= r9 goto +0x1
+# CHECK-OBJ-OLD: if r0 s< r9 goto +0x1
+# CHECK-OBJ-OLD: if r0 s<= r9 goto +0x1
 # CHECK-ASM-NEW: encoding: [0x1d,0x90,0x01,0x00,0x00,0x00,0x00,0x00]
 # CHECK-ASM-NEW: encoding: [0x5d,0x90,0x01,0x00,0x00,0x00,0x00,0x00]
 # CHECK-ASM-NEW: encoding: [0x2d,0x90,0x01,0x00,0x00,0x00,0x00,0x00]
@@ -70,26 +70,26 @@ jsge r0, r9, +1
 jslt r0, r9, +1
 jsle r0, r9, +1
 
-# CHECK-OBJ-NEW: jeq r3, r2, +1
-# CHECK-OBJ-NEW: jne r3, r2, +1
-# CHECK-OBJ-NEW: jgt r3, r2, +1
-# CHECK-OBJ-NEW: jge r3, r2, +1
-# CHECK-OBJ-NEW: jlt r3, r2, +1
-# CHECK-OBJ-NEW: jle r3, r2, +1
-# CHECK-OBJ-NEW: jsgt r3, r2, +1
-# CHECK-OBJ-NEW: jsge r3, r2, +1
-# CHECK-OBJ-NEW: jslt r3, r2, +1
-# CHECK-OBJ-NEW: jsle r3, r2, +1
-# CHECK-OBJ-OLD: if r3 == r2 goto +1
-# CHECK-OBJ-OLD: if r3 != r2 goto +1
-# CHECK-OBJ-OLD: if r3 > r2 goto +1
-# CHECK-OBJ-OLD: if r3 >= r2 goto +1
-# CHECK-OBJ-OLD: if r3 < r2 goto +1
-# CHECK-OBJ-OLD: if r3 <= r2 goto +1
-# CHECK-OBJ-OLD: if r3 s> r2 goto +1
-# CHECK-OBJ-OLD: if r3 s>= r2 goto +1
-# CHECK-OBJ-OLD: if r3 s< r2 goto +1
-# CHECK-OBJ-OLD: if r3 s<= r2 goto +1
+# CHECK-OBJ-NEW: jeq r3, r2, +0x1
+# CHECK-OBJ-NEW: jne r3, r2, +0x1
+# CHECK-OBJ-NEW: jgt r3, r2, +0x1
+# CHECK-OBJ-NEW: jge r3, r2, +0x1
+# CHECK-OBJ-NEW: jlt r3, r2, +0x1
+# CHECK-OBJ-NEW: jle r3, r2, +0x1
+# CHECK-OBJ-NEW: jsgt r3, r2, +0x1
+# CHECK-OBJ-NEW: jsge r3, r2, +0x1
+# CHECK-OBJ-NEW: jslt r3, r2, +0x1
+# CHECK-OBJ-NEW: jsle r3, r2, +0x1
+# CHECK-OBJ-OLD: if r3 == r2 goto +0x1
+# CHECK-OBJ-OLD: if r3 != r2 goto +0x1
+# CHECK-OBJ-OLD: if r3 > r2 goto +0x1
+# CHECK-OBJ-OLD: if r3 >= r2 goto +0x1
+# CHECK-OBJ-OLD: if r3 < r2 goto +0x1
+# CHECK-OBJ-OLD: if r3 <= r2 goto +0x1
+# CHECK-OBJ-OLD: if r3 s> r2 goto +0x1
+# CHECK-OBJ-OLD: if r3 s>= r2 goto +0x1
+# CHECK-OBJ-OLD: if r3 s< r2 goto +0x1
+# CHECK-OBJ-OLD: if r3 s<= r2 goto +0x1
 # CHECK-ASM-NEW: encoding: [0x1d,0x23,0x01,0x00,0x00,0x00,0x00,0x00]
 # CHECK-ASM-NEW: encoding: [0x5d,0x23,0x01,0x00,0x00,0x00,0x00,0x00]
 # CHECK-ASM-NEW: encoding: [0x2d,0x23,0x01,0x00,0x00,0x00,0x00,0x00]
@@ -111,26 +111,26 @@ jsge r3, r2, +1
 jslt r3, r2, +1
 jsle r3, r2, +1
 
-# CHECK-OBJ-NEW: jeq r3, 123, +8
-# CHECK-OBJ-NEW: jne r3, 123, +8
-# CHECK-OBJ-NEW: jgt r3, 123, +8
-# CHECK-OBJ-NEW: jge r3, 123, +8
-# CHECK-OBJ-NEW: jlt r3, 123, +8
-# CHECK-OBJ-NEW: jle r3, 123, +8
-# CHECK-OBJ-NEW: jsgt r3, 123, +8
-# CHECK-OBJ-NEW: jsge r3, 123, +8
-# CHECK-OBJ-NEW: jslt r3, 123, +8
-# CHECK-OBJ-NEW: jsle r3, 123, +8
-# CHECK-OBJ-OLD: if r3 == 123 goto +8
-# CHECK-OBJ-OLD: if r3 != 123 goto +8
-# CHECK-OBJ-OLD: if r3 > 123 goto +8
-# CHECK-OBJ-OLD: if r3 >= 123 goto +8
-# CHECK-OBJ-OLD: if r3 < 123 goto +8
-# CHECK-OBJ-OLD: if r3 <= 123 goto +8
-# CHECK-OBJ-OLD: if r3 s> 123 goto +8
-# CHECK-OBJ-OLD: if r3 s>= 123 goto +8
-# CHECK-OBJ-OLD: if r3 s< 123 goto +8
-# CHECK-OBJ-OLD: if r3 s<= 123 goto +8
+# CHECK-OBJ-NEW: jeq r3, 0x7b, +0x8
+# CHECK-OBJ-NEW: jne r3, 0x7b, +0x8
+# CHECK-OBJ-NEW: jgt r3, 0x7b, +0x8
+# CHECK-OBJ-NEW: jge r3, 0x7b, +0x8
+# CHECK-OBJ-NEW: jlt r3, 0x7b, +0x8
+# CHECK-OBJ-NEW: jle r3, 0x7b, +0x8
+# CHECK-OBJ-NEW: jsgt r3, 0x7b, +0x8
+# CHECK-OBJ-NEW: jsge r3, 0x7b, +0x8
+# CHECK-OBJ-NEW: jslt r3, 0x7b, +0x8
+# CHECK-OBJ-NEW: jsle r3, 0x7b, +0x8
+# CHECK-OBJ-OLD: if r3 == 0x7b goto +0x8
+# CHECK-OBJ-OLD: if r3 != 0x7b goto +0x8
+# CHECK-OBJ-OLD: if r3 > 0x7b goto +0x8
+# CHECK-OBJ-OLD: if r3 >= 0x7b goto +0x8
+# CHECK-OBJ-OLD: if r3 < 0x7b goto +0x8
+# CHECK-OBJ-OLD: if r3 <= 0x7b goto +0x8
+# CHECK-OBJ-OLD: if r3 s> 0x7b goto +0x8
+# CHECK-OBJ-OLD: if r3 s>= 0x7b goto +0x8
+# CHECK-OBJ-OLD: if r3 s< 0x7b goto +0x8
+# CHECK-OBJ-OLD: if r3 s<= 0x7b goto +0x8
 # CHECK-ASM-NEW: encoding: [0x15,0x03,0x08,0x00,0x7b,0x00,0x00,0x00]
 # CHECK-ASM-NEW: encoding: [0x55,0x03,0x08,0x00,0x7b,0x00,0x00,0x00]
 # CHECK-ASM-NEW: encoding: [0x25,0x03,0x08,0x00,0x7b,0x00,0x00,0x00]
@@ -152,26 +152,26 @@ jsge r3, 123, +8
 jslt r3, 123, +8
 jsle r3, 123, +8
 
-# CHECK-OBJ-NEW: jeq r5, -123, +8
-# CHECK-OBJ-NEW: jne r5, -123, +8
-# CHECK-OBJ-NEW: jgt r5, -123, +8
-# CHECK-OBJ-NEW: jge r5, -123, +8
-# CHECK-OBJ-NEW: jlt r5, -123, +8
-# CHECK-OBJ-NEW: jle r5, -123, +8
-# CHECK-OBJ-NEW: jsgt r5, -123, +8
-# CHECK-OBJ-NEW: jsge r5, -123, +8
-# CHECK-OBJ-NEW: jslt r5, -123, +8
-# CHECK-OBJ-NEW: jsle r5, -123, +8
-# CHECK-OBJ-OLD: if r5 == -123 goto +8
-# CHECK-OBJ-OLD: if r5 != -123 goto +8
-# CHECK-OBJ-OLD: if r5 > -123 goto +8
-# CHECK-OBJ-OLD: if r5 >= -123 goto +8
-# CHECK-OBJ-OLD: if r5 < -123 goto +8
-# CHECK-OBJ-OLD: if r5 <= -123 goto +8
-# CHECK-OBJ-OLD: if r5 s> -123 goto +8
-# CHECK-OBJ-OLD: if r5 s>= -123 goto +8
-# CHECK-OBJ-OLD: if r5 s< -123 goto +8
-# CHECK-OBJ-OLD: if r5 s<= -123 goto +8
+# CHECK-OBJ-NEW: jeq r5, -0x7b, +0x8
+# CHECK-OBJ-NEW: jne r5, -0x7b, +0x8
+# CHECK-OBJ-NEW: jgt r5, -0x7b, +0x8
+# CHECK-OBJ-NEW: jge r5, -0x7b, +0x8
+# CHECK-OBJ-NEW: jlt r5, -0x7b, +0x8
+# CHECK-OBJ-NEW: jle r5, -0x7b, +0x8
+# CHECK-OBJ-NEW: jsgt r5, -0x7b, +0x8
+# CHECK-OBJ-NEW: jsge r5, -0x7b, +0x8
+# CHECK-OBJ-NEW: jslt r5, -0x7b, +0x8
+# CHECK-OBJ-NEW: jsle r5, -0x7b, +0x8
+# CHECK-OBJ-OLD: if r5 == -0x7b goto +0x8
+# CHECK-OBJ-OLD: if r5 != -0x7b goto +0x8
+# CHECK-OBJ-OLD: if r5 > -0x7b goto +0x8
+# CHECK-OBJ-OLD: if r5 >= -0x7b goto +0x8
+# CHECK-OBJ-OLD: if r5 < -0x7b goto +0x8
+# CHECK-OBJ-OLD: if r5 <= -0x7b goto +0x8
+# CHECK-OBJ-OLD: if r5 s> -0x7b goto +0x8
+# CHECK-OBJ-OLD: if r5 s>= -0x7b goto +0x8
+# CHECK-OBJ-OLD: if r5 s< -0x7b goto +0x8
+# CHECK-OBJ-OLD: if r5 s<= -0x7b goto +0x8
 # CHECK-ASM-NEW: encoding: [0x15,0x05,0x08,0x00,0x85,0xff,0xff,0xff]
 # CHECK-ASM-NEW: encoding: [0x55,0x05,0x08,0x00,0x85,0xff,0xff,0xff]
 # CHECK-ASM-NEW: encoding: [0x25,0x05,0x08,0x00,0x85,0xff,0xff,0xff]
@@ -193,26 +193,26 @@ jsge r5, -123, +8
 jslt r5, -123, +8
 jsle r5, -123, +8
 
-# CHECK-OBJ-NEW: jeq w6, w2, +8
-# CHECK-OBJ-NEW: jne w6, w2, +8
-# CHECK-OBJ-NEW: jgt w6, w2, +8
-# CHECK-OBJ-NEW: jge w6, w2, +8
-# CHECK-OBJ-NEW: jlt w6, w2, +8
-# CHECK-OBJ-NEW: jle w6, w2, +8
-# CHECK-OBJ-NEW: jsgt w6, w2, +8
-# CHECK-OBJ-NEW: jsge w6, w2, +8
-# CHECK-OBJ-NEW: jslt w6, w2, +8
-# CHECK-OBJ-NEW: jsle w6, w2, +8
-# CHECK-OBJ-OLD: if w6 == w2 goto +8
-# CHECK-OBJ-OLD: if w6 != w2 goto +8
-# CHECK-OBJ-OLD: if w6 > w2 goto +8
-# CHECK-OBJ-OLD: if w6 >= w2 goto +8
-# CHECK-OBJ-OLD: if w6 < w2 goto +8
-# CHECK-OBJ-OLD: if w6 <= w2 goto +8
-# CHECK-OBJ-OLD: if w6 s> w2 goto +8
-# CHECK-OBJ-OLD: if w6 s>= w2 goto +8
-# CHECK-OBJ-OLD: if w6 s< w2 goto +8
-# CHECK-OBJ-OLD: if w6 s<= w2 goto +8
+# CHECK-OBJ-NEW: jeq w6, w2, +0x8
+# CHECK-OBJ-NEW: jne w6, w2, +0x8
+# CHECK-OBJ-NEW: jgt w6, w2, +0x8
+# CHECK-OBJ-NEW: jge w6, w2, +0x8
+# CHECK-OBJ-NEW: jlt w6, w2, +0x8
+# CHECK-OBJ-NEW: jle w6, w2, +0x8
+# CHECK-OBJ-NEW: jsgt w6, w2, +0x8
+# CHECK-OBJ-NEW: jsge w6, w2, +0x8
+# CHECK-OBJ-NEW: jslt w6, w2, +0x8
+# CHECK-OBJ-NEW: jsle w6, w2, +0x8
+# CHECK-OBJ-OLD: if w6 == w2 goto +0x8
+# CHECK-OBJ-OLD: if w6 != w2 goto +0x8
+# CHECK-OBJ-OLD: if w6 > w2 goto +0x8
+# CHECK-OBJ-OLD: if w6 >= w2 goto +0x8
+# CHECK-OBJ-OLD: if w6 < w2 goto +0x8
+# CHECK-OBJ-OLD: if w6 <= w2 goto +0x8
+# CHECK-OBJ-OLD: if w6 s> w2 goto +0x8
+# CHECK-OBJ-OLD: if w6 s>= w2 goto +0x8
+# CHECK-OBJ-OLD: if w6 s< w2 goto +0x8
+# CHECK-OBJ-OLD: if w6 s<= w2 goto +0x8
 # CHECK-ASM-NEW: encoding: [0x1e,0x26,0x08,0x00,0x00,0x00,0x00,0x00]
 # CHECK-ASM-NEW: encoding: [0x5e,0x26,0x08,0x00,0x00,0x00,0x00,0x00]
 # CHECK-ASM-NEW: encoding: [0x2e,0x26,0x08,0x00,0x00,0x00,0x00,0x00]
@@ -234,22 +234,22 @@ jsge w6, w2, +8
 jslt w6, w2, +8
 jsle w6, w2, +8
 
-# CHECK-OBJ-NEW: jeq w5, -123, +8
-# CHECK-OBJ-NEW: jne w5, -123, +8
-# CHECK-OBJ-NEW: jgt w5, -123, +8
-# CHECK-OBJ-NEW: jge w5, -123, +8
-# CHECK-OBJ-NEW: jlt w5, -123, +8
-# CHECK-OBJ-NEW: jle w5, -123, +8
-# CHECK-OBJ-NEW: jsgt w5, -123, +8
-# CHECK-OBJ-NEW: jsge w5, -123, +8
-# CHECK-OBJ-NEW: jslt w5, -123, +8
-# CHECK-OBJ-NEW: jsle w5, -123, +8
-# CHECK-OBJ-OLD: if w5 == -123 goto +8
-# CHECK-OBJ-OLD: if w5 != -123 goto +8
-# CHECK-OBJ-OLD: if w5 s> -123 goto +8
-# CHECK-OBJ-OLD: if w5 s>= -123 goto +8
-# CHECK-OBJ-OLD: if w5 s< -123 goto +8
-# CHECK-OBJ-OLD: if w5 s<= -123 goto +8
+# CHECK-OBJ-NEW: jeq w5, -0x7b, +0x8
+# CHECK-OBJ-NEW: jne w5, -0x7b, +0x8
+# CHECK-OBJ-NEW: jgt w5, -0x7b, +0x8
+# CHECK-OBJ-NEW: jge w5, -0x7b, +0x8
+# CHECK-OBJ-NEW: jlt w5, -0x7b, +0x8
+# CHECK-OBJ-NEW: jle w5, -0x7b, +0x8
+# CHECK-OBJ-NEW: jsgt w5, -0x7b, +0x8
+# CHECK-OBJ-NEW: jsge w5, -0x7b, +0x8
+# CHECK-OBJ-NEW: jslt w5, -0x7b, +0x8
+# CHECK-OBJ-NEW: jsle w5, -0x7b, +0x8
+# CHECK-OBJ-OLD: if w5 == -0x7b goto +0x8
+# CHECK-OBJ-OLD: if w5 != -0x7b goto +0x8
+# CHECK-OBJ-OLD: if w5 s> -0x7b goto +0x8
+# CHECK-OBJ-OLD: if w5 s>= -0x7b goto +0x8
+# CHECK-OBJ-OLD: if w5 s< -0x7b goto +0x8
+# CHECK-OBJ-OLD: if w5 s<= -0x7b goto +0x8
 # CHECK-ASM-NEW: encoding: [0x16,0x05,0x08,0x00,0x85,0xff,0xff,0xff]
 # CHECK-ASM-NEW: encoding: [0x56,0x05,0x08,0x00,0x85,0xff,0xff,0xff]
 # CHECK-ASM-NEW: encoding: [0x26,0x05,0x08,0x00,0x85,0xff,0xff,0xff]
@@ -272,8 +272,8 @@ jslt w5, -123, +8
 jsle w5, -123, +8
 
 
-# CHECK-OBJ-NEW: call 8
-# CHECK-OBJ-OLD: call 8
+# CHECK-OBJ-NEW: call 0x8
+# CHECK-OBJ-OLD: call 0x8
 # CHECK-ASM-NEW: encoding: [0x85,0x00,0x00,0x00,0x08,0x00,0x00,0x00]
 call 8
 
