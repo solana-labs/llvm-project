@@ -268,6 +268,15 @@ class ALU_RR<SBFOpClass Class, SBFArithOp Opc,
   let SBFClass = Class;
 }
 
+
+def HOR_ri : ALU_RI<SBF_ALU64, SBF_HOR,
+                   (outs GPR:$dst),
+                   (ins GPR:$fakesrc, u64imm:$imm),
+                   "{?!?hor64 $dst, $imm!$dst |= $imm << 32}",
+                   []> {
+  let Constraints = "$fakesrc = $dst";
+}
+
 multiclass ALU<SBFArithOp Opc, string Mnemonic, string OpcodeStr,
                SDNode OpNode> {
   def _rr : ALU_RR<SBF_ALU64, Opc,
@@ -334,6 +343,11 @@ let Constraints = "$dst = $src", isAsCheapAsAMove = 1 in {
                      [(set GPR32:$dst, (ineg i32:$src))]>;
 }
 
+
+def LD_imm64 : Pseudo<(outs GPR:$dst), (ins u64imm:$imm), "?",
+	[(set GPR:$dst, (i64 imm:$imm))]> {
+}
+
 class LD_IMM64<bits<4> Pseudo, string Mnemonic, string OpcodeStr>
     : TYPE_LD_ST<SBF_IMM.Value, SBF_DW.Value,
                  (outs GPR:$dst),
@@ -353,7 +367,7 @@ class LD_IMM64<bits<4> Pseudo, string Mnemonic, string OpcodeStr>
 }
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
-def LD_imm64 : LD_IMM64<0, "lddw", "=">;
+//def LD_imm64_old : LD_IMM64<0, "lddw", "=">;
 def MOV_rr : ALU_RR<SBF_ALU64, SBF_MOV,
                     (outs GPR:$dst),
                     (ins GPR:$src),

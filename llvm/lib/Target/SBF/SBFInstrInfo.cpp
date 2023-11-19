@@ -112,13 +112,32 @@ void SBFInstrInfo::expandMEMCPY(MachineBasicBlock::iterator MI) const {
   BB->erase(MI);
 }
 
+void SBFInstrInfo::expandLD_imm64(MachineBasicBlock::iterator MI) const {
+  DebugLoc DL = MI->getDebugLoc();
+  MachineBasicBlock &MBB = *MI->getParent();
+  unsigned Dst = MI->getOperand(0).getReg();
+  uint64_t Imm = MI->getOperand(1).getImm();
+  uint64_t Lo32 = Imm & 0x00000000ffffffff;
+  uint64_t Hi32 = (Imm & 0Xffffffff00000000) >> 32 ;
+
+  BuildMI(MBB, MI, DL, get(SBF::MOV_ri), Dst).addImm(Lo32);
+  if(Hi32 != 0){
+    BuildMI(MBB, MI, DL, get(SBF::HOR_ri), Dst).addReg(Dst).addImm(Hi32);
+  }
+  MBB.erase(MI);
+}
+
 bool SBFInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
-  if (MI.getOpcode() == SBF::MEMCPY) {
+  switch (MI.getOpcode()) {
+  case SBF::MEMCPY:
     expandMEMCPY(MI);
     return true;
+  case SBF::LD_imm64:
+    expandLD_imm64(MI);
+    return true;
+  default:
+    return false;
   }
-
-  return false;
 }
 
 void SBFInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,

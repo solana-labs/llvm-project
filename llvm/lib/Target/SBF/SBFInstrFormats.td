@@ -44,6 +44,7 @@ def SBF_MOV  : SBFArithOp<0xb>;
 def SBF_ARSH : SBFArithOp<0xc>;
 def SBF_END  : SBFArithOp<0xd>;
 def SBF_SDIV : SBFArithOp<0xe>;
+def SBF_HOR : SBFArithOp<0xf>;
 
 def SBF_XCHG    : SBFArithOp<0xe>;
 def SBF_CMPXCHG : SBFArithOp<0xf>;
