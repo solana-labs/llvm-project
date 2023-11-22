@@ -60,7 +60,7 @@ public:
                         int *BytesAdded = nullptr) const override;
 private:
   void expandMEMCPY(MachineBasicBlock::iterator) const;
-  void expandLD_imm64(MachineBasicBlock::iterator) const;
+  bool expandLD_imm64(MachineBasicBlock::iterator) const;
 
 };
 }

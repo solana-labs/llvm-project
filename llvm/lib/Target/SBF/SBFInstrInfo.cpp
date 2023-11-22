@@ -112,19 +112,34 @@ void SBFInstrInfo::expandMEMCPY(MachineBasicBlock::iterator MI) const {
   BB->erase(MI);
 }
 
-void SBFInstrInfo::expandLD_imm64(MachineBasicBlock::iterator MI) const {
+bool SBFInstrInfo::expandLD_imm64(MachineBasicBlock::iterator MI) const {
   DebugLoc DL = MI->getDebugLoc();
   MachineBasicBlock &MBB = *MI->getParent();
-  unsigned Dst = MI->getOperand(0).getReg();
-  uint64_t Imm = MI->getOperand(1).getImm();
-  uint64_t Lo32 = Imm & 0x00000000ffffffff;
-  uint64_t Hi32 = (Imm & 0Xffffffff00000000) >> 32 ;
 
-  BuildMI(MBB, MI, DL, get(SBF::MOV_ri), Dst).addImm(Lo32);
-  if(Hi32 != 0){
-    BuildMI(MBB, MI, DL, get(SBF::HOR_ri), Dst).addReg(Dst).addImm(Hi32);
-  }
-  MBB.erase(MI);
+  if (MI->getOperand(1).isImm()) {
+    unsigned Dst = MI->getOperand(0).getReg();
+    uint64_t Imm = MI->getOperand(1).getImm();
+    uint64_t Lo32 = Imm & 0x00000000ffffffff;
+    uint64_t Hi32 = (Imm & 0Xffffffff00000000) >> 32 ;
+
+    BuildMI(MBB, MI, DL, get(SBF::MOV_ri), Dst).addImm(Lo32);
+    if(Hi32 != 0){
+      BuildMI(MBB, MI, DL, get(SBF::HOR_ri), Dst).addReg(Dst).addImm(Hi32);
+    }
+    MBB.erase(MI);
+    return true;
+  } else if (MI->getOperand(1).isReg()) {
+    unsigned Dst = MI->getOperand(0).getReg();
+    unsigned Src = MI->getOperand(1).getReg();
+    BuildMI(MBB, MI, DL, get(SBF::MOV_rr), Dst).addReg(Src);
+    MBB.erase(MI);
+    return true;
+  } else if (MI->getOperand(1).isGlobal()) {
+    llvm_unreachable("Global variable not supported yet");
+    return false;
+  } else {
+    return false;
+  } 
 }
 
 bool SBFInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
@@ -133,8 +148,7 @@ bool SBFInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
     expandMEMCPY(MI);
     return true;
   case SBF::LD_imm64:
-    expandLD_imm64(MI);
-    return true;
+    return expandLD_imm64(MI);
   default:
     return false;
   }

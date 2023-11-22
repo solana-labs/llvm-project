@@ -5,7 +5,8 @@
 ; Function Attrs: nounwind uwtable
 define void @bar(i32 %a) #0 {
 ; CHECK-LABEL: bar:
-; CHECK: lddw r2, 8589934593
+; CHECK: mov64 r2, 1
+; CHECK: hor64 r2, 2
 ; CHECK: stxdw [r10 - 40], r2
 ; CHECK: mov64 r2, r10
 ; CHECK: add64 r2, -40

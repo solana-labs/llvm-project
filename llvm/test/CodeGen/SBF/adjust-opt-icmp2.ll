@@ -40,7 +40,7 @@ entry:
 ; CHECK-DISABLE: add64 [[REG1:r[0-9]+]], -8
 ; CHECK-DISABLE: lsh64 [[REG1]], 32
 ; CHECK-DISABLE: rsh64 [[REG1]], 32
-; CHECK-DISABLE: lddw [[REG2:r[0-9]+]], 4294967289
+; CHECK-DISABLE: mov64 [[REG2:r[0-9]+]], -7
 ; CHECK-DISABLE: jgt [[REG2]], [[REG1]],
 
 if.then:                                          ; preds = %entry
