@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SBFInstrInfo.h"
+#include "MCTargetDesc/SBFBaseInfo.h"
 #include "SBF.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
@@ -116,30 +117,40 @@ bool SBFInstrInfo::expandLD_imm64(MachineBasicBlock::iterator MI) const {
   DebugLoc DL = MI->getDebugLoc();
   MachineBasicBlock &MBB = *MI->getParent();
 
-  if (MI->getOperand(1).isImm()) {
-    unsigned Dst = MI->getOperand(0).getReg();
-    uint64_t Imm = MI->getOperand(1).getImm();
+  const MachineOperand &MO = MI->getOperand(1);
+  const uint64_t DstReg = MI->getOperand(0).getReg();
+  const bool DstIsDead = MI->getOperand(0).isDead();
+
+  if (MO.isImm()) {
+    uint64_t Imm = MO.getImm();
     uint64_t Lo32 = Imm & 0x00000000ffffffff;
     uint64_t Hi32 = (Imm & 0Xffffffff00000000) >> 32 ;
 
-    BuildMI(MBB, MI, DL, get(SBF::MOV_ri), Dst).addImm(Lo32);
+    BuildMI(MBB, MI, DL, get(SBF::MOV_ri), DstReg).addImm(Lo32);
     if(Hi32 != 0){
-      BuildMI(MBB, MI, DL, get(SBF::HOR_ri), Dst).addReg(Dst).addImm(Hi32);
+      BuildMI(MBB, MI, DL, get(SBF::HOR_ri), DstReg).addReg(DstReg).addImm(Hi32);
     }
     MBB.erase(MI);
     return true;
-  } else if (MI->getOperand(1).isReg()) {
-    unsigned Dst = MI->getOperand(0).getReg();
-    unsigned Src = MI->getOperand(1).getReg();
-    BuildMI(MBB, MI, DL, get(SBF::MOV_rr), Dst).addReg(Src);
-    MBB.erase(MI);
-    return true;
-  } else if (MI->getOperand(1).isGlobal()) {
+  } else if (MO.isGlobal()) {  
+      const GlobalValue *GV = MO.getGlobal();
+      const unsigned TF = MO.getTargetFlags();
+
+        
+      BuildMI(MBB, MI, DL, get(SBF::MOV_ri), DstReg)
+        .addGlobalAddress(GV, MO.getOffset(), TF | SBFII::MO_LO32);
+
+      BuildMI(MBB, MI, DL, get(SBF::HOR_ri))
+        .addReg(DstReg, RegState::Define | getDeadRegState(DstIsDead))
+        .addReg(DstReg)
+        .addGlobalAddress(GV, MO.getOffset(), TF | SBFII::MO_HI32);
+      MBB.erase(MI);
+      return true;
+  } else {
     llvm_unreachable("Global variable not supported yet");
     return false;
-  } else {
-    return false;
   } 
+
 }
 
 bool SBFInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
