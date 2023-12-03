@@ -18,7 +18,8 @@ entry:
   %tobool = icmp eq i32 %0, 0
   %1 = load i32, i32* @c, align 4
   %. = select i1 %tobool, i32 0, i32 %1
-; CHECK:  lddw r1, b
+; CHECK:  mov64 r1, b
+; CHECK:  hor64 r1, b
 ; CHECK:  ldxw r1, [r1 + 0]
 ; CHECK:  jeq r1, 0,
   ret i32 %.
@@ -32,7 +33,8 @@ define i32 @foo(i64*) local_unnamed_addr #0 {
   %3 = load i64, i64* %0, align 8
   %4 = add i64 %3, %2
   %5 = icmp ne i64 %4, 8589934591
-; CHECK: lddw r{{[0-9]+}}, 8589934591
+; CHECK: mov64 r{{[0-9]+}}, -1
+; CHECK: hor64 r{{[0-9]+}}, 1
   %6 = sext i1 %5 to i32
   ret i32 %6
 }

@@ -23,6 +23,7 @@ define zeroext i8 @loadG() {
   %tmp = load i8, i8* @G
   ret i8 %tmp
 ; CHECK-LABEL: loadG:
-; CHECK: lddw r1, G
+; CHECK: mov64 r1, G
+; CHECK: hor64 r1, G
 ; CHECK: ldxb r0, [r1 + 0]
 }

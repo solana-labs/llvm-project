@@ -27,7 +27,8 @@ define i32 @test() local_unnamed_addr #0 {
 ; CHECK-LABEL: test:
 entry:
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 2 bitcast (%struct.test_t1* @g to i8*), i8* align 2 bitcast (%struct.test_t1* getelementptr inbounds ([4 x %struct.test_t1], [4 x %struct.test_t1]* @test.t1, i64 0, i64 1) to i8*), i64 6, i1 false)
-; CHECK: lddw r1, g
+; CHECK: mov64 r1, g
+; CHECK: hor64 r1, g
 ; CHECK: mov64 r2, 6
 ; CHECK: stxh [r1 + 4], r2
 ; CHECK: mov64 r2, 39321660
