@@ -22,8 +22,7 @@ using namespace llvm;
 namespace {
 
 void adjustStackPointer(MachineFunction &MF, MachineBasicBlock &MBB,
-                        MachineBasicBlock::iterator &MBBI,
-                        bool IsSubtract) {
+                        MachineBasicBlock::iterator &MBBI, bool IsSubtract) {
   MachineFrameInfo &MFI = MF.getFrameInfo();
   int NumBytes = (int)MFI.getStackSize();
   if (NumBytes) {
@@ -32,7 +31,7 @@ void adjustStackPointer(MachineFunction &MF, MachineBasicBlock &MBB,
         *static_cast<const SBFInstrInfo *>(MF.getSubtarget().getInstrInfo());
     BuildMI(MBB, MBBI, Dl, TII.get(SBF::ADD_ri), SBF::R11)
         .addReg(SBF::R11)
-        .addImm(IsSubtract? -NumBytes : NumBytes);
+        .addImm(IsSubtract ? -NumBytes : NumBytes);
   }
 }
 
