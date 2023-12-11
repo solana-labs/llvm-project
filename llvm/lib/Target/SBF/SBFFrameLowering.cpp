@@ -23,18 +23,16 @@ namespace {
 
 void adjustStackPointer(MachineFunction &MF, MachineBasicBlock &MBB,
                         MachineBasicBlock::iterator &MBBI,
-                        bool Subtract) {
+                        bool IsSubtract) {
   MachineFrameInfo &MFI = MF.getFrameInfo();
   int NumBytes = (int)MFI.getStackSize();
-  if (Subtract)
-    NumBytes = - NumBytes;
   if (NumBytes) {
     DebugLoc Dl;
     const SBFInstrInfo &TII =
         *static_cast<const SBFInstrInfo *>(MF.getSubtarget().getInstrInfo());
     BuildMI(MBB, MBBI, Dl, TII.get(SBF::ADD_ri), SBF::R11)
         .addReg(SBF::R11)
-        .addImm(NumBytes);
+        .addImm(IsSubtract? -NumBytes : NumBytes);
   }
 }
 
