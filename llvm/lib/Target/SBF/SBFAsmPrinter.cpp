@@ -34,7 +34,6 @@ using namespace llvm;
 
 #define DEBUG_TYPE "asm-printer"
 
-extern cl::opt<unsigned> SBFAsmWriterVariant;
 static cl::opt<bool> SBFEnableBTFEmission(
     "sbf-enable-btf-emission", cl::Hidden, cl::init(false),
     cl::desc("Enable BTF debuginfo sections to be emitted"));
@@ -138,15 +137,11 @@ bool SBFAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
   if (ExtraCode)
     return true; // Unknown modifier.
 
-  if (SBFAsmWriterVariant == 1)
-    O << "(";
   O << SBFInstPrinter::getRegisterName(BaseMO.getReg());
   if (Offset < 0)
     O << " - " << -Offset;
   else
     O << " + " << Offset;
-  if (SBFAsmWriterVariant == 1)
-    O << ")";
 
   return false;
 }

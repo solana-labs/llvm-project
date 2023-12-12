@@ -235,8 +235,6 @@ bool objdump::UnwindInfo;
 static bool Wide;
 std::string objdump::Prefix;
 uint32_t objdump::PrefixStrip;
-static uint64_t OutputAsmVariant;
-static bool HasOutputAsmVariantFlag;
 
 DebugVarsFormat objdump::DbgVariables = DVDisabled;
 
@@ -2103,9 +2101,6 @@ static void disassembleObject(ObjectFile *Obj, bool InlineRelocs) {
       TheTarget->createMCInstrAnalysis(MII.get()));
 
   int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
-  // User may have overridden the assembler variant.
-  if (HasOutputAsmVariantFlag)
-    AsmPrinterVariant = OutputAsmVariant;
   std::unique_ptr<MCInstPrinter> IP(TheTarget->createMCInstPrinter(
       Triple(TripleName), AsmPrinterVariant, *AsmInfo, *MII, *MRI));
   if (!IP)
@@ -3086,8 +3081,6 @@ static void parseObjdumpOptions(const llvm::opt::InputArgList &InputArgs) {
       invalidArgValue(A);
   }
   parseIntArg(InputArgs, OBJDUMP_debug_vars_indent_EQ, DbgIndent);
-  parseIntArg(InputArgs, OBJDUMP_output_asm_variant_EQ, OutputAsmVariant);
-  HasOutputAsmVariantFlag = InputArgs.hasArg(OBJDUMP_output_asm_variant_EQ);
 
   parseMachOOptions(InputArgs);
 
