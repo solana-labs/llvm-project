@@ -155,12 +155,11 @@ class TYPE_LD_ST<bits<3> mode, bits<2> size,
 }
 
 // jump instructions
-class JMP_RR<SBFJumpOp Opc, string Mnemonic, string OpcodeStr, PatLeaf Cond>
+class JMP_RR<SBFJumpOp Opc, string Mnemonic, PatLeaf Cond>
     : TYPE_ALU_JMP<Opc.Value, SBF_X.Value,
                    (outs),
                    (ins GPR:$dst, GPR:$src, brtarget:$BrDst),
-                   "{" # Mnemonic # " $dst, $src, $BrDst"
-                   "|if $dst " # OpcodeStr # " $src goto $BrDst}",
+                   Mnemonic # " $dst, $src, $BrDst",
                    [(SBFbrcc i64:$dst, i64:$src, Cond, bb:$BrDst)]> {
   bits<4> dst;
   bits<4> src;
@@ -172,12 +171,11 @@ class JMP_RR<SBFJumpOp Opc, string Mnemonic, string OpcodeStr, PatLeaf Cond>
   let SBFClass = SBF_JMP;
 }
 
-class JMP_RI<SBFJumpOp Opc, string Mnemonic, string OpcodeStr, PatLeaf Cond>
+class JMP_RI<SBFJumpOp Opc, string Mnemonic, PatLeaf Cond>
     : TYPE_ALU_JMP<Opc.Value, SBF_K.Value,
                    (outs),
                    (ins GPR:$dst, i64imm:$imm, brtarget:$BrDst),
-                   "{" # Mnemonic # " $dst, $imm, $BrDst"
-                   "|if $dst " # OpcodeStr # " $imm goto $BrDst}",
+                   Mnemonic # " $dst, $imm, $BrDst",
                    [(SBFbrcc i64:$dst, i64immSExt32:$imm, Cond, bb:$BrDst)]> {
   bits<4> dst;
   bits<16> BrDst;
@@ -189,12 +187,11 @@ class JMP_RI<SBFJumpOp Opc, string Mnemonic, string OpcodeStr, PatLeaf Cond>
   let SBFClass = SBF_JMP;
 }
 
-class JMP_RR_32<SBFJumpOp Opc, string Mnemonic, string OpcodeStr, PatLeaf Cond>
+class JMP_RR_32<SBFJumpOp Opc, string Mnemonic, PatLeaf Cond>
     : TYPE_ALU_JMP<Opc.Value, SBF_X.Value,
                    (outs),
                    (ins GPR32:$dst, GPR32:$src, brtarget:$BrDst),
-                   "{" # Mnemonic # " $dst, $src, $BrDst"
-                   "|if $dst " # OpcodeStr # " $src goto $BrDst}",
+                   Mnemonic # " $dst, $src, $BrDst",
                    [(SBFbrcc i32:$dst, i32:$src, Cond, bb:$BrDst)]> {
   bits<4> dst;
   bits<4> src;
@@ -206,12 +203,11 @@ class JMP_RR_32<SBFJumpOp Opc, string Mnemonic, string OpcodeStr, PatLeaf Cond>
   let SBFClass = SBF_JMP32;
 }
 
-class JMP_RI_32<SBFJumpOp Opc, string Mnemonic, string OpcodeStr, PatLeaf Cond>
+class JMP_RI_32<SBFJumpOp Opc, string Mnemonic, PatLeaf Cond>
     : TYPE_ALU_JMP<Opc.Value, SBF_K.Value,
                    (outs),
                    (ins GPR32:$dst, i32imm:$imm, brtarget:$BrDst),
-                   "{" # Mnemonic # " $dst, $imm, $BrDst"
-                   "|if $dst " # OpcodeStr # " $imm goto $BrDst}",
+                   Mnemonic # " $dst, $imm, $BrDst",
                    [(SBFbrcc i32:$dst, i32immSExt32:$imm, Cond, bb:$BrDst)]> {
   bits<4> dst;
   bits<16> BrDst;
@@ -223,26 +219,25 @@ class JMP_RI_32<SBFJumpOp Opc, string Mnemonic, string OpcodeStr, PatLeaf Cond>
   let SBFClass = SBF_JMP32;
 }
 
-multiclass J<SBFJumpOp Opc, string Mnemonic, string OpcodeStr, PatLeaf Cond,
-             PatLeaf Cond32> {
-  def _rr : JMP_RR<Opc, Mnemonic, OpcodeStr, Cond>;
-  def _ri : JMP_RI<Opc, Mnemonic, OpcodeStr, Cond>;
-  def _rr_32 : JMP_RR_32<Opc, Mnemonic, OpcodeStr, Cond32>;
-  def _ri_32 : JMP_RI_32<Opc, Mnemonic, OpcodeStr, Cond32>;
+multiclass J<SBFJumpOp Opc, string Mnemonic, PatLeaf Cond, PatLeaf Cond32> {
+  def _rr : JMP_RR<Opc, Mnemonic, Cond>;
+  def _ri : JMP_RI<Opc, Mnemonic, Cond>;
+  def _rr_32 : JMP_RR_32<Opc, Mnemonic, Cond32>;
+  def _ri_32 : JMP_RI_32<Opc, Mnemonic, Cond32>;
 }
 
 let isBranch = 1, isTerminator = 1, hasDelaySlot=0 in {
 // cmp+goto instructions
-defm JEQ  : J<SBF_JEQ, "jeq", "==",  SBF_CC_EQ, SBF_CC_EQ_32>;
-defm JUGT : J<SBF_JGT, "jgt", ">", SBF_CC_GTU, SBF_CC_GTU_32>;
-defm JUGE : J<SBF_JGE, "jge", ">=", SBF_CC_GEU, SBF_CC_GEU_32>;
-defm JNE  : J<SBF_JNE, "jne", "!=",  SBF_CC_NE, SBF_CC_NE_32>;
-defm JSGT : J<SBF_JSGT, "jsgt",  "s>", SBF_CC_GT, SBF_CC_GT_32>;
-defm JSGE : J<SBF_JSGE, "jsge",  "s>=", SBF_CC_GE, SBF_CC_GE_32>;
-defm JULT : J<SBF_JLT, "jlt", "<", SBF_CC_LTU, SBF_CC_LTU_32>;
-defm JULE : J<SBF_JLE, "jle", "<=", SBF_CC_LEU, SBF_CC_LEU_32>;
-defm JSLT : J<SBF_JSLT, "jslt", "s<", SBF_CC_LT, SBF_CC_LT_32>;
-defm JSLE : J<SBF_JSLE, "jsle", "s<=", SBF_CC_LE, SBF_CC_LE_32>;
+defm JEQ  : J<SBF_JEQ, "jeq", SBF_CC_EQ, SBF_CC_EQ_32>;
+defm JUGT : J<SBF_JGT, "jgt", SBF_CC_GTU, SBF_CC_GTU_32>;
+defm JUGE : J<SBF_JGE, "jge", SBF_CC_GEU, SBF_CC_GEU_32>;
+defm JNE  : J<SBF_JNE, "jne", SBF_CC_NE, SBF_CC_NE_32>;
+defm JSGT : J<SBF_JSGT, "jsgt", SBF_CC_GT, SBF_CC_GT_32>;
+defm JSGE : J<SBF_JSGE, "jsge", SBF_CC_GE, SBF_CC_GE_32>;
+defm JULT : J<SBF_JLT, "jlt", SBF_CC_LTU, SBF_CC_LTU_32>;
+defm JULE : J<SBF_JLE, "jle", SBF_CC_LEU, SBF_CC_LEU_32>;
+defm JSLT : J<SBF_JSLT, "jslt", SBF_CC_LT, SBF_CC_LT_32>;
+defm JSLE : J<SBF_JSLE, "jsle", SBF_CC_LE, SBF_CC_LE_32>;
 }
 
 // ALU instructions
@@ -268,51 +263,46 @@ class ALU_RR<SBFOpClass Class, SBFArithOp Opc,
   let SBFClass = Class;
 }
 
-multiclass ALU<SBFArithOp Opc, string Mnemonic, string OpcodeStr,
-               SDNode OpNode> {
+multiclass ALU<SBFArithOp Opc, string Mnemonic, SDNode OpNode> {
   def _rr : ALU_RR<SBF_ALU64, Opc,
                    (outs GPR:$dst),
                    (ins GPR:$src2, GPR:$src),
-                   "{?!?" # Mnemonic # "64 $dst, $src" #
-                   "!$dst " # OpcodeStr # " $src}",
+                   Mnemonic # "64 $dst, $src",
                    [(set GPR:$dst, (OpNode i64:$src2, i64:$src))]>;
   def _ri : ALU_RI<SBF_ALU64, Opc,
                    (outs GPR:$dst),
                    (ins GPR:$src2, i64imm:$imm),
-                   "{?!?" # Mnemonic # "64 $dst, $imm" #
-                   "!$dst " # OpcodeStr #" $imm}",
+                   Mnemonic # "64 $dst, $imm",
                    [(set GPR:$dst, (OpNode GPR:$src2, i64immSExt32:$imm))]>;
   def _rr_32 : ALU_RR<SBF_ALU, Opc,
                    (outs GPR32:$dst),
                    (ins GPR32:$src2, GPR32:$src),
-                   "{?!?" # Mnemonic # "32 $dst, $src" #
-                   "!$dst " # OpcodeStr # " $src}",
+                   Mnemonic # "32 $dst, $src",
                    [(set GPR32:$dst, (OpNode i32:$src2, i32:$src))]>;
   def _ri_32 : ALU_RI<SBF_ALU, Opc,
                    (outs GPR32:$dst),
                    (ins GPR32:$src2, i32imm:$imm),
-                   "{?!?" # Mnemonic # "32 $dst, $imm" #
-                   "!$dst " # OpcodeStr # " $imm}",
+                   Mnemonic # "32 $dst, $imm",
                    [(set GPR32:$dst, (OpNode GPR32:$src2, i32immSExt32:$imm))]>;
 }
 
 let Constraints = "$dst = $src2" in {
     let isAsCheapAsAMove = 1 in {
-        defm ADD : ALU<SBF_ADD, "add", "+=", add>;
-        defm SUB : ALU<SBF_SUB, "sub", "-=", sub>;
-        defm OR  : ALU<SBF_OR, "or", "|=", or>;
-        defm AND : ALU<SBF_AND, "and", "&=", and>;
-        defm SLL : ALU<SBF_LSH, "lsh", "<<=", shl>;
-        defm SRL : ALU<SBF_RSH, "rsh", ">>=", srl>;
-        defm XOR : ALU<SBF_XOR, "xor", "^=", xor>;
-        defm SRA : ALU<SBF_ARSH, "arsh", "s>>=", sra>;
+        defm ADD : ALU<SBF_ADD, "add", add>;
+        defm SUB : ALU<SBF_SUB, "sub", sub>;
+        defm OR  : ALU<SBF_OR, "or", or>;
+        defm AND : ALU<SBF_AND, "and", and>;
+        defm SLL : ALU<SBF_LSH, "lsh", shl>;
+        defm SRL : ALU<SBF_RSH, "rsh", srl>;
+        defm XOR : ALU<SBF_XOR, "xor", xor>;
+        defm SRA : ALU<SBF_ARSH, "arsh", sra>;
     }
 
-    defm MUL : ALU<SBF_MUL, "mul", "*=", mul>;
-    defm DIV : ALU<SBF_DIV, "div", "/=", udiv>;
+    defm MUL : ALU<SBF_MUL, "mul", mul>;
+    defm DIV : ALU<SBF_DIV, "div", udiv>;
 
     let Predicates = [SBFSubtargetSolana] in {
-        defm SDIV : ALU<SBF_SDIV, "sdiv", "s/=", sdiv>;
+        defm SDIV : ALU<SBF_SDIV, "sdiv", sdiv>;
     }
 }
 
@@ -327,19 +317,18 @@ class NEG_RR<SBFOpClass Class, SBFArithOp Opc,
 
 let Constraints = "$dst = $src", isAsCheapAsAMove = 1 in {
   def NEG_64: NEG_RR<SBF_ALU64, SBF_NEG, (outs GPR:$dst), (ins GPR:$src),
-                     "{neg64 $dst|$dst = -$src}",
+                     "neg64 $dst",
                      [(set GPR:$dst, (ineg i64:$src))]>;
   def NEG_32: NEG_RR<SBF_ALU, SBF_NEG, (outs GPR32:$dst), (ins GPR32:$src),
-                     "{neg32 $dst|$dst = -$src}",
+                     "neg32 $dst",
                      [(set GPR32:$dst, (ineg i32:$src))]>;
 }
 
-class LD_IMM64<bits<4> Pseudo, string Mnemonic, string OpcodeStr>
+class LD_IMM64<bits<4> Pseudo, string Mnemonic>
     : TYPE_LD_ST<SBF_IMM.Value, SBF_DW.Value,
                  (outs GPR:$dst),
                  (ins u64imm:$imm),
-                 "{" # Mnemonic # " $dst, $imm" #
-                 "|$dst " # OpcodeStr # " $imm ll}",
+                 Mnemonic # " $dst, $imm",
                  [(set GPR:$dst, (i64 imm:$imm))]> {
 
   bits<4> dst;
@@ -353,26 +342,26 @@ class LD_IMM64<bits<4> Pseudo, string Mnemonic, string OpcodeStr>
 }
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
-def LD_imm64 : LD_IMM64<0, "lddw", "=">;
+def LD_imm64 : LD_IMM64<0, "lddw">;
 def MOV_rr : ALU_RR<SBF_ALU64, SBF_MOV,
                     (outs GPR:$dst),
                     (ins GPR:$src),
-                    "{mov64 $dst, $src|$dst = $src}",
+                    "mov64 $dst, $src",
                     []>;
 def MOV_ri : ALU_RI<SBF_ALU64, SBF_MOV,
                     (outs GPR:$dst),
                     (ins i64imm:$imm),
-                    "{mov64 $dst, $imm|$dst = $imm}",
+                    "mov64 $dst, $imm",
                     [(set GPR:$dst, (i64 i64immSExt32:$imm))]>;
 def MOV_rr_32 : ALU_RR<SBF_ALU, SBF_MOV,
                     (outs GPR32:$dst),
                     (ins GPR32:$src),
-                    "{mov32 $dst, $src|$dst = $src}",
+                    "mov32 $dst, $src",
                     []>;
 def MOV_ri_32 : ALU_RI<SBF_ALU, SBF_MOV,
                     (outs GPR32:$dst),
                     (ins i32imm:$imm),
-                    "{mov32 $dst, $imm|$dst = $imm}",
+                    "mov32 $dst, $imm",
                     [(set GPR32:$dst, (i32 i32immSExt32:$imm))]>;
 }
 
@@ -411,13 +400,11 @@ def LD_pseudo
 }
 
 // STORE instructions
-class STORE<SBFWidthModifer SizeOp, string Mnemonic, string OpcodeStr,
-            list<dag> Pattern>
+class STORE<SBFWidthModifer SizeOp, string Mnemonic, list<dag> Pattern>
     : TYPE_LD_ST<SBF_MEM.Value, SizeOp.Value,
                  (outs),
                  (ins GPR:$src, MEMri:$addr),
-                 "{" # Mnemonic # " [$addr], $src" #
-                 "|*(" # OpcodeStr # " *)($addr) = $src}",
+                 Mnemonic # " [$addr], $src",
                  Pattern> {
   bits<4> src;
   bits<20> addr;
@@ -428,25 +415,22 @@ class STORE<SBFWidthModifer SizeOp, string Mnemonic, string OpcodeStr,
   let SBFClass = SBF_STX;
 }
 
-class STOREi64<SBFWidthModifer Opc, string Mnemonic, string OpcodeStr,
-               PatFrag OpNode>
-    : STORE<Opc, Mnemonic, OpcodeStr, [(OpNode i64:$src, ADDRri:$addr)]>;
+class STOREi64<SBFWidthModifer Opc, string Mnemonic, PatFrag OpNode>
+    : STORE<Opc, Mnemonic, [(OpNode i64:$src, ADDRri:$addr)]>;
 
 let Predicates = [SBFNoALU32] in {
-  def STW : STOREi64<SBF_W, "stxw", "u32", truncstorei32>;
-  def STH : STOREi64<SBF_H, "stxh", "u16", truncstorei16>;
-  def STB : STOREi64<SBF_B, "stxb", "u8", truncstorei8>;
+  def STW : STOREi64<SBF_W, "stxw", truncstorei32>;
+  def STH : STOREi64<SBF_H, "stxh", truncstorei16>;
+  def STB : STOREi64<SBF_B, "stxb", truncstorei8>;
 }
-def STD : STOREi64<SBF_DW, "stxdw", "u64", store>;
+def STD : STOREi64<SBF_DW, "stxdw", store>;
 
 // LOAD instructions
-class LOAD<SBFWidthModifer SizeOp, string Mnemonic, string OpcodeStr,
-           list<dag> Pattern>
+class LOAD<SBFWidthModifer SizeOp, string Mnemonic, list<dag> Pattern>
     : TYPE_LD_ST<SBF_MEM.Value, SizeOp.Value,
                  (outs GPR:$dst),
                  (ins MEMri:$addr),
-                 "{" # Mnemonic # " $dst, [$addr]" #
-                 "|$dst = *(" # OpcodeStr # " *)($addr)}",
+                 Mnemonic # " $dst, [$addr]",
                  Pattern> {
   bits<4> dst;
   bits<20> addr;
@@ -457,9 +441,8 @@ class LOAD<SBFWidthModifer SizeOp, string Mnemonic, string OpcodeStr,
   let SBFClass = SBF_LDX;
 }
 
-class LOADi64<SBFWidthModifer SizeOp, string Mnemonic, string OpcodeStr,
-              PatFrag OpNode>
-    : LOAD<SizeOp, Mnemonic, OpcodeStr, [(set i64:$dst, (OpNode ADDRri:$addr))]>;
+class LOADi64<SBFWidthModifer SizeOp, string Mnemonic, PatFrag OpNode>
+    : LOAD<SizeOp, Mnemonic, [(set i64:$dst, (OpNode ADDRri:$addr))]>;
 
 let isCodeGenOnly = 1 in {
   def CORE_MEM : TYPE_LD_ST<SBF_MEM.Value, SBF_W.Value,
@@ -482,20 +465,18 @@ let isCodeGenOnly = 1 in {
 }
 
 let Predicates = [SBFNoALU32] in {
-  def LDW : LOADi64<SBF_W, "ldxw", "u32", zextloadi32>;
-  def LDH : LOADi64<SBF_H, "ldxh", "u16", zextloadi16>;
-  def LDB : LOADi64<SBF_B, "ldxb", "u8", zextloadi8>;
+  def LDW : LOADi64<SBF_W, "ldxw", zextloadi32>;
+  def LDH : LOADi64<SBF_H, "ldxh", zextloadi16>;
+  def LDB : LOADi64<SBF_B, "ldxb", zextloadi8>;
 }
 
-def LDD : LOADi64<SBF_DW, "ldxdw", "u64", load>;
+def LDD : LOADi64<SBF_DW, "ldxdw", load>;
 
-class BRANCH<SBFJumpOp Opc, string Mnemonic, string OpcodeStr,
-             list<dag> Pattern>
+class BRANCH<SBFJumpOp Opc, string Mnemonic, list<dag> Pattern>
     : TYPE_ALU_JMP<Opc.Value, SBF_K.Value,
                    (outs),
                    (ins brtarget:$BrDst),
-                   "{" # Mnemonic # " $BrDst" #
-                   "|" # OpcodeStr # " $BrDst}",
+                   Mnemonic # " $BrDst",
                    Pattern> {
   bits<16> BrDst;
 
@@ -529,7 +510,7 @@ class CALLX<string OpcodeStr>
 
 // Jump always
 let isBranch = 1, isTerminator = 1, hasDelaySlot=0, isBarrier = 1 in {
-  def JMP : BRANCH<SBF_JA, "ja", "goto", [(br bb:$BrDst)]>;
+  def JMP : BRANCH<SBF_JA, "ja", [(br bb:$BrDst)]>;
 }
 
 // Jump and link
@@ -644,13 +625,11 @@ let Predicates = [SBFNoALU32] in {
 }
 
 // Atomic XADD for SBFNoALU32
-class XADD<SBFWidthModifer SizeOp, string Mnemonic, string OpcodeStr,
-           PatFrag OpNode>
+class XADD<SBFWidthModifer SizeOp, string Mnemonic, PatFrag OpNode>
     : TYPE_LD_ST<SBF_ATOMIC.Value, SizeOp.Value,
                  (outs GPR:$dst),
                  (ins MEMri:$addr, GPR:$val),
-                 "{" # Mnemonic # " [$addr], $val" #
-                 "|lock *(" # OpcodeStr # " *)($addr) += $val}",
+                 Mnemonic # " [$addr], $val",
                  [(set GPR:$dst, (OpNode ADDRri:$addr, GPR:$val))]> {
   bits<4> dst;
   bits<20> addr;
@@ -664,17 +643,16 @@ class XADD<SBFWidthModifer SizeOp, string Mnemonic, string OpcodeStr,
 
 let Constraints = "$dst = $val" in {
   let Predicates = [SBFNoALU32] in {
-    def XADDW : XADD<SBF_W, "stxxaddw", "u32", atomic_load_add_32>;
+    def XADDW : XADD<SBF_W, "stxxaddw", atomic_load_add_32>;
   }
 }
 
 // Atomic add, and, or, xor
-class ATOMIC_NOFETCH<SBFArithOp Opc, string Mnemonic, string Opstr>
+class ATOMIC_NOFETCH<SBFArithOp Opc, string Mnemonic>
     : TYPE_LD_ST<SBF_ATOMIC.Value, SBF_DW.Value,
                  (outs GPR:$dst),
                  (ins MEMri:$addr, GPR:$val),
-                 "{?!?stxx" # Mnemonic # "dw [$addr], $val" #
-                 "!lock *(u64 *)($addr) " # Opstr # "= $val}",
+                 "stxx" # Mnemonic # "dw [$addr], $val",
                  []> {
   bits<4> dst;
   bits<20> addr;
@@ -686,12 +664,11 @@ class ATOMIC_NOFETCH<SBFArithOp Opc, string Mnemonic, string Opstr>
   let SBFClass = SBF_STX;
 }
 
-class ATOMIC32_NOFETCH<SBFArithOp Opc, string Mnemonic, string Opstr>
+class ATOMIC32_NOFETCH<SBFArithOp Opc, string Mnemonic>
     : TYPE_LD_ST<SBF_ATOMIC.Value, SBF_W.Value,
                  (outs GPR32:$dst),
                  (ins MEMri:$addr, GPR32:$val),
-                 "{?!?stxx" # Mnemonic # "w [$addr], $val" #
-                 "!lock *(u32 *)($addr) " # Opstr # "= $val}",
+                 "stxx" # Mnemonic # "w [$addr], $val",
                  []> {
   bits<4> dst;
   bits<20> addr;
@@ -705,26 +682,25 @@ class ATOMIC32_NOFETCH<SBFArithOp Opc, string Mnemonic, string Opstr>
 
 let Constraints = "$dst = $val" in {
   let Predicates = [SBFHasALU32], DecoderNamespace = "SBFALU32" in {
-    def XADDW32 : ATOMIC32_NOFETCH<SBF_ADD, "add", "+">;
-    def XANDW32 : ATOMIC32_NOFETCH<SBF_AND, "and", "&">;
-    def XORW32  : ATOMIC32_NOFETCH<SBF_OR, "or", "|">;
-    def XXORW32 : ATOMIC32_NOFETCH<SBF_XOR, "xor", "^">;
+    def XADDW32 : ATOMIC32_NOFETCH<SBF_ADD, "add">;
+    def XANDW32 : ATOMIC32_NOFETCH<SBF_AND, "and">;
+    def XORW32  : ATOMIC32_NOFETCH<SBF_OR, "or">;
+    def XXORW32 : ATOMIC32_NOFETCH<SBF_XOR, "xor">;
   }
 
-  def XADDD  : ATOMIC_NOFETCH<SBF_ADD, "add", "+">;
-  def XANDD  : ATOMIC_NOFETCH<SBF_AND, "and", "&">;
-  def XORD   : ATOMIC_NOFETCH<SBF_OR, "or", "|">;
-  def XXORD  : ATOMIC_NOFETCH<SBF_XOR,"xor",  "^">;
+  def XADDD  : ATOMIC_NOFETCH<SBF_ADD, "add">;
+  def XANDD  : ATOMIC_NOFETCH<SBF_AND, "and">;
+  def XORD   : ATOMIC_NOFETCH<SBF_OR, "or">;
+  def XXORD  : ATOMIC_NOFETCH<SBF_XOR,"xor">;
 }
 
 // Atomic Fetch-and-<add, and, or, xor> operations
-class XFALU64<SBFWidthModifer SizeOp, SBFArithOp Opc, string OpcodeStr,
-              string OpcStr, PatFrag OpNode>
+class XFALU64<SBFWidthModifer SizeOp, SBFArithOp Opc, string OpcStr,
+              PatFrag OpNode>
     : TYPE_LD_ST<SBF_ATOMIC.Value, SizeOp.Value,
                  (outs GPR:$dst),
                  (ins MEMri:$addr, GPR:$val),
-                 "{stxxf" # OpcStr # "dw [$addr], $val" #
-                 "|$dst = atomic_fetch_" # OpcStr # "((" # OpcodeStr # " *)($addr), $val)}",
+                 "stxxf" # OpcStr # "dw [$addr], $val",
                  [(set GPR:$dst, (OpNode ADDRri:$addr, GPR:$val))]> {
   bits<4> dst;
   bits<20> addr;
@@ -737,13 +713,12 @@ class XFALU64<SBFWidthModifer SizeOp, SBFArithOp Opc, string OpcodeStr,
   let SBFClass = SBF_STX;
 }
 
-class XFALU32<SBFWidthModifer SizeOp, SBFArithOp Opc, string OpcodeStr,
-              string OpcStr, PatFrag OpNode>
+class XFALU32<SBFWidthModifer SizeOp, SBFArithOp Opc, string OpcStr,
+              PatFrag OpNode>
     : TYPE_LD_ST<SBF_ATOMIC.Value, SizeOp.Value,
                  (outs GPR32:$dst),
                  (ins MEMri:$addr, GPR32:$val),
-                 "{stxxf" # OpcStr  # "w [$addr], $val" #
-                 "|$dst = atomic_fetch_" # OpcStr # "((" # OpcodeStr # " *)($addr), $val)}",
+                 "stxxf" # OpcStr  # "w [$addr], $val",
                  [(set GPR32:$dst, (OpNode ADDRri:$addr, GPR32:$val))]> {
   bits<4> dst;
   bits<20> addr;
@@ -758,16 +733,16 @@ class XFALU32<SBFWidthModifer SizeOp, SBFArithOp Opc, string OpcodeStr,
 
 let Constraints = "$dst = $val" in {
   let Predicates = [SBFHasALU32], DecoderNamespace = "SBFALU32" in {
-    def XFADDW32 : XFALU32<SBF_W, SBF_ADD, "u32", "add", atomic_load_add_32>;
-    def XFANDW32 : XFALU32<SBF_W, SBF_AND, "u32", "and", atomic_load_and_32>;
-    def XFORW32  : XFALU32<SBF_W, SBF_OR,  "u32", "or",  atomic_load_or_32>;
-    def XFXORW32 : XFALU32<SBF_W, SBF_XOR, "u32", "xor", atomic_load_xor_32>;
+    def XFADDW32 : XFALU32<SBF_W, SBF_ADD, "add", atomic_load_add_32>;
+    def XFANDW32 : XFALU32<SBF_W, SBF_AND, "and", atomic_load_and_32>;
+    def XFORW32  : XFALU32<SBF_W, SBF_OR,  "or",  atomic_load_or_32>;
+    def XFXORW32 : XFALU32<SBF_W, SBF_XOR, "xor", atomic_load_xor_32>;
   }
 
-  def XFADDD : XFALU64<SBF_DW, SBF_ADD, "u64", "add", atomic_load_add_64>;
-  def XFANDD : XFALU64<SBF_DW, SBF_AND, "u64", "and", atomic_load_and_64>;
-  def XFORD  : XFALU64<SBF_DW, SBF_OR,  "u64", "or",  atomic_load_or_64>;
-  def XFXORD : XFALU64<SBF_DW, SBF_XOR, "u64", "xor", atomic_load_xor_64>;
+  def XFADDD : XFALU64<SBF_DW, SBF_ADD, "add", atomic_load_add_64>;
+  def XFANDD : XFALU64<SBF_DW, SBF_AND, "and", atomic_load_and_64>;
+  def XFORD  : XFALU64<SBF_DW, SBF_OR,  "or",  atomic_load_or_64>;
+  def XFXORD : XFALU64<SBF_DW, SBF_XOR, "xor", atomic_load_xor_64>;
 }
 
 // atomic_load_sub can be represented as a neg followed
@@ -786,12 +761,11 @@ let Predicates = [SBFSubtargetSolana], usesCustomInserter = 1, isCodeGenOnly = 1
 }
 
 // Atomic Exchange
-class XCHG<SBFWidthModifer SizeOp, string OpcodeStr, PatFrag OpNode>
+class XCHG<SBFWidthModifer SizeOp, PatFrag OpNode>
     : TYPE_LD_ST<SBF_ATOMIC.Value, SizeOp.Value,
                  (outs GPR:$dst),
                  (ins MEMri:$addr, GPR:$val),
-                 "{stxxchgdw [$addr], $val" #
-                 "|$dst = xchg_" # OpcodeStr # "($addr, $val)}",
+                 "stxxchgdw [$addr], $val",
                  [(set GPR:$dst, (OpNode ADDRri:$addr,GPR:$val))]> {
   bits<4> dst;
   bits<20> addr;
@@ -804,12 +778,11 @@ class XCHG<SBFWidthModifer SizeOp, string OpcodeStr, PatFrag OpNode>
   let SBFClass = SBF_STX;
 }
 
-class XCHG32<SBFWidthModifer SizeOp, string OpcodeStr, PatFrag OpNode>
+class XCHG32<SBFWidthModifer SizeOp, PatFrag OpNode>
     : TYPE_LD_ST<SBF_ATOMIC.Value, SizeOp.Value,
                  (outs GPR32:$dst),
                  (ins MEMri:$addr, GPR32:$val),
-                 "{stxxchgw [$addr], $val" #
-                 "|$dst = xchg32_" # OpcodeStr # "($addr, $val)}",
+                 "stxxchgw [$addr], $val",
                  [(set GPR32:$dst, (OpNode ADDRri:$addr,GPR32:$val))]> {
   bits<4> dst;
   bits<20> addr;
@@ -824,19 +797,18 @@ class XCHG32<SBFWidthModifer SizeOp, string OpcodeStr, PatFrag OpNode>
 
 let Constraints = "$dst = $val" in {
   let Predicates = [SBFHasALU32], DecoderNamespace = "SBFALU32" in {
-    def XCHGW32 : XCHG32<SBF_W, "32", atomic_swap_32>;
+    def XCHGW32 : XCHG32<SBF_W, atomic_swap_32>;
   }
 
-  def XCHGD : XCHG<SBF_DW, "64", atomic_swap_64>;
+  def XCHGD : XCHG<SBF_DW, atomic_swap_64>;
 }
 
 // Compare-And-Exchange
-class CMPXCHG<SBFWidthModifer SizeOp, string OpcodeStr, PatFrag OpNode>
+class CMPXCHG<SBFWidthModifer SizeOp, PatFrag OpNode>
     : TYPE_LD_ST<SBF_ATOMIC.Value, SizeOp.Value,
                  (outs),
                  (ins MEMri:$addr, GPR:$new),
-                 "{stxcmpxchgdw [$addr], $new" #
-                 "|r0 = cmpxchg_" # OpcodeStr # "($addr, r0, $new)}",
+                 "stxcmpxchgdw [$addr], $new",
                  [(set R0, (OpNode ADDRri:$addr, R0, GPR:$new))]> {
   bits<4> new;
   bits<20> addr;
@@ -849,12 +821,11 @@ class CMPXCHG<SBFWidthModifer SizeOp, string OpcodeStr, PatFrag OpNode>
   let SBFClass = SBF_STX;
 }
 
-class CMPXCHG32<SBFWidthModifer SizeOp, string OpcodeStr, PatFrag OpNode>
+class CMPXCHG32<SBFWidthModifer SizeOp, PatFrag OpNode>
     : TYPE_LD_ST<SBF_ATOMIC.Value, SizeOp.Value,
                  (outs),
                  (ins MEMri:$addr, GPR32:$new),
-                 "{stxcmpxchgw [$addr], $new" #
-                 "|w0 = cmpxchg32_" # OpcodeStr # "($addr, w0, $new)}",
+                 "stxcmpxchgw [$addr], $new",
                  [(set W0, (OpNode ADDRri:$addr, W0, GPR32:$new))]> {
   bits<4> new;
   bits<20> addr;
@@ -869,11 +840,11 @@ class CMPXCHG32<SBFWidthModifer SizeOp, string OpcodeStr, PatFrag OpNode>
 
 let Predicates = [SBFHasALU32], Defs = [W0], Uses = [W0],
     DecoderNamespace = "SBFALU32" in {
-  def CMPXCHGW32 : CMPXCHG32<SBF_W, "32", atomic_cmp_swap_32>;
+  def CMPXCHGW32 : CMPXCHG32<SBF_W, atomic_cmp_swap_32>;
 }
 
 let Defs = [R0], Uses = [R0] in {
-  def CMPXCHGD : CMPXCHG<SBF_DW, "64", atomic_cmp_swap_64>;
+  def CMPXCHGD : CMPXCHG<SBF_DW, atomic_cmp_swap_64>;
 }
 
 // bswap16, bswap32, bswap64
@@ -881,8 +852,7 @@ class BSWAP<bits<32> SizeOp, string OpcodeStr, SBFSrcType SrcType, list<dag> Pat
     : TYPE_ALU_JMP<SBF_END.Value, SrcType.Value,
                    (outs GPR:$dst),
                    (ins GPR:$src),
-                   "{" # OpcodeStr # " $src" #
-                   "|$dst = " # OpcodeStr # " $src}",
+                   OpcodeStr # " $src",
                    Pattern> {
   bits<4> dst;
 
@@ -907,13 +877,11 @@ let Constraints = "$dst = $src" in {
 
 let Defs = [R0, R1, R2, R3, R4, R5], Uses = [R6], hasSideEffects = 1,
     hasExtraDefRegAllocReq = 1, hasExtraSrcRegAllocReq = 1, mayLoad = 1 in {
-class LOAD_ABS<SBFWidthModifer SizeOp, string Mnemonic, string OpcodeStr,
-               Intrinsic OpNode>
+class LOAD_ABS<SBFWidthModifer SizeOp, string Mnemonic, Intrinsic OpNode>
     : TYPE_LD_ST<SBF_ABS.Value, SizeOp.Value,
                  (outs),
                  (ins GPR:$skb, i64imm:$imm),
-                 "{" # Mnemonic # " $imm" #
-                 "|r0 = *(" # OpcodeStr # " *)skb[$imm]}",
+                 Mnemonic # " $imm",
                  [(set R0, (OpNode GPR:$skb, i64immSExt32:$imm))]> {
   bits<32> imm;
 
@@ -921,13 +889,11 @@ class LOAD_ABS<SBFWidthModifer SizeOp, string Mnemonic, string OpcodeStr,
   let SBFClass = SBF_LD;
 }
 
-class LOAD_IND<SBFWidthModifer SizeOp, string Mnemonic, string OpcodeStr,
-               Intrinsic OpNode>
+class LOAD_IND<SBFWidthModifer SizeOp, string Mnemonic, Intrinsic OpNode>
     : TYPE_LD_ST<SBF_IND.Value, SizeOp.Value,
                  (outs),
                  (ins GPR:$skb, GPR:$val),
-                 "{" # Mnemonic # " $val" #
-                 "|r0 = *(" # OpcodeStr # " *)skb[$val]}",
+                 Mnemonic # " $val",
                  [(set R0, (OpNode GPR:$skb, GPR:$val))]> {
   bits<4> val;
 
@@ -936,18 +902,18 @@ class LOAD_IND<SBFWidthModifer SizeOp, string Mnemonic, string OpcodeStr,
 }
 }
 
-def LD_ABS_B : LOAD_ABS<SBF_B, "ldabsb", "u8", int_bpf_load_byte>;
-def LD_ABS_H : LOAD_ABS<SBF_H, "ldabsh", "u16", int_bpf_load_half>;
-def LD_ABS_W : LOAD_ABS<SBF_W, "ldabsw", "u32", int_bpf_load_word>;
+def LD_ABS_B : LOAD_ABS<SBF_B, "ldabsb", int_bpf_load_byte>;
+def LD_ABS_H : LOAD_ABS<SBF_H, "ldabsh", int_bpf_load_half>;
+def LD_ABS_W : LOAD_ABS<SBF_W, "ldabsw", int_bpf_load_word>;
 
-def LD_IND_B : LOAD_IND<SBF_B, "ldindb", "u8", int_bpf_load_byte>;
-def LD_IND_H : LOAD_IND<SBF_H, "ldindh", "u16", int_bpf_load_half>;
-def LD_IND_W : LOAD_IND<SBF_W, "ldindw", "u32", int_bpf_load_word>;
+def LD_IND_B : LOAD_IND<SBF_B, "ldindb", int_bpf_load_byte>;
+def LD_IND_H : LOAD_IND<SBF_H, "ldindh", int_bpf_load_half>;
+def LD_IND_W : LOAD_IND<SBF_W, "ldindw", int_bpf_load_word>;
 
 let isCodeGenOnly = 1 in {
   def MOV_32_64 : ALU_RR<SBF_ALU, SBF_MOV,
                          (outs GPR:$dst), (ins GPR32:$src),
-                         "{mov32 $dst, $src|$dst = $src}", []>;
+                         "mov32 $dst, $src", []>;
 }
 
 def : Pat<(i64 (sext GPR32:$src)),
@@ -963,13 +929,11 @@ def : Pat<(i32 (trunc GPR:$src)),
 def : Pat<(i64 (anyext GPR32:$src)),
           (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GPR32:$src, sub_32)>;
 
-class STORE32<SBFWidthModifer SizeOp, string Mnemonic, string OpcodeStr,
-              list<dag> Pattern>
+class STORE32<SBFWidthModifer SizeOp, string Mnemonic, list<dag> Pattern>
     : TYPE_LD_ST<SBF_MEM.Value, SizeOp.Value,
                  (outs),
                  (ins GPR32:$src, MEMri:$addr),
-                 "{" # Mnemonic # " [$addr], $src" #
-                 "|*("#OpcodeStr#" *)($addr) = $src}",
+                 Mnemonic # " [$addr], $src",
                  Pattern> {
   bits<4> src;
   bits<20> addr;
@@ -980,23 +944,20 @@ class STORE32<SBFWidthModifer SizeOp, string Mnemonic, string OpcodeStr,
   let SBFClass = SBF_STX;
 }
 
-class STOREi32<SBFWidthModifer Opc, string Mnemonic, string OpcodeStr,
-               PatFrag OpNode>
-    : STORE32<Opc, Mnemonic, OpcodeStr, [(OpNode i32:$src, ADDRri:$addr)]>;
+class STOREi32<SBFWidthModifer Opc, string Mnemonic, PatFrag OpNode>
+    : STORE32<Opc, Mnemonic, [(OpNode i32:$src, ADDRri:$addr)]>;
 
 let Predicates = [SBFHasALU32], DecoderNamespace = "SBFALU32" in {
-  def STW32 : STOREi32<SBF_W, "stxw", "u32", store>;
-  def STH32 : STOREi32<SBF_H, "stxh", "u16", truncstorei16>;
-  def STB32 : STOREi32<SBF_B, "stxb", "u8", truncstorei8>;
+  def STW32 : STOREi32<SBF_W, "stxw", store>;
+  def STH32 : STOREi32<SBF_H, "stxh", truncstorei16>;
+  def STB32 : STOREi32<SBF_B, "stxb", truncstorei8>;
 }
 
-class LOAD32<SBFWidthModifer SizeOp, string Mnemonic, string OpcodeStr,
-             list<dag> Pattern>
+class LOAD32<SBFWidthModifer SizeOp, string Mnemonic, list<dag> Pattern>
     : TYPE_LD_ST<SBF_MEM.Value, SizeOp.Value,
                 (outs GPR32:$dst),
                 (ins MEMri:$addr),
-                 "{" # Mnemonic # " $dst, [$addr]" #
-                "|$dst = *("#OpcodeStr#" *)($addr)}",
+                Mnemonic # " $dst, [$addr]",
                 Pattern> {
   bits<4> dst;
   bits<20> addr;
@@ -1007,14 +968,13 @@ class LOAD32<SBFWidthModifer SizeOp, string Mnemonic, string OpcodeStr,
   let SBFClass = SBF_LDX;
 }
 
-class LOADi32<SBFWidthModifer SizeOp, string Mnemonic, string OpcodeStr,
-              PatFrag OpNode>
-    : LOAD32<SizeOp, Mnemonic, OpcodeStr, [(set i32:$dst, (OpNode ADDRri:$addr))]>;
+class LOADi32<SBFWidthModifer SizeOp, string Mnemonic, PatFrag OpNode>
+    : LOAD32<SizeOp, Mnemonic, [(set i32:$dst, (OpNode ADDRri:$addr))]>;
 
 let Predicates = [SBFHasALU32], DecoderNamespace = "SBFALU32" in {
-  def LDW32 : LOADi32<SBF_W, "ldxw", "u32", load>;
-  def LDH32 : LOADi32<SBF_H, "ldxh", "u16", zextloadi16>;
-  def LDB32 : LOADi32<SBF_B, "ldxb", "u8", zextloadi8>;
+  def LDW32 : LOADi32<SBF_W, "ldxw", load>;
+  def LDH32 : LOADi32<SBF_H, "ldxh", zextloadi16>;
+  def LDB32 : LOADi32<SBF_B, "ldxb", zextloadi8>;
 }
 
 let Predicates = [SBFHasALU32] in {
