@@ -16,24 +16,22 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/CodeGen/MachineRegisterInfo.h"
 
 using namespace llvm;
 
 namespace {
 
 void adjustStackPointer(MachineFunction &MF, MachineBasicBlock &MBB,
-                        MachineBasicBlock::iterator &MBBI,
-                        unsigned int Opcode) {
+                        MachineBasicBlock::iterator &MBBI, bool IsSubtract) {
   MachineFrameInfo &MFI = MF.getFrameInfo();
   int NumBytes = (int)MFI.getStackSize();
   if (NumBytes) {
     DebugLoc Dl;
     const SBFInstrInfo &TII =
         *static_cast<const SBFInstrInfo *>(MF.getSubtarget().getInstrInfo());
-    BuildMI(MBB, MBBI, Dl, TII.get(Opcode), SBF::R11)
+    BuildMI(MBB, MBBI, Dl, TII.get(SBF::ADD_ri), SBF::R11)
         .addReg(SBF::R11)
-        .addImm(NumBytes);
+        .addImm(IsSubtract ? -NumBytes : NumBytes);
   }
 }
 
@@ -47,7 +45,7 @@ void SBFFrameLowering::emitPrologue(MachineFunction &MF,
     return;
   }
   MachineBasicBlock::iterator MBBI = MBB.begin();
-  adjustStackPointer(MF, MBB, MBBI, SBF::SUB_ri);
+  adjustStackPointer(MF, MBB, MBBI, true);
 }
 
 void SBFFrameLowering::emitEpilogue(MachineFunction &MF,
@@ -56,7 +54,7 @@ void SBFFrameLowering::emitEpilogue(MachineFunction &MF,
     return;
   }
   MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
-  adjustStackPointer(MF, MBB, MBBI, SBF::ADD_ri);
+  adjustStackPointer(MF, MBB, MBBI, false);
 }
 
 void SBFFrameLowering::determineCalleeSaves(MachineFunction &MF,
