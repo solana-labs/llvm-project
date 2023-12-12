@@ -3,12 +3,10 @@
 # RUN: llvm-objdump  --mattr=+alu32 -d -r %t | FileCheck %s
 
 // ======== BPF_ALU Class ========
-  neg32 w1    // BPF_NEG
   add32 w0, w1    // BPF_ADD  | BPF_X
   sub32 w1, w2    // BPF_SUB  | BPF_X
   mul32 w2, w3    // BPF_MUL  | BPF_X
   div32 w3, w4    // BPF_DIV  | BPF_X
-// CHECK: 84 01 00 00 00 00 00 00      neg32 w1
 // CHECK: 0c 10 00 00 00 00 00 00      add32 w0, w1
 // CHECK: 1c 21 00 00 00 00 00 00      sub32 w1, w2
 // CHECK: 2c 32 00 00 00 00 00 00      mul32 w2, w3

@@ -263,33 +263,58 @@ class ALU_RR<SBFOpClass Class, SBFArithOp Opc,
   let SBFClass = Class;
 }
 
-multiclass ALU<SBFArithOp Opc, string Mnemonic, SDNode OpNode> {
+// ALU with register operand
+multiclass ALU_REG<SBFArithOp Opc, string Mnemonic, SDNode OpNode> {
   def _rr : ALU_RR<SBF_ALU64, Opc,
                    (outs GPR:$dst),
                    (ins GPR:$src2, GPR:$src),
                    Mnemonic # "64 $dst, $src",
                    [(set GPR:$dst, (OpNode i64:$src2, i64:$src))]>;
+ def _rr_32 : ALU_RR<SBF_ALU, Opc,
+                  (outs GPR32:$dst),
+                  (ins GPR32:$src2, GPR32:$src),
+                  Mnemonic # "32 $dst, $src",
+                  [(set GPR32:$dst, (OpNode i32:$src2, i32:$src))]>;
+}
+
+// ALU with immediate operand
+multiclass ALU<SBFArithOp Opc, string Mnemonic, SDNode OpNode> {
+ defm "" : ALU_REG<Opc, Mnemonic, OpNode>;
+ def _ri : ALU_RI<SBF_ALU64, Opc,
+                    (outs GPR:$dst),
+                    (ins GPR:$src2, i64imm:$imm),
+                    Mnemonic # "64 $dst, $imm",
+                    [(set GPR:$dst, (OpNode GPR:$src2, i64immSExt32:$imm))]>;
+
+ def _ri_32 : ALU_RI<SBF_ALU, Opc,
+                  (outs GPR32:$dst),
+                  (ins GPR32:$src2, i32imm:$imm),
+                  Mnemonic # "32 $dst, $imm",
+                  [(set GPR32:$dst, (OpNode GPR32:$src2, i32immSExt32:$imm))]>;
+}
+
+// ALU with immediate operand, but reversed semantics.
+// Currently, this is only used for sub:
+// sub r1, 2 means r1 = 2 - r2
+multiclass ALU_REV<SBFArithOp Opc, string Mnemonic, SDNode OpNode> {
+  defm "" : ALU_REG<Opc, Mnemonic, OpNode>;
   def _ri : ALU_RI<SBF_ALU64, Opc,
                    (outs GPR:$dst),
                    (ins GPR:$src2, i64imm:$imm),
                    Mnemonic # "64 $dst, $imm",
-                   [(set GPR:$dst, (OpNode GPR:$src2, i64immSExt32:$imm))]>;
-  def _rr_32 : ALU_RR<SBF_ALU, Opc,
-                   (outs GPR32:$dst),
-                   (ins GPR32:$src2, GPR32:$src),
-                   Mnemonic # "32 $dst, $src",
-                   [(set GPR32:$dst, (OpNode i32:$src2, i32:$src))]>;
+                   [(set GPR:$dst, (OpNode i64immSExt32:$imm, GPR:$src2))]>;
+
   def _ri_32 : ALU_RI<SBF_ALU, Opc,
                    (outs GPR32:$dst),
                    (ins GPR32:$src2, i32imm:$imm),
                    Mnemonic # "32 $dst, $imm",
-                   [(set GPR32:$dst, (OpNode GPR32:$src2, i32immSExt32:$imm))]>;
-}
+                   [(set GPR32:$dst, (OpNode i32immSExt32:$imm, GPR32:$src2))]>;
+ }
 
 let Constraints = "$dst = $src2" in {
     let isAsCheapAsAMove = 1 in {
         defm ADD : ALU<SBF_ADD, "add", add>;
-        defm SUB : ALU<SBF_SUB, "sub", sub>;
+        defm SUB : ALU_REV<SBF_SUB, "sub", sub>;
         defm OR  : ALU<SBF_OR, "or", or>;
         defm AND : ALU<SBF_AND, "and", and>;
         defm SLL : ALU<SBF_LSH, "lsh", shl>;
@@ -304,24 +329,6 @@ let Constraints = "$dst = $src2" in {
     let Predicates = [SBFSubtargetSolana] in {
         defm SDIV : ALU<SBF_SDIV, "sdiv", sdiv>;
     }
-}
-
-class NEG_RR<SBFOpClass Class, SBFArithOp Opc,
-             dag outs, dag ins, string asmstr, list<dag> pattern>
-    : TYPE_ALU_JMP<Opc.Value, 0, outs, ins, asmstr, pattern> {
-  bits<4> dst;
-
-  let Inst{51-48} = dst;
-  let SBFClass = Class;
-}
-
-let Constraints = "$dst = $src", isAsCheapAsAMove = 1 in {
-  def NEG_64: NEG_RR<SBF_ALU64, SBF_NEG, (outs GPR:$dst), (ins GPR:$src),
-                     "neg64 $dst",
-                     [(set GPR:$dst, (ineg i64:$src))]>;
-  def NEG_32: NEG_RR<SBF_ALU, SBF_NEG, (outs GPR32:$dst), (ins GPR32:$src),
-                     "neg32 $dst",
-                     [(set GPR32:$dst, (ineg i32:$src))]>;
 }
 
 class LD_IMM64<bits<4> Pseudo, string Mnemonic>
@@ -748,9 +755,9 @@ let Constraints = "$dst = $val" in {
 // atomic_load_sub can be represented as a neg followed
 // by an atomic_load_add.
 def : Pat<(atomic_load_sub_32 ADDRri:$addr, GPR32:$val),
-          (XFADDW32 ADDRri:$addr, (NEG_32 GPR32:$val))>;
+          (XFADDW32 ADDRri:$addr, (SUB_ri_32 GPR32:$val, 0))>;
 def : Pat<(atomic_load_sub_64 ADDRri:$addr, GPR:$val),
-          (XFADDD ADDRri:$addr, (NEG_64 GPR:$val))>;
+          (XFADDD ADDRri:$addr, (SUB_ri GPR:$val, 0))>;
 
 let Predicates = [SBFSubtargetSolana], usesCustomInserter = 1, isCodeGenOnly = 1 in {
   def ATOMIC_FENCE : Pseudo<
