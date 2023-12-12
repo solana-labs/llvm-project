@@ -33,12 +33,6 @@ class SBFAsmParser : public MCTargetAsmParser {
 
   SMLoc getLoc() const { return getParser().getTok().getLoc(); }
 
-  bool isNewSyntax() {
-    return getParser().getAssemblerDialect() == 0;
-  }
-
-  bool PreMatchCheck(OperandVector &Operands);
-
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                OperandVector &Operands, MCStreamer &Out,
                                uint64_t &ErrorInfo,
@@ -52,17 +46,7 @@ class SBFAsmParser : public MCTargetAsmParser {
   bool ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
                         SMLoc NameLoc, OperandVector &Operands) override;
 
-  bool parseOldInstruction(ParseInstructionInfo &Info, StringRef Name,
-                           SMLoc NameLoc, OperandVector &Operands);
-
   bool ParseDirective(AsmToken DirectiveID) override;
-
-  // "=" is used as assignment operator for assembly statement, so can't be used
-  // for symbol assignment (old syntax only).
-  bool equalIsAsmAssignment() override { return isNewSyntax(); }
-  // "*" is used for dereferencing memory that it will be the start of
-  // statement (old syntax only).
-  bool starIsStartOfStatement() override { return !isNewSyntax(); }
 
 #define GET_ASSEMBLER_HEADER
 #include "SBFGenAsmMatcher.inc"
@@ -70,7 +54,6 @@ class SBFAsmParser : public MCTargetAsmParser {
   bool parseOperand(OperandVector &Operands, StringRef Mnemonic);
   OperandMatchResultTy parseImmediate(OperandVector &Operands);
   OperandMatchResultTy parseRegister(OperandVector &Operands);
-  OperandMatchResultTy parseOperandAsOperator(OperandVector &Operands);
   OperandMatchResultTy parseMemOperand(OperandVector &Operands);
 
 public:
@@ -280,32 +263,6 @@ public:
 #define GET_MATCHER_IMPLEMENTATION
 #include "SBFGenAsmMatcher.inc"
 
-bool SBFAsmParser::PreMatchCheck(OperandVector &Operands) {
-
-  // These checks not needed for the new syntax.
-  if (isNewSyntax())
-    return false;
-
-  if (Operands.size() == 4) {
-    // check "reg1 = -reg2" and "reg1 = be16/be32/be64/le16/le32/le64 reg2",
-    // reg1 must be the same as reg2
-    SBFOperand &Op0 = (SBFOperand &)*Operands[0];
-    SBFOperand &Op1 = (SBFOperand &)*Operands[1];
-    SBFOperand &Op2 = (SBFOperand &)*Operands[2];
-    SBFOperand &Op3 = (SBFOperand &)*Operands[3];
-    if (Op0.isReg() && Op1.isToken() && Op2.isToken() && Op3.isReg()
-        && Op1.getToken() == "="
-        && (Op2.getToken() == "-" || Op2.getToken() == "be16"
-            || Op2.getToken() == "be32" || Op2.getToken() == "be64"
-            || Op2.getToken() == "le16" || Op2.getToken() == "le32"
-            || Op2.getToken() == "le64")
-        && Op0.getReg() != Op3.getReg())
-      return true;
-  }
-
-  return false;
-}
-
 bool SBFAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                            OperandVector &Operands,
                                            MCStreamer &Out, uint64_t &ErrorInfo,
@@ -313,12 +270,7 @@ bool SBFAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   MCInst Inst;
   SMLoc ErrorLoc;
 
-  if (PreMatchCheck(Operands))
-    return Error(IDLoc, "additional inst constraint not met");
-
-  unsigned Dialect = getParser().getAssemblerDialect();
-  switch (MatchInstructionImpl(Operands, Inst, ErrorInfo, MatchingInlineAsm,
-                               Dialect)) {
+  switch (MatchInstructionImpl(Operands, Inst, ErrorInfo, MatchingInlineAsm)) {
   default:
     break;
   case Match_Success:
@@ -367,75 +319,6 @@ OperandMatchResultTy SBFAsmParser::tryParseRegister(MCRegister &Reg,
   if (!MatchRegisterName(Name)) {
     getParser().Lex(); // Eat identifier token.
     return MatchOperand_Success;
-  }
-
-  return MatchOperand_NoMatch;
-}
-
-OperandMatchResultTy
-SBFAsmParser::parseOperandAsOperator(OperandVector &Operands) {
-  if (isNewSyntax())
-    llvm_unreachable("parseOperandAsOperator called for new syntax");
-
-  SMLoc S = getLoc();
-
-  if (getLexer().getKind() == AsmToken::Identifier) {
-    StringRef Name = getLexer().getTok().getIdentifier();
-
-    if (SBFOperand::isValidIdInMiddle(Name)) {
-      getLexer().Lex();
-      Operands.push_back(SBFOperand::createToken(Name, S));
-      return MatchOperand_Success;
-    }
-
-    return MatchOperand_NoMatch;
-  }
-
-  switch (getLexer().getKind()) {
-  case AsmToken::Minus:
-  case AsmToken::Plus: {
-    if (getLexer().peekTok().is(AsmToken::Integer))
-      return MatchOperand_NoMatch;
-    [[fallthrough]];
-  }
-
-  case AsmToken::Equal:
-  case AsmToken::Greater:
-  case AsmToken::Less:
-  case AsmToken::Pipe:
-  case AsmToken::Star:
-  case AsmToken::LParen:
-  case AsmToken::RParen:
-  case AsmToken::LBrac:
-  case AsmToken::RBrac:
-  case AsmToken::Slash:
-  case AsmToken::Amp:
-  case AsmToken::Percent:
-  case AsmToken::Caret: {
-    StringRef Name = getLexer().getTok().getString();
-    getLexer().Lex();
-    Operands.push_back(SBFOperand::createToken(Name, S));
-
-    return MatchOperand_Success;
-  }
-
-  case AsmToken::EqualEqual:
-  case AsmToken::ExclaimEqual:
-  case AsmToken::GreaterEqual:
-  case AsmToken::GreaterGreater:
-  case AsmToken::LessEqual:
-  case AsmToken::LessLess: {
-    Operands.push_back(SBFOperand::createToken(
-        getLexer().getTok().getString().substr(0, 1), S));
-    Operands.push_back(SBFOperand::createToken(
-        getLexer().getTok().getString().substr(1, 1), S));
-    getLexer().Lex();
-
-    return MatchOperand_Success;
-  }
-
-  default:
-    break;
   }
 
   return MatchOperand_NoMatch;
@@ -519,9 +402,6 @@ OperandMatchResultTy SBFAsmParser::parseMemOperand(OperandVector &Operands) {
 /// information, adding to Operands. If operand was parsed, returns false, else
 /// true.
 bool SBFAsmParser::parseOperand(OperandVector &Operands, StringRef Mnemonic) {
-  if (!isNewSyntax())
-    llvm_unreachable("parseOperand called for old syntax");
-
   // Attempt to parse token as a register.
   if (parseRegister(Operands) == MatchOperand_Success)
     return false;
@@ -544,10 +424,6 @@ bool SBFAsmParser::parseOperand(OperandVector &Operands, StringRef Mnemonic) {
 /// Parse an SBF instruction.
 bool SBFAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
                                     SMLoc NameLoc, OperandVector &Operands) {
-  if (!isNewSyntax()) {
-    return parseOldInstruction(Info, Name, NameLoc, Operands);
-  }
-
   // First operand is token for instruction mnemonic.
   Operands.push_back(SBFOperand::createToken(Name, NameLoc));
 
@@ -581,71 +457,7 @@ bool SBFAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
   return false;
 }
 
-/// Parse an SBF instruction which is in SBF verifier format (old syntax).
-bool SBFAsmParser::parseOldInstruction(ParseInstructionInfo &Info,
-                                       StringRef Name, SMLoc NameLoc,
-                                       OperandVector &Operands) {
-  if (isNewSyntax())
-    llvm_unreachable("parseOldInstruction called for new syntax");
-
-  // The first operand could be either register or actually an operator.
-  unsigned RegNo = MatchRegisterName(Name);
-
-  if (RegNo != 0) {
-    SMLoc E = SMLoc::getFromPointer(NameLoc.getPointer() - 1);
-    Operands.push_back(SBFOperand::createReg(RegNo, NameLoc, E));
-  } else if (SBFOperand::isValidIdAtStart (Name))
-    Operands.push_back(SBFOperand::createToken(Name, NameLoc));
-  else
-    return Error(NameLoc, "invalid register/token name");
-
-  while (!getLexer().is(AsmToken::EndOfStatement)) {
-    // Attempt to parse token as operator
-    if (parseOperandAsOperator(Operands) == MatchOperand_Success)
-      continue;
-
-    // Attempt to parse token as register
-    if (parseRegister(Operands) == MatchOperand_Success)
-      continue;
-
-    // Attempt to parse token as an immediate
-    if (parseImmediate(Operands) != MatchOperand_Success) {
-      SMLoc Loc = getLexer().getLoc();
-      return Error(Loc, "unexpected token");
-    }
-  }
-
-  if (getLexer().isNot(AsmToken::EndOfStatement)) {
-    SMLoc Loc = getLexer().getLoc();
-
-    getParser().eatToEndOfStatement();
-
-    return Error(Loc, "unexpected token");
-  }
-
-  // Consume the EndOfStatement.
-  getParser().Lex();
-  return false;
-}
-
-bool SBFAsmParser::ParseDirective(AsmToken DirectiveID) {
-  // This returns false if this function recognizes the directive
-  // regardless of whether it is successfully handles or reports an
-  // error. Otherwise it returns true to give the generic parser a
-  // chance at recognizing it.
-  StringRef IDVal = DirectiveID.getString();
-
-  if (IDVal == ".syntax_old") {
-    getParser().setAssemblerDialect(1);
-    return false;
-  }
-  if (IDVal == ".syntax_new") {
-    getParser().setAssemblerDialect(0);
-    return false;
-  }
-
-  return true;
-}
+bool SBFAsmParser::ParseDirective(AsmToken DirectiveID) { return true; }
 
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeSBFAsmParser() {
   RegisterMCAsmParser<SBFAsmParser> XX(getTheSBFXTarget());
