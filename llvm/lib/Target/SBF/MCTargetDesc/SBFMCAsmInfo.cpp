@@ -17,12 +17,8 @@
 
 using namespace llvm;
 
-cl::opt<unsigned> SBFAsmWriterVariant(
-    "sbf-output-asm-variant", cl::Hidden, cl::init(0),
-    cl::desc("Choose output assembly variant (0 = sbf[default], 1 = legacy)"));
-
 SBFMCAsmInfo::SBFMCAsmInfo(const Triple &TT, const MCTargetOptions &Options) {
-  AssemblerDialect = SBFAsmWriterVariant;
+  assert(AssemblerDialect == 0);
 
   PrivateGlobalPrefix = ".L";
   WeakRefDirective = "\t.weak\t";
