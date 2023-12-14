@@ -263,58 +263,38 @@ class ALU_RR<SBFOpClass Class, SBFArithOp Opc,
   let SBFClass = Class;
 }
 
-// ALU with register operand
-multiclass ALU_REG<SBFArithOp Opc, string Mnemonic, SDNode OpNode> {
+multiclass ALU<SBFArithOp Opc, string Mnemonic, SDNode OpNode> {
+  defvar DoSwap = !eq(OpNode, sub);
+  defvar RegImmPat = !if(DoSwap, (OpNode i64immSExt32:$imm, GPR:$src2),
+                                 (OpNode GPR:$src2, i64immSExt32:$imm));
+  defvar RegImmPat32 = !if(DoSwap,(OpNode i32immSExt32:$imm, GPR32:$src2),
+                                  (OpNode GPR32:$src2, i32immSExt32:$imm));
   def _rr : ALU_RR<SBF_ALU64, Opc,
                    (outs GPR:$dst),
                    (ins GPR:$src2, GPR:$src),
                    Mnemonic # "64 $dst, $src",
                    [(set GPR:$dst, (OpNode i64:$src2, i64:$src))]>;
- def _rr_32 : ALU_RR<SBF_ALU, Opc,
-                  (outs GPR32:$dst),
-                  (ins GPR32:$src2, GPR32:$src),
-                  Mnemonic # "32 $dst, $src",
-                  [(set GPR32:$dst, (OpNode i32:$src2, i32:$src))]>;
-}
-
-// ALU with immediate operand
-multiclass ALU<SBFArithOp Opc, string Mnemonic, SDNode OpNode> {
- defm "" : ALU_REG<Opc, Mnemonic, OpNode>;
- def _ri : ALU_RI<SBF_ALU64, Opc,
-                    (outs GPR:$dst),
-                    (ins GPR:$src2, i64imm:$imm),
-                    Mnemonic # "64 $dst, $imm",
-                    [(set GPR:$dst, (OpNode GPR:$src2, i64immSExt32:$imm))]>;
-
- def _ri_32 : ALU_RI<SBF_ALU, Opc,
-                  (outs GPR32:$dst),
-                  (ins GPR32:$src2, i32imm:$imm),
-                  Mnemonic # "32 $dst, $imm",
-                  [(set GPR32:$dst, (OpNode GPR32:$src2, i32immSExt32:$imm))]>;
-}
-
-// ALU with immediate operand, but reversed semantics.
-// Currently, this is only used for sub:
-// sub r1, 2 means r1 = 2 - r2
-multiclass ALU_REV<SBFArithOp Opc, string Mnemonic, SDNode OpNode> {
-  defm "" : ALU_REG<Opc, Mnemonic, OpNode>;
   def _ri : ALU_RI<SBF_ALU64, Opc,
                    (outs GPR:$dst),
                    (ins GPR:$src2, i64imm:$imm),
                    Mnemonic # "64 $dst, $imm",
-                   [(set GPR:$dst, (OpNode i64immSExt32:$imm, GPR:$src2))]>;
-
+                   [(set GPR:$dst, RegImmPat)]>;
+  def _rr_32 : ALU_RR<SBF_ALU, Opc,
+                   (outs GPR32:$dst),
+                   (ins GPR32:$src2, GPR32:$src),
+                   Mnemonic # "32 $dst, $src",
+                   [(set GPR32:$dst, (OpNode i32:$src2, i32:$src))]>;
   def _ri_32 : ALU_RI<SBF_ALU, Opc,
                    (outs GPR32:$dst),
                    (ins GPR32:$src2, i32imm:$imm),
                    Mnemonic # "32 $dst, $imm",
-                   [(set GPR32:$dst, (OpNode i32immSExt32:$imm, GPR32:$src2))]>;
- }
+                   [(set GPR32:$dst, RegImmPat32)]>;
+}
 
 let Constraints = "$dst = $src2" in {
     let isAsCheapAsAMove = 1 in {
         defm ADD : ALU<SBF_ADD, "add", add>;
-        defm SUB : ALU_REV<SBF_SUB, "sub", sub>;
+        defm SUB : ALU<SBF_SUB, "sub", sub>;
         defm OR  : ALU<SBF_OR, "or", or>;
         defm AND : ALU<SBF_AND, "and", and>;
         defm SLL : ALU<SBF_LSH, "lsh", shl>;
