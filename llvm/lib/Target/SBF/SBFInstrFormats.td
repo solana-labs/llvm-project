@@ -38,6 +38,7 @@ def SBF_OR   : SBFArithOp<0x4>;
 def SBF_AND  : SBFArithOp<0x5>;
 def SBF_LSH  : SBFArithOp<0x6>;
 def SBF_RSH  : SBFArithOp<0x7>;
+def SBF_NEG  : SBFArithOp<0x8>;
 def SBF_XOR  : SBFArithOp<0xa>;
 def SBF_MOV  : SBFArithOp<0xb>;
 def SBF_ARSH : SBFArithOp<0xc>;
