@@ -54,6 +54,8 @@ def SBFIsBigEndian    : Predicate<"!CurDAG->getDataLayout().isLittleEndian()">;
 def SBFHasALU32 : Predicate<"Subtarget->getHasAlu32()">;
 def SBFNoALU32 : Predicate<"!Subtarget->getHasAlu32()">;
 def SBFSubtargetSolana : Predicate<"Subtarget->isSolana()">;
+def SBFv2 : Predicate<"Subtarget->isSBFv2()">;
+def NoSBFv2 : Predicate<"!Subtarget->isSBFv2()">;
 
 def brtarget : Operand<OtherVT> {
   let PrintMethod = "printBrTargetOperand";
@@ -263,7 +265,7 @@ class ALU_RR<SBFOpClass Class, SBFArithOp Opc,
   let SBFClass = Class;
 }
 
-multiclass ALU<SBFArithOp Opc, string Mnemonic, SDNode OpNode> {
+multiclass ALU<SBFArithOp Opc, string Mnemonic, SDNode OpNode, bit UseImmPat = 1> {
   def _rr : ALU_RR<SBF_ALU64, Opc,
                    (outs GPR:$dst),
                    (ins GPR:$src2, GPR:$src),
@@ -273,7 +275,9 @@ multiclass ALU<SBFArithOp Opc, string Mnemonic, SDNode OpNode> {
                    (outs GPR:$dst),
                    (ins GPR:$src2, i64imm:$imm),
                    Mnemonic # "64 $dst, $imm",
-                   [(set GPR:$dst, (OpNode GPR:$src2, i64immSExt32:$imm))]>;
+                   !if(UseImmPat,
+                       [(set GPR:$dst,
+                            (OpNode GPR:$src2, i64immSExt32:$imm))], [])>;
   def _rr_32 : ALU_RR<SBF_ALU, Opc,
                    (outs GPR32:$dst),
                    (ins GPR32:$src2, GPR32:$src),
@@ -283,13 +287,15 @@ multiclass ALU<SBFArithOp Opc, string Mnemonic, SDNode OpNode> {
                    (outs GPR32:$dst),
                    (ins GPR32:$src2, i32imm:$imm),
                    Mnemonic # "32 $dst, $imm",
-                   [(set GPR32:$dst, (OpNode GPR32:$src2, i32immSExt32:$imm))]>;
+                   !if(UseImmPat,
+                       [(set GPR32:$dst,
+                             (OpNode GPR32:$src2, i32immSExt32:$imm))], [])>;
 }
 
 let Constraints = "$dst = $src2" in {
     let isAsCheapAsAMove = 1 in {
         defm ADD : ALU<SBF_ADD, "add", add>;
-        defm SUB : ALU<SBF_SUB, "sub", sub>;
+        defm SUB : ALU<SBF_SUB, "sub", sub, 0>;
         defm OR  : ALU<SBF_OR, "or", or>;
         defm AND : ALU<SBF_AND, "and", and>;
         defm SLL : ALU<SBF_LSH, "lsh", shl>;
@@ -306,6 +312,19 @@ let Constraints = "$dst = $src2" in {
     }
 }
 
+// Special case for SBFv2
+// In SBFv1, `sub reg, imm` is interpreted as reg = reg - imm,
+// but in SBFv2 it means reg = imm - reg
+def : Pat<(sub GPR:$src, i64immSExt32:$imm),
+          (SUB_ri GPR:$src, i64immSExt32:$imm)>, Requires<[NoSBFv2]>;
+def : Pat<(sub GPR32:$src, i32immSExt32:$imm),
+          (SUB_ri_32 GPR32:$src, i32immSExt32:$imm)>, Requires<[NoSBFv2]>;
+
+def : Pat<(sub i64immSExt32:$imm, GPR:$src),
+          (SUB_ri GPR:$src, i64immSExt32:$imm)>, Requires<[SBFv2]>;
+def : Pat<(sub i32immSExt32:$imm, GPR32:$src),
+          (SUB_ri_32 GPR32:$src, i32immSExt32:$imm)>, Requires<[SBFv2]>;
+
 class NEG_RR<SBFOpClass Class, SBFArithOp Opc,
              dag outs, dag ins, string asmstr, list<dag> pattern>
     : TYPE_ALU_JMP<Opc.Value, 0, outs, ins, asmstr, pattern> {
@@ -318,11 +337,20 @@ class NEG_RR<SBFOpClass Class, SBFArithOp Opc,
 let Constraints = "$dst = $src", isAsCheapAsAMove = 1 in {
   def NEG_64: NEG_RR<SBF_ALU64, SBF_NEG, (outs GPR:$dst), (ins GPR:$src),
                      "neg64 $dst",
-                     [(set GPR:$dst, (ineg i64:$src))]>;
+                     []>;
   def NEG_32: NEG_RR<SBF_ALU, SBF_NEG, (outs GPR32:$dst), (ins GPR32:$src),
                      "neg32 $dst",
-                     [(set GPR32:$dst, (ineg i32:$src))]>;
+                     []>;
 }
+
+// Instruction `neg` exists on SBFv1, but not on SBFv2
+// In SBFv2, the negate operation is done with a subtraction
+def : Pat<(ineg i64:$src), (NEG_64 GPR:$src)>, Requires<[NoSBFv2]>;
+def : Pat<(ineg i32:$src), (NEG_32 GPR32:$src)>, Requires<[NoSBFv2]>;
+
+def : Pat<(ineg i64:$src), (SUB_ri GPR:$src, 0)>, Requires<[SBFv2]>;
+def : Pat<(ineg i32:$src), (SUB_ri_32 GPR32:$src, 0)>, Requires<[SBFv2]>;
+
 
 class LD_IMM64<bits<4> Pseudo, string Mnemonic>
     : TYPE_LD_ST<SBF_IMM.Value, SBF_DW.Value,
