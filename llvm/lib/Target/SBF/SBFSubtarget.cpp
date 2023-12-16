@@ -42,6 +42,7 @@ void SBFSubtarget::initializeEnvironment(const Triple &TT) {
   HasDynamicFrames = false;
   HasSdiv = false;
   UseDwarfRIS = false;
+  IsSBFv2 = false;
 }
 
 void SBFSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
@@ -64,8 +65,10 @@ void SBFSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
     HasAlu32 = true;
   }
 
-  if (CPU == "sbfv2" && !HasDynamicFrames) {
-    report_fatal_error("sbfv2 requires dynamic-frames\n", false);
+  if (CPU == "sbfv2") {
+    IsSBFv2 = true;
+    if (!HasDynamicFrames)
+      report_fatal_error("sbfv2 requires dynamic-frames\n", false);
   }
 }
 
