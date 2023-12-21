@@ -896,47 +896,7 @@ let Constraints = "$dst = $src" in {
         def BE32 : BSWAP<32, "be32", SBF_TO_BE, [(set GPR:$dst, (srl (bswap GPR:$src), (i64 32)))]>;
         def BE64 : BSWAP<64, "be64", SBF_TO_BE, [(set GPR:$dst, (bswap GPR:$src))]>;
     }
-    let Predicates = [SBFIsBigEndian] in {
-        def LE16 : BSWAP<16, "le16", SBF_TO_LE, [(set GPR:$dst, (srl (bswap GPR:$src), (i64 48)))]>;
-        def LE32 : BSWAP<32, "le32", SBF_TO_LE, [(set GPR:$dst, (srl (bswap GPR:$src), (i64 32)))]>;
-        def LE64 : BSWAP<64, "le64", SBF_TO_LE, [(set GPR:$dst, (bswap GPR:$src))]>;
-    }
 }
-
-let Defs = [R0, R1, R2, R3, R4, R5], Uses = [R6], hasSideEffects = 1,
-    hasExtraDefRegAllocReq = 1, hasExtraSrcRegAllocReq = 1, mayLoad = 1 in {
-class LOAD_ABS<SBFWidthModifer SizeOp, string Mnemonic, Intrinsic OpNode>
-    : TYPE_LD_ST<SBF_ABS.Value, SizeOp.Value,
-                 (outs),
-                 (ins GPR:$skb, i64imm:$imm),
-                 Mnemonic # " $imm",
-                 [(set R0, (OpNode GPR:$skb, i64immSExt32:$imm))]> {
-  bits<32> imm;
-
-  let Inst{31-0} = imm;
-  let SBFClass = SBF_LD;
-}
-
-class LOAD_IND<SBFWidthModifer SizeOp, string Mnemonic, Intrinsic OpNode>
-    : TYPE_LD_ST<SBF_IND.Value, SizeOp.Value,
-                 (outs),
-                 (ins GPR:$skb, GPR:$val),
-                 Mnemonic # " $val",
-                 [(set R0, (OpNode GPR:$skb, GPR:$val))]> {
-  bits<4> val;
-
-  let Inst{55-52} = val;
-  let SBFClass = SBF_LD;
-}
-}
-
-def LD_ABS_B : LOAD_ABS<SBF_B, "ldabsb", int_bpf_load_byte>;
-def LD_ABS_H : LOAD_ABS<SBF_H, "ldabsh", int_bpf_load_half>;
-def LD_ABS_W : LOAD_ABS<SBF_W, "ldabsw", int_bpf_load_word>;
-
-def LD_IND_B : LOAD_IND<SBF_B, "ldindb", int_bpf_load_byte>;
-def LD_IND_H : LOAD_IND<SBF_H, "ldindh", int_bpf_load_half>;
-def LD_IND_W : LOAD_IND<SBF_W, "ldindw", int_bpf_load_word>;
 
 let isCodeGenOnly = 1 in {
   def MOV_32_64 : ALU_RR<SBF_ALU, SBF_MOV,
