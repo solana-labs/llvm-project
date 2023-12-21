@@ -9,10 +9,6 @@ entry:
   %0 = bitcast i32* %a to i8*
   call void @llvm.lifetime.start.p0i8(i64 4, i8* nonnull %0) #2
   store i32 4, i32* %a, align 4
-  tail call void asm sideeffect "ldabsh $0", "i"(i32 2) #2
-; CHECK: ldabsh 2 
-  tail call void asm sideeffect "ldindh $0", "r"(i32 4) #2
-; CHECK: ldindh r1
   %1 = tail call i32 asm sideeffect "mov64 $0, $1", "=r,i"(i32 4) #2
 ; CHECK: mov64 r1, 4
   %2 = tail call i32 asm sideeffect "lddw $0, $1", "=r,i"(i64 333333333333) #2
