@@ -72,14 +72,14 @@ def i32immSExt32 : PatLeaf<(i32 imm),
                 [{return isInt<32>(N->getSExtValue()); }]>;
 
 // Fetch the upper 32-bits of a 64-bit integer.
-def Upper64 : SDNodeXForm<imm, [{
+def Upper32 : SDNodeXForm<imm, [{
   uint64_t value = N->getSExtValue() >> 32;
   return CurDAG->getTargetConstant(value, SDLoc(N),
                                    N->getValueType(0));
 }]>;
 
 // Fetch the lower 32-bits of a 64-bit integer.
-def Lower64 : SDNodeXForm<imm, [{
+def Lower32 : SDNodeXForm<imm, [{
   uint64_t value = N->getSExtValue() & 0x00000000ffffffff;
   return CurDAG->getTargetConstant(value, SDLoc(N),
                                    N->getValueType(0));
@@ -985,8 +985,8 @@ let isCodeGenOnly = 1 in {
 // hor r1, 0x11223344
 // These instructions copy the value 0x1122334455667788 to a register.
 def : Pat<(i64 imm:$imm),
-            (HOR (MOV_32_64_imm (i32 (Lower64 $imm))),
-                       (i32 (Upper64 $imm)))>, Requires<[SBFv2]>;
+            (HOR (MOV_32_64_imm (i32 (Lower32 $imm))),
+                       (i32 (Upper32 $imm)))>, Requires<[SBFv2]>;
 
 // load 64-bit global address into register.
 def : Pat<(SBFWrapper tglobaladdr:$in), (LD_imm64 tglobaladdr:$in)>,
