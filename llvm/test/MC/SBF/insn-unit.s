@@ -149,6 +149,7 @@ Llabel0 :
   mov64 r9, 1            // BPF_MOV  | BPF_K
   mov64 r9, 0xffffffff   // BPF_MOV  | BPF_K
   arsh64 r10, 64       // BPF_ARSH | BPF_K
+  hor64 r3, 0xcafe      // SBF_HOR
 // CHECK: 47 04 00 00 ff 00 00 00 	or64 r4, 0xff
 // CHECK: 57 05 00 00 ff 00 00 00 	and64 r5, 0xff
 // CHECK: 67 06 00 00 3f 00 00 00 	lsh64 r6, 0x3f
@@ -157,3 +158,4 @@ Llabel0 :
 // CHECK: b7 09 00 00 01 00 00 00 	mov64 r9, 0x1
 // CHECK: b7 09 00 00 ff ff ff ff 	mov64 r9, -0x1
 // CHECK: c7 0a 00 00 40 00 00 00 	arsh64 r10, 0x40
+// CHECK: f7 03 00 00 fe ca 00 00	hor64 r3, 0xcafe

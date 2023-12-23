@@ -71,6 +71,21 @@ def i64immSExt32 : PatLeaf<(i64 imm),
 def i32immSExt32 : PatLeaf<(i32 imm),
                 [{return isInt<32>(N->getSExtValue()); }]>;
 
+// Fetch the upper 32-bits of a 64-bit integer.
+def Upper32 : SDNodeXForm<imm, [{
+  uint64_t value = N->getSExtValue() >> 32;
+  return CurDAG->getTargetConstant(value, SDLoc(N),
+                                   N->getValueType(0));
+}]>;
+
+// Fetch the lower 32-bits of a 64-bit integer.
+def Lower32 : SDNodeXForm<imm, [{
+  uint64_t value = N->getSExtValue() & 0x00000000ffffffff;
+  return CurDAG->getTargetConstant(value, SDLoc(N),
+                                   N->getValueType(0));
+}]>;
+
+
 // Addressing modes.
 def ADDRri : ComplexPattern<i64, 2, "SelectAddr", [], []>;
 def FIri : ComplexPattern<i64, 2, "SelectFIAddr", [add, or], []>;
@@ -302,6 +317,22 @@ let Constraints = "$dst = $src2" in {
         defm SRL : ALU<SBF_RSH, "rsh", srl>;
         defm XOR : ALU<SBF_XOR, "xor", xor>;
         defm SRA : ALU<SBF_ARSH, "arsh", sra>;
+
+        let Predicates = [SBFv2] in {
+            def HOR :  ALU_RI<SBF_ALU64, SBF_HOR,
+                        (outs GPR:$dst),
+                        (ins GPR:$src2, i32imm:$imm),
+                        "hor64 $dst, $imm",
+                        []>;
+            let DecoderNamespace = "AddrLoad" in {
+              def HOR_addr :  ALU_RI<SBF_ALU64, SBF_HOR,
+                                      (outs GPR:$dst),
+                                      (ins GPR:$src2, u64imm:$imm),
+                                      "hor64 $dst, $imm",
+                                      []>;
+
+            }
+        }
     }
 
     defm MUL : ALU<SBF_MUL, "mul", mul>;
@@ -370,7 +401,7 @@ class LD_IMM64<bits<4> Pseudo, string Mnemonic>
 }
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
-def LD_imm64 : LD_IMM64<0, "lddw">;
+def LD_imm64 : LD_IMM64<0, "lddw">, Requires<[NoSBFv2]>;
 def MOV_rr : ALU_RR<SBF_ALU64, SBF_MOV,
                     (outs GPR:$dst),
                     (ins GPR:$src),
@@ -631,9 +662,6 @@ let usesCustomInserter = 1, isCodeGenOnly = 1 in {
                       [(set i64:$dst,
                        (SBFselectcc i32:$lhs, (i32immSExt32:$rhs), (i32 imm:$imm), i64:$src, i64:$src2))]>;
 }
-
-// load 64-bit global addr into register
-def : Pat<(SBFWrapper tglobaladdr:$in), (LD_imm64 tglobaladdr:$in)>;
 
 // 0xffffFFFF doesn't fit into simm32, optimize common case
 def : Pat<(i64 (and (i64 GPR:$src), 0xffffFFFF)),
@@ -902,7 +930,31 @@ let isCodeGenOnly = 1 in {
   def MOV_32_64 : ALU_RR<SBF_ALU, SBF_MOV,
                          (outs GPR:$dst), (ins GPR32:$src),
                          "mov32 $dst, $src", []>;
+  let Predicates = [SBFv2] in {
+    def MOV_32_64_imm : ALU_RI<SBF_ALU, SBF_MOV,
+                               (outs GPR:$dst), (ins i32imm:$imm),
+                               "mov32 $dst, $imm", []>;
+    def MOV_32_64_addr : ALU_RI<SBF_ALU, SBF_MOV,
+                           (outs GPR:$dst), (ins u64imm:$imm),
+                           "mov32 $dst, $imm", []>;
+  }
 }
+
+// In SBFv2, a CopyToReg of a 64-bit value is split in two instructions:
+// mov32 r1, 0x55667788
+// hor r1, 0x11223344
+// These instructions copy the value 0x1122334455667788 to a register.
+def : Pat<(i64 imm:$imm),
+            (HOR (MOV_32_64_imm (i32 (Lower32 $imm))),
+                       (i32 (Upper32 $imm)))>, Requires<[SBFv2]>;
+
+// load 64-bit global address into register.
+def : Pat<(SBFWrapper tglobaladdr:$in), (LD_imm64 tglobaladdr:$in)>,
+                                                    Requires<[NoSBFv2]>;
+def : Pat<(SBFWrapper tglobaladdr:$in),
+        (HOR_addr (MOV_32_64_addr tglobaladdr:$in),
+                            tglobaladdr:$in)>, Requires<[SBFv2]>;
+
 
 def : Pat<(i64 (sext GPR32:$src)),
           (SRA_ri (SLL_ri (MOV_32_64 GPR32:$src), 32), 32)>;
