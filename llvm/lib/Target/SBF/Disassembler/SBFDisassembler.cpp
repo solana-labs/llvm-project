@@ -175,6 +175,10 @@ DecodeStatus SBFDisassembler::getInstruction(MCInst &Instr, uint64_t &Size,
       STI.getFeatureBits()[SBF::ALU32])
     Result = decodeInstruction(DecoderTableSBFALU3264, Instr, Insn, Address,
                                this, STI);
+  else if (InstClass == SBF_ALU && !STI.getFeatureBits()[SBF::ALU32] &&
+           STI.getFeatureBits()[SBF::FeatureDisableLddw])
+    Result =
+        decodeInstruction(DecoderTableSBFv264, Instr, Insn, Address, this, STI);
   else
     Result =
         decodeInstruction(DecoderTableSBF64, Instr, Insn, Address, this, STI);
