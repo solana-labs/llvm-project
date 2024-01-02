@@ -85,6 +85,9 @@ protected:
   // wether we should use the LDDW instruction
   bool NoLddw;
 
+  // Whether to encode destination register in Callx's src field
+  bool CallxRegSrc;
+
 public:
   // This constructor initializes the data members to match that
   // of the specified triple.
@@ -108,6 +111,7 @@ public:
   bool getDisableNeg() const { return DisableNeg; }
   bool getReverseSubImm() const { return ReverseSubImm; }
   bool getNoLddw() const { return NoLddw; }
+  bool getCallXRegSrc() const { return CallxRegSrc; }
 
   const SBFInstrInfo *getInstrInfo() const override { return &InstrInfo; }
   const SBFFrameLowering *getFrameLowering() const override {

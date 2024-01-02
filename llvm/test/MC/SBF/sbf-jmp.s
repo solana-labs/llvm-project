@@ -1,8 +1,13 @@
 # RUN: llvm-mc %s -triple=sbf-solana-solana --mcpu=sbfv2 --show-encoding \
 # RUN:     | FileCheck %s --check-prefix=CHECK-ASM-NEW
+# RUN: llvm-mc %s -triple=sbf-solana-solana --show-encoding \
+# RUN:     | FileCheck %s --check-prefix=CHECK-ASM-OLD
 # RUN: llvm-mc %s -triple=sbf-solana-solana --mcpu=sbfv2 -filetype=obj \
-# RUN:     | llvm-objdump -d -r - \
+# RUN:     | llvm-objdump --mcpu=sbfv2 -d -r - \
 # RUN:     | FileCheck --check-prefix=CHECK-OBJ-NEW %s
+# RUN: llvm-mc %s -triple=sbf-solana-solana -filetype=obj \
+# RUN:     | llvm-objdump -d -r - \
+# RUN:     | FileCheck --check-prefix=CHECK-OBJ-OLD %s
 
 
 
@@ -215,7 +220,9 @@ jsle w5, -123, +8
 call 8
 
 # CHECK-OBJ-NEW: callx r4
-# CHECK-ASM-NEW: encoding: [0x8d,0x00,0x00,0x00,0x04,0x00,0x00,0x00]
+# CHECK-OBJ-OLD: callx r4
+# CHECK-ASM-NEW: encoding: [0x8d,0x04,0x00,0x00,0x00,0x00,0x00,0x00]
+# CHECK-ASM-OLD: encoding: [0x8d,0x00,0x00,0x00,0x04,0x00,0x00,0x00]
 callx r4
 
 # CHECK-OBJ-NEW: exit

@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 include "SBFInstrFormats.td"
+include "SBFTargetFeatures.td"
 
 // Instruction Operands and Patterns
 
@@ -63,6 +64,8 @@ def SBFHasNeg : Predicate<"!Subtarget->getDisableNeg()">;
 def SBFNoNeg: Predicate<"Subtarget->getDisableNeg()">;
 def SBFRevSub : Predicate<"Subtarget->getReverseSubImm()">;
 def SBFNoRevSub : Predicate<"!Subtarget->getReverseSubImm()">;
+def SBFCallxSrc : Predicate<"Subtarget->getCallXRegSrc()">, AssemblerPredicate<(all_of FeatureCallxRegSrc)>;
+def NoSBFCallxSrc : Predicate<"!Subtarget->getCallXRegSrc()">;
 
 def brtarget : Operand<OtherVT> {
   let PrintMethod = "printBrTargetOperand";
@@ -574,6 +577,18 @@ class CALLX<string OpcodeStr>
   let SBFClass = SBF_JMP;
 }
 
+class CALLX_SRC_REG<string OpcodeStr>
+    : TYPE_ALU_JMP<SBF_CALL.Value, SBF_X.Value,
+                   (outs),
+                   (ins GPR:$BrDst),
+                   !strconcat(OpcodeStr, " $BrDst"),
+                   []> {
+  bits<4> BrDst;
+
+  let Inst{51-48} = BrDst;
+  let SBFClass = SBF_JMP;
+}
+
 // Jump always
 let isBranch = 1, isTerminator = 1, hasDelaySlot=0, isBarrier = 1 in {
   def JMP : BRANCH<SBF_JA, "ja", [(br bb:$BrDst)]>;
@@ -583,8 +598,11 @@ let isBranch = 1, isTerminator = 1, hasDelaySlot=0, isBarrier = 1 in {
 let isCall=1, hasDelaySlot=0, Uses = [R11],
     // Potentially clobbered registers
     Defs = [R0, R1, R2, R3, R4, R5] in {
-  def JAL  : CALL<"call">;
-  def JALX  : CALLX<"callx">;
+  def JAL     : CALL<"call">;
+  def JALX    : CALLX<"callx">, Requires<[NoSBFCallxSrc]>;
+  let DecoderNamespace = "SBFv2" in {
+    def JALX_v2 : CALLX_SRC_REG<"callx">, Requires<[SBFCallxSrc]>;
+  }
 }
 
 class NOP_I<string OpcodeStr>
@@ -678,7 +696,8 @@ def : Pat<(i64 (and (i64 GPR:$src), 0xffffFFFF)),
 def : Pat<(SBFcall tglobaladdr:$dst), (JAL tglobaladdr:$dst)>;
 def : Pat<(SBFcall texternalsym:$dst), (JAL texternalsym:$dst)>;
 def : Pat<(SBFcall imm:$dst), (JAL imm:$dst)>;
-def : Pat<(SBFcall GPR:$dst), (JALX GPR:$dst)>;
+def : Pat<(SBFcall GPR:$dst), (JALX GPR:$dst)>, Requires<[NoSBFCallxSrc]>;
+def : Pat<(SBFcall GPR:$dst), (JALX_v2 GPR:$dst)>, Requires<[SBFCallxSrc]>;
 
 // Loads
 let Predicates = [SBFNoALU32] in {
