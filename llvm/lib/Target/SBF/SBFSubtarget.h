@@ -75,6 +75,13 @@ protected:
   // whether we are targeting SBFv2
   bool IsSBFv2;
 
+  // Whether to disable the negate (neg) instruction
+  bool DisableNeg;
+
+  // Whether to consider 'sub reg, imm' as 'reg = imm - reg', instead of 'reg =
+  // reg - imm'.
+  bool ReverseSubImm;
+
 public:
   // This constructor initializes the data members to match that
   // of the specified triple.
@@ -95,6 +102,8 @@ public:
   bool getHasSdiv() const { return HasSdiv; }
   bool getUseDwarfRIS() const { return UseDwarfRIS; }
   bool isSBFv2() const { return IsSBFv2; }
+  bool getDisableNeg() const { return DisableNeg; }
+  bool getReverseSubImm() const { return ReverseSubImm; }
 
   const SBFInstrInfo *getInstrInfo() const override { return &InstrInfo; }
   const SBFFrameLowering *getFrameLowering() const override {

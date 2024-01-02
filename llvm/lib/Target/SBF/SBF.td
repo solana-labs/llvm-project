@@ -38,6 +38,12 @@ def FeatureRelocAbs64 : SubtargetFeature<"reloc-abs64", "UseRelocAbs64", "true",
 def FeatureStaticSyscalls : SubtargetFeature<"static-syscalls", "HasStaticSyscalls", "true",
                                    "Marker feature used for conditional compilation">;
 
+def FeatureDisableNeg : SubtargetFeature<"no-neg", "DisableNeg", "true",
+                                    "Disable the neg instruction">;
+
+def FeatureReverseSubImm : SubtargetFeature<"reverse-sub", "ReverseSubImm", "true",
+                                    "Reverse the operands in the 'sub reg, imm' instruction">;
+
 class Proc<string Name, list<SubtargetFeature> Features>
  : Processor<Name, NoItineraries, Features>;
 
@@ -46,7 +52,8 @@ def : Proc<"v1", []>;
 def : Proc<"v2", []>;
 def : Proc<"v3", []>;
 def : Proc<"probe", []>;
-def : Proc<"sbfv2", [FeatureSolana, FeatureDynamicFrames, FeatureSdiv, FeatureRelocAbs64, FeatureStaticSyscalls]>;
+def : Proc<"sbfv2", [FeatureSolana, FeatureDynamicFrames, FeatureSdiv, FeatureRelocAbs64, FeatureStaticSyscalls,
+                        FeatureDisableNeg, FeatureReverseSubImm]>;
 
 //===----------------------------------------------------------------------===//
 // Assembly printer
