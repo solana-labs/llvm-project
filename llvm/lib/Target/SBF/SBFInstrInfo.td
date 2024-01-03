@@ -56,6 +56,10 @@ def SBFNoALU32 : Predicate<"!Subtarget->getHasAlu32()">;
 def SBFSubtargetSolana : Predicate<"Subtarget->isSolana()">;
 def SBFv2 : Predicate<"Subtarget->isSBFv2()">;
 def NoSBFv2 : Predicate<"!Subtarget->isSBFv2()">;
+def SBFHasNeg : Predicate<"!Subtarget->getDisableNeg()">;
+def SBFNoNeg: Predicate<"Subtarget->getDisableNeg()">;
+def SBFRevSub : Predicate<"Subtarget->getReverseSubImm()">;
+def SBFNoRevSub : Predicate<"!Subtarget->getReverseSubImm()">;
 
 def brtarget : Operand<OtherVT> {
   let PrintMethod = "printBrTargetOperand";
@@ -347,14 +351,14 @@ let Constraints = "$dst = $src2" in {
 // In SBFv1, `sub reg, imm` is interpreted as reg = reg - imm,
 // but in SBFv2 it means reg = imm - reg
 def : Pat<(sub GPR:$src, i64immSExt32:$imm),
-          (SUB_ri GPR:$src, i64immSExt32:$imm)>, Requires<[NoSBFv2]>;
+          (SUB_ri GPR:$src, i64immSExt32:$imm)>, Requires<[SBFNoRevSub]>;
 def : Pat<(sub GPR32:$src, i32immSExt32:$imm),
-          (SUB_ri_32 GPR32:$src, i32immSExt32:$imm)>, Requires<[NoSBFv2]>;
+          (SUB_ri_32 GPR32:$src, i32immSExt32:$imm)>, Requires<[SBFNoRevSub]>;
 
 def : Pat<(sub i64immSExt32:$imm, GPR:$src),
-          (SUB_ri GPR:$src, i64immSExt32:$imm)>, Requires<[SBFv2]>;
+          (SUB_ri GPR:$src, i64immSExt32:$imm)>, Requires<[SBFRevSub]>;
 def : Pat<(sub i32immSExt32:$imm, GPR32:$src),
-          (SUB_ri_32 GPR32:$src, i32immSExt32:$imm)>, Requires<[SBFv2]>;
+          (SUB_ri_32 GPR32:$src, i32immSExt32:$imm)>, Requires<[SBFRevSub]>;
 
 class NEG_RR<SBFOpClass Class, SBFArithOp Opc,
              dag outs, dag ins, string asmstr, list<dag> pattern>
@@ -376,11 +380,11 @@ let Constraints = "$dst = $src", isAsCheapAsAMove = 1 in {
 
 // Instruction `neg` exists on SBFv1, but not on SBFv2
 // In SBFv2, the negate operation is done with a subtraction
-def : Pat<(ineg i64:$src), (NEG_64 GPR:$src)>, Requires<[NoSBFv2]>;
-def : Pat<(ineg i32:$src), (NEG_32 GPR32:$src)>, Requires<[NoSBFv2]>;
+def : Pat<(ineg i64:$src), (NEG_64 GPR:$src)>, Requires<[SBFHasNeg]>;
+def : Pat<(ineg i32:$src), (NEG_32 GPR32:$src)>, Requires<[SBFHasNeg]>;
 
-def : Pat<(ineg i64:$src), (SUB_ri GPR:$src, 0)>, Requires<[SBFv2]>;
-def : Pat<(ineg i32:$src), (SUB_ri_32 GPR32:$src, 0)>, Requires<[SBFv2]>;
+def : Pat<(ineg i64:$src), (SUB_ri GPR:$src, 0)>, Requires<[SBFNoNeg]>;
+def : Pat<(ineg i32:$src), (SUB_ri_32 GPR32:$src, 0)>, Requires<[SBFNoNeg]>;
 
 
 class LD_IMM64<bits<4> Pseudo, string Mnemonic>
