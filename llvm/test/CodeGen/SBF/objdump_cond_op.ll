@@ -1,4 +1,4 @@
-; RUN: llc -march=sbf -mcpu=sbfv2 -filetype=obj -o - %s | llvm-objdump -d --mcpu=sbfv2 - | FileCheck %s
+; RUN: llc -march=sbf -mcpu=sbfv2 -filetype=obj -o - %s | llvm-objdump -d - | FileCheck %s
 
 ; Source Code:
 ; int gbl;

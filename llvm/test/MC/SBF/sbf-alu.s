@@ -1,7 +1,7 @@
 # RUN: llvm-mc %s -triple=sbf-solana-solana --mcpu=sbfv2 --show-encoding \
 # RUN:     | FileCheck %s --check-prefix=CHECK-ASM-NEW
 # RUN: llvm-mc %s -triple=sbf-solana-solana --mcpu=sbfv2 -filetype=obj \
-# RUN:     | llvm-objdump -d -r - \
+# RUN:     | llvm-objdump -d -r --mattr=+alu32 - \
 # RUN:     | FileCheck --check-prefix=CHECK-OBJ-NEW %s
 
 
