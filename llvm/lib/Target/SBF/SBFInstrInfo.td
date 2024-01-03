@@ -585,7 +585,7 @@ class CALLX_SRC_REG<string OpcodeStr>
                    []> {
   bits<4> BrDst;
 
-  let Inst{51-48} = BrDst;
+  let Inst{55-52} = BrDst;
   let SBFClass = SBF_JMP;
 }
 
