@@ -57,9 +57,6 @@ def SBFNoALU32 : Predicate<"!Subtarget->getHasAlu32()">;
 def SBFSubtargetSolana : Predicate<"Subtarget->isSolana()">;
 def SBFHasLddw : Predicate<"!Subtarget->getNoLddw()">;
 def SBFNoLddw : Predicate<"Subtarget->getNoLddw()">;
-
-def SBFv2 : Predicate<"Subtarget->isSBFv2()">;
-def NoSBFv2 : Predicate<"!Subtarget->isSBFv2()">;
 def SBFHasNeg : Predicate<"!Subtarget->getDisableNeg()">;
 def SBFNoNeg: Predicate<"Subtarget->getDisableNeg()">;
 def SBFRevSub : Predicate<"Subtarget->getReverseSubImm()">;
