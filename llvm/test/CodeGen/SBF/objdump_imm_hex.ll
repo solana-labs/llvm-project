@@ -26,17 +26,17 @@ define i32 @test(i64, i64) local_unnamed_addr #0 {
 ; CHECK-LABEL: test
   %3 = icmp eq i64 %0, -6067004223159161907
   br i1 %3, label %4, label %8
-; CHECK-DEC: b4 03 00 00 cd ab cd ab	mov32 w3, -0x54325433
+; CHECK-DEC: b4 03 00 00 cd ab cd ab	mov32 r3, -0x54325433
 ; CHECK-DEC: f7 03 00 00 cd ab cd ab	hor64 r3, -0x54325433
 ; CHECK-DEC: 5d 31 07 00 00 00 00 00         jne r1, r3, +0x7
-; CHECK-HEX: b4 03 00 00 cd ab cd ab	mov32 w3, -0x54325433
+; CHECK-HEX: b4 03 00 00 cd ab cd ab	mov32 r3, -0x54325433
 ; CHECK-HEX: f7 03 00 00 cd ab cd ab	hor64 r3, -0x54325433
 ; CHECK-HEX: 5d 31 07 00 00 00 00 00         jne r1, r3, +0x7
 
 ; <label>:4:                                      ; preds = %2
-; CHECK-DEC: b4 01 00 00 00 00 00 00	mov32 w1, 0x0
+; CHECK-DEC: b4 01 00 00 00 00 00 00	mov32 r1, 0x0
 ; CHECK-DEC: f7 01 00 00 00 00 00 00	hor64 r1, 0x0
-; CHECK-HEX: b4 01 00 00 00 00 00 00	mov32 w1, 0x0
+; CHECK-HEX: b4 01 00 00 00 00 00 00	mov32 r1, 0x0
 ; CHECK-HEX: f7 01 00 00 00 00 00 00	hor64 r1, 0x0
 ; CHECK-REL:   fixup A - offset: 0, value: gbl, kind: FK_SecRel_8
   %5 = load i32, i32* @gbl, align 4
@@ -48,16 +48,16 @@ define i32 @test(i64, i64) local_unnamed_addr #0 {
 
 ; <label>:8:                                      ; preds = %2
   %9 = icmp eq i64 %1, 188899839028173
-; CHECK-DEC: b4 01 00 00 cd ab cd ab	mov32 w1, -0x54325433
+; CHECK-DEC: b4 01 00 00 cd ab cd ab	mov32 r1, -0x54325433
 ; CHECK-DEC: f7 01 00 00 cd ab 00 00	hor64 r1, 0xabcd
-; CHECK-HEX: b4 01 00 00 cd ab cd ab	mov32 w1, -0x54325433
+; CHECK-HEX: b4 01 00 00 cd ab cd ab	mov32 r1, -0x54325433
 ; CHECK-HEX: f7 01 00 00 cd ab 00 00	hor64 r1, 0xabcd
   br i1 %9, label %10, label %16
 
 ; <label>:10:                                     ; preds = %8
-; CHECK-DEC: b4 01 00 00 00 00 00 00	mov32 w1, 0x0
+; CHECK-DEC: b4 01 00 00 00 00 00 00	mov32 r1, 0x0
 ; CHECK-DEC: f7 01 00 00 00 00 00 00	hor64 r1, 0x0
-; CHECK-HEX: b4 01 00 00 00 00 00 00	mov32 w1, 0x0
+; CHECK-HEX: b4 01 00 00 00 00 00 00	mov32 r1, 0x0
 ; CHECK-HEX: f7 01 00 00 00 00 00 00	hor64 r1, 0x0
 ; CHECK-REL: fixup A - offset: 0, value: gbl, kind: FK_SecRel_8
   %11 = load i32, i32* @gbl, align 4

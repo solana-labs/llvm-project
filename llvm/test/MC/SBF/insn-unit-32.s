@@ -1,6 +1,6 @@
 # RUN: llvm-mc -triple sbf --mcpu=sbfv2 -filetype=obj -o %t %s
-# RUN: llvm-objdump  -d -r %t | FileCheck %s
-# RUN: llvm-objdump  --mattr=+alu32 -d -r %t | FileCheck %s
+# RUN: llvm-objdump  -d -r %t | FileCheck %s --check-prefixes=CHECK,CHECK-alu64
+# RUN: llvm-objdump  --mattr=+alu32 -d -r %t | FileCheck %s --check-prefixes=CHECK,CHECK-alu32
 
 // ======== BPF_ALU Class ========
   neg32 w1    // BPF_NEG
@@ -51,8 +51,10 @@
 // CHECK: 64 06 00 00 3f 00 00 00      lsh32 w6, 0x3f
 // CHECK: 74 07 00 00 20 00 00 00      rsh32 w7, 0x20
 // CHECK: a4 08 00 00 00 00 00 00      xor32 w8, 0x0
-// CHECK: b4 09 00 00 01 00 00 00      mov32 w9, 0x1
-// CHECK: b4 09 00 00 ff ff ff ff      mov32 w9, -0x1
+// CHECK-alu64: b4 09 00 00 01 00 00 00      mov32 r9, 0x1
+// CHECK-alu64: b4 09 00 00 ff ff ff ff      mov32 r9, -0x1
+// CHECK-alu32: b4 09 00 00 01 00 00 00      mov32 w9, 0x1
+// CHECK-alu32: b4 09 00 00 ff ff ff ff      mov32 w9, -0x1
 // CHECK: c4 0a 00 00 40 00 00 00      arsh32 w10, 0x40
 
   jeq w0, w1, Llabel0   // BPF_JEQ  | BPF_X
