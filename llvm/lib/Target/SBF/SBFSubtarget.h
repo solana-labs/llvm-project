@@ -82,6 +82,9 @@ protected:
   // reg - imm'.
   bool ReverseSubImm;
 
+  // wether we should use the LDDW instruction
+  bool NoLddw;
+
 public:
   // This constructor initializes the data members to match that
   // of the specified triple.
@@ -104,6 +107,7 @@ public:
   bool isSBFv2() const { return IsSBFv2; }
   bool getDisableNeg() const { return DisableNeg; }
   bool getReverseSubImm() const { return ReverseSubImm; }
+  bool getNoLddw() const { return NoLddw; }
 
   const SBFInstrInfo *getInstrInfo() const override { return &InstrInfo; }
   const SBFFrameLowering *getFrameLowering() const override {
