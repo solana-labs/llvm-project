@@ -67,6 +67,7 @@ public:
   uint8_t getInstClass(uint64_t Inst) const { return (Inst >> 56) & 0x7; };
   uint8_t getInstSize(uint64_t Inst) const { return (Inst >> 59) & 0x3; };
   uint8_t getInstMode(uint64_t Inst) const { return (Inst >> 61) & 0x7; };
+  bool isMov32(uint64_t Inst) const { return (Inst >> 56) == 0xb4; }
 };
 
 } // end anonymous namespace
@@ -175,6 +176,10 @@ DecodeStatus SBFDisassembler::getInstruction(MCInst &Instr, uint64_t &Size,
       STI.getFeatureBits()[SBF::ALU32])
     Result = decodeInstruction(DecoderTableSBFALU3264, Instr, Insn, Address,
                                this, STI);
+  else if (isMov32(Insn) && !STI.getFeatureBits()[SBF::ALU32] &&
+           STI.getFeatureBits()[SBF::FeatureDisableLddw])
+    Result =
+        decodeInstruction(DecoderTableSBFv264, Instr, Insn, Address, this, STI);
   else
     Result =
         decodeInstruction(DecoderTableSBF64, Instr, Insn, Address, this, STI);

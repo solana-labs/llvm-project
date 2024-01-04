@@ -34,7 +34,7 @@ define i32 @test(i32, i32) local_unnamed_addr #0 {
   %10 = load i32, i32* @gbl, align 4
   br i1 %9, label %15, label %11
 
-; CHECK: mov32 w1, 0x0
+; CHECK: mov32 r1, 0x0
 ; CHECK: hor64 r1, 0x0
 ; CHECK: ldxw r0, [r1 + 0x0]
 ; CHECK: mul64 r0, r0
@@ -46,7 +46,7 @@ define i32 @test(i32, i32) local_unnamed_addr #0 {
   br label %13
 
 ; CHECK-LABEL: <LBB0_2>:
-; CHECK: mov32 w3, 0x0
+; CHECK: mov32 r3, 0x0
 ; CHECK: hor64 r3, 0x0
 ; CHECK: ldxw r0, [r3 + 0x0]
 ; CHECK: lsh64 r2, 0x20
@@ -59,7 +59,7 @@ define i32 @test(i32, i32) local_unnamed_addr #0 {
   store i32 %14, i32* @gbl, align 4
   br label %15
 ; CHECK-LABEL: <LBB0_4>:
-; CHECK: mov32 w1, 0x0
+; CHECK: mov32 r1, 0x0
 ; CHECK: hor64 r1, 0x0
 ; CHECK: stxw [r1 + 0x0], r0
 

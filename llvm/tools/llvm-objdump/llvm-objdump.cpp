@@ -2061,6 +2061,15 @@ static void disassembleObject(ObjectFile *Obj, bool InlineRelocs) {
     }
   }
 
+  // The SBF target specifies the cpu type as an ELF flag, which is not parsed automatically in LLVM objdump.
+  // We must set the CPU type here so that the disassembler can decode the SBFv2 features correctly.
+  if (MCPU.empty() && Obj->isELF() && Obj->getArch() == Triple::sbf) {
+    const auto *Elf64 = dyn_cast<ELF64LEObjectFile>(Obj);
+    if (Elf64->getPlatformFlags() & ELF::EF_SBF_V2) {
+      MCPU = "sbfv2";
+    }
+  }
+
   std::unique_ptr<const MCSubtargetInfo> STI(
       TheTarget->createMCSubtargetInfo(TripleName, MCPU, Features.getString()));
   if (!STI)
