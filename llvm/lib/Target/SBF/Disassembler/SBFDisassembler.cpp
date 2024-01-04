@@ -205,6 +205,12 @@ DecodeStatus SBFDisassembler::getInstruction(MCInst &Instr, uint64_t &Size,
     Op.setImm(Make_64(Hi, Op.getImm()));
     break;
   }
+  case SBF::JALX: {
+    if (STI.getFeatureBits()[SBF::FeatureCallxRegSrc]) {
+      Result = decodeInstruction(DecoderTableSBFv264, Instr, Insn, Address,
+                                 this, STI);
+    }
+  }
   }
 
   return Result;
