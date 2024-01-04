@@ -44,6 +44,9 @@ def FeatureDisableNeg : SubtargetFeature<"no-neg", "DisableNeg", "true",
 def FeatureReverseSubImm : SubtargetFeature<"reverse-sub", "ReverseSubImm", "true",
                                     "Reverse the operands in the 'sub reg, imm' instruction">;
 
+def FeatureDisableLddw : SubtargetFeature<"no-lddw", "NoLddw", "true",
+                                    "Disable the lddw instruction">;
+
 class Proc<string Name, list<SubtargetFeature> Features>
  : Processor<Name, NoItineraries, Features>;
 
@@ -53,7 +56,7 @@ def : Proc<"v2", []>;
 def : Proc<"v3", []>;
 def : Proc<"probe", []>;
 def : Proc<"sbfv2", [FeatureSolana, FeatureDynamicFrames, FeatureSdiv, FeatureRelocAbs64, FeatureStaticSyscalls,
-                        FeatureDisableNeg, FeatureReverseSubImm]>;
+                        FeatureDisableNeg, FeatureReverseSubImm, FeatureDisableLddw]>;
 
 //===----------------------------------------------------------------------===//
 // Assembly printer
