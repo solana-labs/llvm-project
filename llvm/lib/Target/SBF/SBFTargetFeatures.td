@@ -32,7 +32,7 @@ def FeatureRelocAbs64 : SubtargetFeature<"reloc-abs64", "UseRelocAbs64", "true",
                                    "Fix 64bit data relocations">;
 
 def FeatureStaticSyscalls : SubtargetFeature<"static-syscalls", "HasStaticSyscalls", "true",
-                                   "Marker feature used for conditional compilation">;
+                                   "Enable static syscalls">;
 
 def FeatureDisableNeg : SubtargetFeature<"no-neg", "DisableNeg", "true",
                                     "Disable the neg instruction">;
