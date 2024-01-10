@@ -67,7 +67,7 @@ entry:
 
 ; CHECK-LABEL: test_cas_32
 ; CHECK: ldxw w0, [r1 + 0]
-; CHECK: jeq w0, w2,
+; CHECK: jeq r0, r2,
 ; CHECK: mov32 w3, w0
 ; CHECK: stxw [r1 + 0], w3
 define dso_local i32 @test_cas_32(i32* nocapture %p, i32 %old, i32 %new) local_unnamed_addr {
@@ -181,8 +181,14 @@ entry:
 
 ; CHECK-LABEL: test_min_32
 ; CHECK: ldxw w0, [r1 + 0]
-; CHECK: mov32 w3, w0
-; CHECK: jslt w0, w2,
+; CHECK: mov64 r4, r0
+; CHECK: lsh64 r4, 32
+; CHECK: arsh64 r4, 32
+; CHECK: mov32 r5, w2
+; CHECK: lsh64 r5, 32
+; CHECK: arsh64 r5, 32
+; CHECK:mov32 w3, w0
+; CHECK: jslt r4, r5, LBB16_2
 ; CHECK: mov32 w3, w2
 ; CHECK: stxw [r1 + 0], w3
 define dso_local i32 @test_min_32(i32* nocapture %ptr, i32 %v) local_unnamed_addr #0 {
@@ -205,8 +211,14 @@ entry:
 
 ; CHECK-LABEL: test_max_32
 ; CHECK: ldxw w0, [r1 + 0]
+; CHECK: mov64 r4, r0
+; CHECK: lsh64 r4, 32
+; CHECK: arsh64 r4, 32
+; CHECK: mov32 r5, w2
+; CHECK: lsh64 r5, 32
+; CHECK: arsh64 r5, 32
 ; CHECK: mov32 w3, w0
-; CHECK: jsgt w0, w2,
+; CHECK: jsgt r4, r5, LBB18_2
 ; CHECK: mov32 w3, w2
 ; CHECK: stxw [r1 + 0], w3
 define dso_local  i32 @test_max_32(i32* nocapture %ptr, i32 %v) local_unnamed_addr #0 {
@@ -229,8 +241,9 @@ entry:
 
 ; CHECK-LABEL: test_umin_32
 ; CHECK: ldxw w0, [r1 + 0]
+; CHECK: mov32 r4, w2
 ; CHECK: mov32 w3, w0
-; CHECK: jlt w0, w2,
+; CHECK: jlt r0, r4,
 ; CHECK: mov32 w3, w2
 ; CHECK: stxw [r1 + 0], w3
 define dso_local  i32 @test_umin_32(i32* nocapture %ptr, i32 %v) local_unnamed_addr #0 {
@@ -253,8 +266,9 @@ entry:
 
 ; CHECK-LABEL: test_umax_32
 ; CHECK: ldxw w0, [r1 + 0]
+; CHECK: mov32 r4, w2
 ; CHECK: mov32 w3, w0
-; CHECK: jgt w0, w2,
+; CHECK: jgt r0, r4,
 ; CHECK: mov32 w3, w2
 ; CHECK: stxw [r1 + 0], w3
 define dso_local  i32 @test_umax_32(i32* nocapture %ptr, i32 %v) local_unnamed_addr #0 {

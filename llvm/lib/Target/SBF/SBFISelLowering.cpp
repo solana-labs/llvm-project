@@ -150,8 +150,7 @@ SBFTargetLowering::SBFTargetLowering(const TargetMachine &TM,
 
   if (STI.getHasAlu32()) {
     setOperationAction(ISD::BSWAP, MVT::i32, Promote);
-    setOperationAction(ISD::BR_CC, MVT::i32,
-                       STI.getHasJmp32() ? Custom : Promote);
+    setOperationAction(ISD::BR_CC, MVT::i32, Promote);
   }
 
   if (Subtarget->isSolana()) {
@@ -219,7 +218,6 @@ SBFTargetLowering::SBFTargetLowering(const TargetMachine &TM,
 
   // CPU/Feature control
   HasAlu32 = STI.getHasAlu32();
-  HasJmp32 = STI.getHasJmp32();
   HasJmpExt = STI.getHasJmpExt();
   SBFRegisterInfo::FrameLength = STI.isSolana() ? 4096 : 512;
 }
@@ -800,7 +798,7 @@ SDValue SBFTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
     NegateCC(LHS, RHS, CC);
 
   return DAG.getNode(SBFISD::BR_CC, DL, Op.getValueType(), Chain, LHS, RHS,
-                     DAG.getConstant(CC, DL, LHS.getValueType()), Dest);
+                     DAG.getConstant(CC, DL, MVT::i64), Dest);
 }
 
 SDValue SBFTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
@@ -1091,23 +1089,20 @@ SBFTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   int CC = MI.getOperand(3).getImm();
   int NewCC;
   switch (CC) {
-#define SET_NEWCC(X, Y) \
-  case ISD::X: \
-    if (is32BitCmp && HasJmp32) \
-      NewCC = isSelectRROp ? SBF::Y##_rr_32 : SBF::Y##_ri_32; \
-    else \
-      NewCC = isSelectRROp ? SBF::Y##_rr : SBF::Y##_ri; \
+#define SET_NEWCC(X, Y)                                                        \
+  case ISD::X:                                                                 \
+    NewCC = isSelectRROp ? SBF::Y##_rr : SBF::Y##_ri;                          \
     break
-  SET_NEWCC(SETGT, JSGT);
-  SET_NEWCC(SETUGT, JUGT);
-  SET_NEWCC(SETGE, JSGE);
-  SET_NEWCC(SETUGE, JUGE);
-  SET_NEWCC(SETEQ, JEQ);
-  SET_NEWCC(SETNE, JNE);
-  SET_NEWCC(SETLT, JSLT);
-  SET_NEWCC(SETULT, JULT);
-  SET_NEWCC(SETLE, JSLE);
-  SET_NEWCC(SETULE, JULE);
+    SET_NEWCC(SETGT, JSGT);
+    SET_NEWCC(SETUGT, JUGT);
+    SET_NEWCC(SETGE, JSGE);
+    SET_NEWCC(SETUGE, JUGE);
+    SET_NEWCC(SETEQ, JEQ);
+    SET_NEWCC(SETNE, JNE);
+    SET_NEWCC(SETLT, JSLT);
+    SET_NEWCC(SETULT, JULT);
+    SET_NEWCC(SETLE, JSLE);
+    SET_NEWCC(SETULE, JULE);
   default:
     report_fatal_error("unimplemented select CondCode " + Twine(CC));
   }
@@ -1125,13 +1120,13 @@ SBFTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   //
   // We simply do extension for all situations in this method, but we will
   // try to remove those unnecessary in SBFMIPeephole pass.
-  if (is32BitCmp && !HasJmp32)
+  if (is32BitCmp)
     LHS = EmitSubregExt(MI, BB, LHS, isSignedCmp);
 
   if (isSelectRROp) {
     Register RHS = MI.getOperand(2).getReg();
 
-    if (is32BitCmp && !HasJmp32)
+    if (is32BitCmp)
       RHS = EmitSubregExt(MI, BB, RHS, isSignedCmp);
 
     BuildMI(BB, DL, TII.get(NewCC)).addReg(LHS).addReg(RHS).addMBB(Copy1MBB);

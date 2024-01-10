@@ -37,7 +37,6 @@ void SBFSubtarget::initializeEnvironment(const Triple &TT) {
   assert(TT.getArch() == Triple::sbf && "expected Triple::sbf");
   IsSolana = true;
   HasJmpExt = false;
-  HasJmp32 = false;
   HasAlu32 = false;
   HasSdiv = false;
   UseDwarfRIS = false;
@@ -66,7 +65,6 @@ void SBFSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
 
   if (CPU == "v3") {
     HasJmpExt = true;
-    HasJmp32 = true;
     HasAlu32 = true;
   }
 
