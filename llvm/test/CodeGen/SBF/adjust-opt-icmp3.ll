@@ -41,7 +41,7 @@ return:                                           ; preds = %if.end, %if.then
 
 ; CHECK-LABEL: test1
 ; CHECK-V1:    jgt r[[#]], r[[#]],
-; CHECK-V3:    jlt w[[#]], 4,
+; CHECK-V3:    jlt r[[#]], 4,
 
 ; Function Attrs: nounwind
 define dso_local i32 @test2(i64 %a) #0 {
@@ -69,7 +69,7 @@ return:                                           ; preds = %if.end, %if.then
 
 ; CHECK-LABEL: test2
 ; CHECK-V1:    jgt r[[#]], r[[#]],
-; CHECK-V3:    jlt w[[#]], 4,
+; CHECK-V3:    jlt r[[#]], 4,
 
 attributes #0 = { nounwind "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" }
 

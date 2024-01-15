@@ -50,10 +50,6 @@ protected:
   // whether the cpu supports jmp ext
   bool HasJmpExt;
 
-  // whether the cpu supports jmp32 ext.
-  // NOTE: jmp32 is not enabled when alu32 enabled.
-  bool HasJmp32;
-
   // whether the cpu supports alu32 instructions.
   bool HasAlu32;
 
@@ -99,7 +95,6 @@ public:
   void ParseSubtargetFeatures(StringRef CPU, StringRef TuneCPU, StringRef FS);
   bool isSolana() const { return IsSolana; }
   bool getHasJmpExt() const { return HasJmpExt; }
-  bool getHasJmp32() const { return HasJmp32; }
   bool getHasAlu32() const { return HasAlu32; }
   bool getHasDynamicFrames() const { return HasDynamicFrames; }
   bool getHasSdiv() const { return HasSdiv; }
