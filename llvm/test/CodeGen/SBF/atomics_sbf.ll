@@ -187,7 +187,7 @@ entry:
 ; CHECK: mov32 r5, w2
 ; CHECK: lsh64 r5, 32
 ; CHECK: arsh64 r5, 32
-; CHECK:mov32 w3, w0
+; CHECK: mov32 w3, w0
 ; CHECK: jslt r4, r5, LBB16_2
 ; CHECK: mov32 w3, w2
 ; CHECK: stxw [r1 + 0], w3

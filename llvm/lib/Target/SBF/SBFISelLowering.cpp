@@ -1093,16 +1093,16 @@ SBFTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   case ISD::X:                                                                 \
     NewCC = isSelectRROp ? SBF::Y##_rr : SBF::Y##_ri;                          \
     break
-    SET_NEWCC(SETGT, JSGT);
-    SET_NEWCC(SETUGT, JUGT);
-    SET_NEWCC(SETGE, JSGE);
-    SET_NEWCC(SETUGE, JUGE);
-    SET_NEWCC(SETEQ, JEQ);
-    SET_NEWCC(SETNE, JNE);
-    SET_NEWCC(SETLT, JSLT);
-    SET_NEWCC(SETULT, JULT);
-    SET_NEWCC(SETLE, JSLE);
-    SET_NEWCC(SETULE, JULE);
+  SET_NEWCC(SETGT, JSGT);
+  SET_NEWCC(SETUGT, JUGT);
+  SET_NEWCC(SETGE, JSGE);
+  SET_NEWCC(SETUGE, JUGE);
+  SET_NEWCC(SETEQ, JEQ);
+  SET_NEWCC(SETNE, JNE);
+  SET_NEWCC(SETLT, JSLT);
+  SET_NEWCC(SETULT, JULT);
+  SET_NEWCC(SETLE, JSLE);
+  SET_NEWCC(SETULE, JULE);
   default:
     report_fatal_error("unimplemented select CondCode " + Twine(CC));
   }
