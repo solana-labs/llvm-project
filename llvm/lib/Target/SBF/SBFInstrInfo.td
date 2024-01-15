@@ -126,26 +126,6 @@ def SBF_CC_LTU : PatLeaf<(i64 imm),
                          [{return (N->getZExtValue() == ISD::SETULT);}]>;
 def SBF_CC_LEU : PatLeaf<(i64 imm),
                          [{return (N->getZExtValue() == ISD::SETULE);}]>;
-def SBF_CC_EQ_32  : PatLeaf<(i32 imm),
-                         [{return (N->getZExtValue() == ISD::SETEQ);}]>;
-def SBF_CC_NE_32  : PatLeaf<(i32 imm),
-                         [{return (N->getZExtValue() == ISD::SETNE);}]>;
-def SBF_CC_GE_32  : PatLeaf<(i32 imm),
-                         [{return (N->getZExtValue() == ISD::SETGE);}]>;
-def SBF_CC_GT_32  : PatLeaf<(i32 imm),
-                         [{return (N->getZExtValue() == ISD::SETGT);}]>;
-def SBF_CC_GTU_32 : PatLeaf<(i32 imm),
-                         [{return (N->getZExtValue() == ISD::SETUGT);}]>;
-def SBF_CC_GEU_32 : PatLeaf<(i32 imm),
-                         [{return (N->getZExtValue() == ISD::SETUGE);}]>;
-def SBF_CC_LE_32  : PatLeaf<(i32 imm),
-                         [{return (N->getZExtValue() == ISD::SETLE);}]>;
-def SBF_CC_LT_32  : PatLeaf<(i32 imm),
-                         [{return (N->getZExtValue() == ISD::SETLT);}]>;
-def SBF_CC_LTU_32 : PatLeaf<(i32 imm),
-                         [{return (N->getZExtValue() == ISD::SETULT);}]>;
-def SBF_CC_LEU_32 : PatLeaf<(i32 imm),
-                         [{return (N->getZExtValue() == ISD::SETULE);}]>;
 
 // For arithmetic and jump instructions the 8-bit 'code'
 // field is divided into three parts:
@@ -211,57 +191,23 @@ class JMP_RI<SBFJumpOp Opc, string Mnemonic, PatLeaf Cond>
   let SBFClass = SBF_JMP;
 }
 
-class JMP_RR_32<SBFJumpOp Opc, string Mnemonic, PatLeaf Cond>
-    : TYPE_ALU_JMP<Opc.Value, SBF_X.Value,
-                   (outs),
-                   (ins GPR32:$dst, GPR32:$src, brtarget:$BrDst),
-                   Mnemonic # " $dst, $src, $BrDst",
-                   [(SBFbrcc i32:$dst, i32:$src, Cond, bb:$BrDst)]> {
-  bits<4> dst;
-  bits<4> src;
-  bits<16> BrDst;
-
-  let Inst{55-52} = src;
-  let Inst{51-48} = dst;
-  let Inst{47-32} = BrDst;
-  let SBFClass = SBF_JMP32;
-}
-
-class JMP_RI_32<SBFJumpOp Opc, string Mnemonic, PatLeaf Cond>
-    : TYPE_ALU_JMP<Opc.Value, SBF_K.Value,
-                   (outs),
-                   (ins GPR32:$dst, i32imm:$imm, brtarget:$BrDst),
-                   Mnemonic # " $dst, $imm, $BrDst",
-                   [(SBFbrcc i32:$dst, i32immSExt32:$imm, Cond, bb:$BrDst)]> {
-  bits<4> dst;
-  bits<16> BrDst;
-  bits<32> imm;
-
-  let Inst{51-48} = dst;
-  let Inst{47-32} = BrDst;
-  let Inst{31-0} = imm;
-  let SBFClass = SBF_JMP32;
-}
-
-multiclass J<SBFJumpOp Opc, string Mnemonic, PatLeaf Cond, PatLeaf Cond32> {
+multiclass J<SBFJumpOp Opc, string Mnemonic, PatLeaf Cond> {
   def _rr : JMP_RR<Opc, Mnemonic, Cond>;
   def _ri : JMP_RI<Opc, Mnemonic, Cond>;
-  def _rr_32 : JMP_RR_32<Opc, Mnemonic, Cond32>;
-  def _ri_32 : JMP_RI_32<Opc, Mnemonic, Cond32>;
 }
 
 let isBranch = 1, isTerminator = 1, hasDelaySlot=0 in {
 // cmp+goto instructions
-defm JEQ  : J<SBF_JEQ, "jeq", SBF_CC_EQ, SBF_CC_EQ_32>;
-defm JUGT : J<SBF_JGT, "jgt", SBF_CC_GTU, SBF_CC_GTU_32>;
-defm JUGE : J<SBF_JGE, "jge", SBF_CC_GEU, SBF_CC_GEU_32>;
-defm JNE  : J<SBF_JNE, "jne", SBF_CC_NE, SBF_CC_NE_32>;
-defm JSGT : J<SBF_JSGT, "jsgt", SBF_CC_GT, SBF_CC_GT_32>;
-defm JSGE : J<SBF_JSGE, "jsge", SBF_CC_GE, SBF_CC_GE_32>;
-defm JULT : J<SBF_JLT, "jlt", SBF_CC_LTU, SBF_CC_LTU_32>;
-defm JULE : J<SBF_JLE, "jle", SBF_CC_LEU, SBF_CC_LEU_32>;
-defm JSLT : J<SBF_JSLT, "jslt", SBF_CC_LT, SBF_CC_LT_32>;
-defm JSLE : J<SBF_JSLE, "jsle", SBF_CC_LE, SBF_CC_LE_32>;
+defm JEQ  : J<SBF_JEQ, "jeq", SBF_CC_EQ>;
+defm JUGT : J<SBF_JGT, "jgt", SBF_CC_GTU>;
+defm JUGE : J<SBF_JGE, "jge", SBF_CC_GEU>;
+defm JNE  : J<SBF_JNE, "jne", SBF_CC_NE>;
+defm JSGT : J<SBF_JSGT, "jsgt", SBF_CC_GT>;
+defm JSGE : J<SBF_JSGE, "jsge", SBF_CC_GE>;
+defm JULT : J<SBF_JLT, "jlt", SBF_CC_LTU>;
+defm JULE : J<SBF_JLE, "jle", SBF_CC_LEU>;
+defm JSLT : J<SBF_JSLT, "jslt", SBF_CC_LT>;
+defm JSLE : J<SBF_JSLE, "jsle", SBF_CC_LE>;
 }
 
 // ALU instructions
