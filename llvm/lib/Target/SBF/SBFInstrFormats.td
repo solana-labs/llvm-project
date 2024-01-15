@@ -16,7 +16,6 @@ def SBF_ST    : SBFOpClass<0x2>;
 def SBF_STX   : SBFOpClass<0x3>;
 def SBF_ALU   : SBFOpClass<0x4>;
 def SBF_JMP   : SBFOpClass<0x5>;
-def SBF_JMP32 : SBFOpClass<0x6>;
 def SBF_ALU64 : SBFOpClass<0x7>;
 
 class SBFSrcType<bits<1> val> {

@@ -49,8 +49,8 @@ return:                                           ; preds = %if.end, %if.then
 ; CHECK-LABEL: test
 ; CHECK-V1:    jsgt r[[#]], r[[#]],
 ; CHECK-V1:    jsgt r[[#]], 6,
-; CHECK-V3:    jslt w[[#]], 1,
-; CHECK-V3:    jsgt w[[#]], 6,
+; CHECK-V3:    jslt r[[#]], 1,
+; CHECK-V3:    jsgt r[[#]], 6,
 
 declare dso_local i32 @bar(i32 noundef) #1
 
