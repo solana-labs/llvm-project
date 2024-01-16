@@ -40,6 +40,7 @@ public:
     SBF_STX = 0x3,
     SBF_ALU = 0x4,
     SBF_JMP = 0x5,
+    SBF_PQR = 0x6,
     SBF_ALU64 = 0x7
   };
 
