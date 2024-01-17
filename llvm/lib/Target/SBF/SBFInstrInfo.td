@@ -142,7 +142,7 @@ class TYPE_ALU_JMP<bits<4> op, bits<1> srctype,
                    bit IsPqr64 = 0>
   : InstSBF<outs, ins, asmstr, pattern> {
 
-  // In the PQR class, instructions that deal with 64-bit registers have a difference OpCode.
+  // In the PQR class, instructions that deal with 64-bit registers have a different OpCode.
   // To obtain it, we add one to its base value.
   let Inst{63-60} = !if(IsPqr64, !add(op, 1), op);
   let Inst{59} = srctype;
