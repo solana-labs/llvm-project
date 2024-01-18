@@ -124,16 +124,16 @@ SBFTargetLowering::SBFTargetLowering(const TargetMachine &TM,
     if (VT == MVT::i32 && !STI.getHasAlu32())
       continue;
 
-    if (Subtarget->isSolana() && !STI.getHasSdiv()) {
+    if (Subtarget->isSolana() && !STI.getHasPqrClass()) {
       setOperationAction(ISD::SDIV, VT, Expand);
+      setOperationAction(ISD::SREM, VT, Expand);
+      setOperationAction(ISD::UREM, VT, Expand);
+      setOperationAction(ISD::MULHU, VT, Expand);
+      setOperationAction(ISD::MULHS, VT, Expand);
     }
 
     setOperationAction(ISD::SDIVREM, VT, Expand);
     setOperationAction(ISD::UDIVREM, VT, Expand);
-    setOperationAction(ISD::SREM, VT, Expand);
-    setOperationAction(ISD::UREM, VT, Expand);
-    setOperationAction(ISD::MULHU, VT, Expand);
-    setOperationAction(ISD::MULHS, VT, Expand);
     setOperationAction(ISD::UMUL_LOHI, VT, Expand);
     setOperationAction(ISD::SMUL_LOHI, VT, Expand);
     setOperationAction(ISD::ROTR, VT, Expand);
