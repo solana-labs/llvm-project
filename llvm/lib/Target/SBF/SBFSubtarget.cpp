@@ -38,7 +38,6 @@ void SBFSubtarget::initializeEnvironment(const Triple &TT) {
   IsSolana = true;
   HasJmpExt = false;
   HasAlu32 = false;
-  HasSdiv = false;
   UseDwarfRIS = false;
 
   // SBFv2 features
@@ -47,6 +46,7 @@ void SBFSubtarget::initializeEnvironment(const Triple &TT) {
   ReverseSubImm = false;
   NoLddw = false;
   CallxRegSrc = false;
+  HasPqrClass = false;
 }
 
 void SBFSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
