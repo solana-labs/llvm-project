@@ -16,6 +16,7 @@ def SBF_ST    : SBFOpClass<0x2>;
 def SBF_STX   : SBFOpClass<0x3>;
 def SBF_ALU   : SBFOpClass<0x4>;
 def SBF_JMP   : SBFOpClass<0x5>;
+def SBF_PQR   : SBFOpClass<0x6>;
 def SBF_ALU64 : SBFOpClass<0x7>;
 
 class SBFSrcType<bits<1> val> {
@@ -44,6 +45,14 @@ def SBF_ARSH : SBFArithOp<0xc>;
 def SBF_END  : SBFArithOp<0xd>;
 def SBF_SDIV : SBFArithOp<0xe>;
 def SBF_HOR  : SBFArithOp<0xf>;
+
+def PQR_UHMUL : SBFArithOp<0x2>;
+def PQR_UDIV  : SBFArithOp<0x4>;
+def PQR_UREM  : SBFArithOp<0x6>;
+def PQR_LMUL  : SBFArithOp<0x8>;
+def PQR_SHMUL : SBFArithOp<0xa>;
+def PQR_SDIV  : SBFArithOp<0xc>;
+def PQR_SREM  : SBFArithOp<0xe>;
 
 def SBF_XCHG    : SBFArithOp<0xe>;
 def SBF_CMPXCHG : SBFArithOp<0xf>;

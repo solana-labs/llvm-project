@@ -59,9 +59,6 @@ protected:
   // Relocate FK_Data_8 fixups as R_SBF_64_ABS64
   bool UseRelocAbs64;
 
-  // whether the cpu supports native SBF_SDIV
-  bool HasSdiv;
-
   // Not used for anything, just set by the static-syscalls marker feature.
   bool HasStaticSyscalls;
 
@@ -81,6 +78,9 @@ protected:
   // Whether to encode destination register in Callx's src field
   bool CallxRegSrc;
 
+  // Whether we have the PQR instruction class
+  bool HasPqrClass;
+
 public:
   // This constructor initializes the data members to match that
   // of the specified triple.
@@ -97,12 +97,12 @@ public:
   bool getHasJmpExt() const { return HasJmpExt; }
   bool getHasAlu32() const { return HasAlu32; }
   bool getHasDynamicFrames() const { return HasDynamicFrames; }
-  bool getHasSdiv() const { return HasSdiv; }
   bool getUseDwarfRIS() const { return UseDwarfRIS; }
   bool getDisableNeg() const { return DisableNeg; }
   bool getReverseSubImm() const { return ReverseSubImm; }
   bool getNoLddw() const { return NoLddw; }
   bool getCallXRegSrc() const { return CallxRegSrc; }
+  bool getHasPqrClass() const { return HasPqrClass; }
 
   const SBFInstrInfo *getInstrInfo() const override { return &InstrInfo; }
   const SBFFrameLowering *getFrameLowering() const override {

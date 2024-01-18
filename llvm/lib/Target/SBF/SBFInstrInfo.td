@@ -63,6 +63,8 @@ def SBFRevSub : Predicate<"Subtarget->getReverseSubImm()">;
 def SBFNoRevSub : Predicate<"!Subtarget->getReverseSubImm()">;
 def SBFCallxSrc : Predicate<"Subtarget->getCallXRegSrc()">, AssemblerPredicate<(all_of FeatureCallxRegSrc)>;
 def NoSBFCallxSrc : Predicate<"!Subtarget->getCallXRegSrc()">;
+def SBFPqrInstr : Predicate<"Subtarget->getHasPqrClass()">;
+def SBFNoPqrInstr : Predicate<"!Subtarget->getHasPqrClass()">;
 
 def brtarget : Operand<OtherVT> {
   let PrintMethod = "printBrTargetOperand";
@@ -136,10 +138,13 @@ def SBF_CC_LEU : PatLeaf<(i64 imm),
 //  +----------------+--------+--------------------+
 //  (MSB)                                      (LSB)
 class TYPE_ALU_JMP<bits<4> op, bits<1> srctype,
-                   dag outs, dag ins, string asmstr, list<dag> pattern>
+                   dag outs, dag ins, string asmstr, list<dag> pattern,
+                   bit IsPqr64 = 0>
   : InstSBF<outs, ins, asmstr, pattern> {
 
-  let Inst{63-60} = op;
+  // In the PQR class, instructions that deal with 64-bit registers have a different OpCode.
+  // To obtain it, we add one to its base value.
+  let Inst{63-60} = !if(IsPqr64, !add(op, 1), op);
   let Inst{59} = srctype;
 }
 
@@ -211,9 +216,11 @@ defm JSLE : J<SBF_JSLE, "jsle", SBF_CC_LE>;
 }
 
 // ALU instructions
-class ALU_RI<SBFOpClass Class, SBFArithOp Opc,
-             dag outs, dag ins, string asmstr, list<dag> pattern>
-    : TYPE_ALU_JMP<Opc.Value, SBF_K.Value, outs, ins, asmstr, pattern> {
+class MATH_RI<SBFOpClass Class, SBFArithOp Opc,
+             dag outs, dag ins, string asmstr,
+             list<dag> pattern, bit isPqr64 = 0>
+    : TYPE_ALU_JMP<Opc.Value, SBF_K.Value, outs, ins,
+                           asmstr, pattern, isPqr64> {
   bits<4> dst;
   bits<32> imm;
 
@@ -222,9 +229,11 @@ class ALU_RI<SBFOpClass Class, SBFArithOp Opc,
   let SBFClass = Class;
 }
 
-class ALU_RR<SBFOpClass Class, SBFArithOp Opc,
-             dag outs, dag ins, string asmstr, list<dag> pattern>
-    : TYPE_ALU_JMP<Opc.Value, SBF_X.Value, outs, ins, asmstr, pattern> {
+class MATH_RR<SBFOpClass Class, SBFArithOp Opc,
+               dag outs, dag ins, string asmstr,
+                list<dag> pattern, bit isPqr64 = 0>
+    : TYPE_ALU_JMP<Opc.Value, SBF_X.Value, outs, ins,
+                           asmstr, pattern, isPqr64> {
   bits<4> dst;
   bits<4> src;
 
@@ -233,31 +242,54 @@ class ALU_RR<SBFOpClass Class, SBFArithOp Opc,
   let SBFClass = Class;
 }
 
-multiclass ALU<SBFArithOp Opc, string Mnemonic, SDNode OpNode, bit UseImmPat = 1> {
-  def _rr : ALU_RR<SBF_ALU64, Opc,
-                   (outs GPR:$dst),
-                   (ins GPR:$src2, GPR:$src),
-                   Mnemonic # "64 $dst, $src",
-                   [(set GPR:$dst, (OpNode i64:$src2, i64:$src))]>;
-  def _ri : ALU_RI<SBF_ALU64, Opc,
-                   (outs GPR:$dst),
-                   (ins GPR:$src2, i64imm:$imm),
-                   Mnemonic # "64 $dst, $imm",
-                   !if(UseImmPat,
-                       [(set GPR:$dst,
-                            (OpNode GPR:$src2, i64immSExt32:$imm))], [])>;
-  def _rr_32 : ALU_RR<SBF_ALU, Opc,
+multiclass MATH_32<SBFArithOp Opc, string Mnemonic,
+                    SBFOpClass Class, SDNode OpNode, bit UseImmPat = 1> {
+  def _rr_32 : MATH_RR<Class, Opc,
                    (outs GPR32:$dst),
                    (ins GPR32:$src2, GPR32:$src),
                    Mnemonic # "32 $dst, $src",
                    [(set GPR32:$dst, (OpNode i32:$src2, i32:$src))]>;
-  def _ri_32 : ALU_RI<SBF_ALU, Opc,
+  def _ri_32 : MATH_RI<Class, Opc,
                    (outs GPR32:$dst),
                    (ins GPR32:$src2, i32imm:$imm),
                    Mnemonic # "32 $dst, $imm",
                    !if(UseImmPat,
                        [(set GPR32:$dst,
                              (OpNode GPR32:$src2, i32immSExt32:$imm))], [])>;
+}
+
+multiclass MATH_64<SBFArithOp Opc, string Mnemonic,
+                     SBFOpClass Class, SDNode OpNode, bit UseImmPat = 1> {
+
+  defvar isPqr64 = !if(!eq(Class, SBF_PQR), 1, 0);
+
+  def _rr : MATH_RR<Class, Opc,
+                   (outs GPR:$dst),
+                   (ins GPR:$src2, GPR:$src),
+                   Mnemonic # "64 $dst, $src",
+                   [(set GPR:$dst, (OpNode i64:$src2, i64:$src))],
+                   isPqr64>;
+
+  def _ri : MATH_RI<Class, Opc,
+                   (outs GPR:$dst),
+                   (ins GPR:$src2, i64imm:$imm),
+                   Mnemonic # "64 $dst, $imm",
+                   !if(UseImmPat,
+                       [(set GPR:$dst,
+                            (OpNode GPR:$src2, i64immSExt32:$imm))], []),
+                   isPqr64>;
+}
+
+multiclass ALU<SBFArithOp Opc, string Mnemonic,
+                    SDNode OpNode, bit UseImmPat = 1> {
+  defm "" : MATH_64<Opc, Mnemonic, SBF_ALU64, OpNode, UseImmPat>;
+
+  defm "" : MATH_32<Opc, Mnemonic, SBF_ALU, OpNode, UseImmPat>;
+}
+
+multiclass PQR<SBFArithOp Opc, string Mnemonic, SDNode OpNode> {
+  defm "" : MATH_64<Opc, Mnemonic, SBF_PQR, OpNode>;
+  defm "" : MATH_32<Opc, Mnemonic, SBF_PQR, OpNode>;
 }
 
 let Constraints = "$dst = $src2" in {
@@ -272,13 +304,13 @@ let Constraints = "$dst = $src2" in {
         defm SRA : ALU<SBF_ARSH, "arsh", sra>;
 
         let Predicates = [SBFNoLddw] in {
-            def HOR :  ALU_RI<SBF_ALU64, SBF_HOR,
+            def HOR :  MATH_RI<SBF_ALU64, SBF_HOR,
                         (outs GPR:$dst),
                         (ins GPR:$src2, i32imm:$imm),
                         "hor64 $dst, $imm",
                         []>;
             let DecoderNamespace = "SBFv2" in {
-              def HOR_addr :  ALU_RI<SBF_ALU64, SBF_HOR,
+              def HOR_addr :  MATH_RI<SBF_ALU64, SBF_HOR,
                                       (outs GPR:$dst),
                                       (ins GPR:$src2, u64imm:$imm),
                                       "hor64 $dst, $imm",
@@ -288,11 +320,20 @@ let Constraints = "$dst = $src2" in {
         }
     }
 
-    defm MUL : ALU<SBF_MUL, "mul", mul>;
-    defm DIV : ALU<SBF_DIV, "div", udiv>;
 
-    let Predicates = [SBFSubtargetSolana] in {
-        defm SDIV : ALU<SBF_SDIV, "sdiv", sdiv>;
+    let Predicates = [SBFNoPqrInstr] in {
+        defm MUL : ALU<SBF_MUL, "mul", mul>;
+        defm DIV : ALU<SBF_DIV, "div", udiv>;
+    }
+
+    let Predicates = [SBFPqrInstr] in {
+        defm UHMUL    : MATH_64<PQR_UHMUL, "uhmul", SBF_PQR, mulhu>;
+        defm UDIV     : PQR<PQR_UDIV, "udiv", udiv>;
+        defm UREM     : PQR<PQR_UREM, "urem", urem>;
+        defm LMUL     : PQR<PQR_LMUL, "lmul", mul>;
+        defm SHMUL    : MATH_64<PQR_SHMUL, "shmul", SBF_PQR, mulhs>;
+        defm SDIV_pqr : PQR<PQR_SDIV, "sdiv", sdiv>;
+        defm SREM     : PQR<PQR_SREM, "srem", srem>;
     }
 }
 
@@ -355,22 +396,22 @@ class LD_IMM64<bits<4> Pseudo, string Mnemonic>
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
 def LD_imm64 : LD_IMM64<0, "lddw">, Requires<[SBFHasLddw]>;
-def MOV_rr : ALU_RR<SBF_ALU64, SBF_MOV,
+def MOV_rr : MATH_RR<SBF_ALU64, SBF_MOV,
                     (outs GPR:$dst),
                     (ins GPR:$src),
                     "mov64 $dst, $src",
                     []>;
-def MOV_ri : ALU_RI<SBF_ALU64, SBF_MOV,
+def MOV_ri : MATH_RI<SBF_ALU64, SBF_MOV,
                     (outs GPR:$dst),
                     (ins i64imm:$imm),
                     "mov64 $dst, $imm",
                     [(set GPR:$dst, (i64 i64immSExt32:$imm))]>;
-def MOV_rr_32 : ALU_RR<SBF_ALU, SBF_MOV,
+def MOV_rr_32 : MATH_RR<SBF_ALU, SBF_MOV,
                     (outs GPR32:$dst),
                     (ins GPR32:$src),
                     "mov32 $dst, $src",
                     []>;
-def MOV_ri_32 : ALU_RI<SBF_ALU, SBF_MOV,
+def MOV_ri_32 : MATH_RI<SBF_ALU, SBF_MOV,
                     (outs GPR32:$dst),
                     (ins i32imm:$imm),
                     "mov32 $dst, $imm",
@@ -468,7 +509,7 @@ let isCodeGenOnly = 1 in {
                                   "$dst = core_alu32_mem($opcode, $src, $offset)",
                                   []>;
   let Constraints = "$dst = $src" in {
-    def CORE_SHIFT : ALU_RR<SBF_ALU64, SBF_LSH,
+    def CORE_SHIFT : MATH_RR<SBF_ALU64, SBF_LSH,
                              (outs GPR:$dst),
                              (ins u64imm:$opcode, GPR:$src, u64imm:$offset),
                              "$dst = core_shift($opcode, $src, $offset)",
@@ -896,16 +937,16 @@ let Constraints = "$dst = $src" in {
 }
 
 let isCodeGenOnly = 1 in {
-  def MOV_32_64 : ALU_RR<SBF_ALU, SBF_MOV,
+  def MOV_32_64 : MATH_RR<SBF_ALU, SBF_MOV,
                          (outs GPR:$dst), (ins GPR32:$src),
                          "mov32 $dst, $src", []>;
-  def MOV_32_64_addr : ALU_RI<SBF_ALU, SBF_MOV,
+  def MOV_32_64_addr : MATH_RI<SBF_ALU, SBF_MOV,
                            (outs GPR:$dst), (ins u64imm:$imm),
                            "mov32 $dst, $imm", []>, Requires<[SBFNoLddw]>;
 }
 
 let DecoderNamespace = "SBFv2", Predicates = [SBFNoLddw] in {
-  def MOV_32_64_imm : ALU_RI<SBF_ALU, SBF_MOV,
+  def MOV_32_64_imm : MATH_RI<SBF_ALU, SBF_MOV,
                                (outs GPR:$dst), (ins i32imm:$imm),
                                "mov32 $dst, $imm", []>;
 }
