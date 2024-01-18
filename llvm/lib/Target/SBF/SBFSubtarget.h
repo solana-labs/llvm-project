@@ -81,6 +81,9 @@ protected:
   // Whether we have the PQR instruction class
   bool HasPqrClass;
 
+  // Whether to use explict sign extension
+  bool ExplicitSignExt;
+
 public:
   // This constructor initializes the data members to match that
   // of the specified triple.
@@ -103,6 +106,7 @@ public:
   bool getNoLddw() const { return NoLddw; }
   bool getCallXRegSrc() const { return CallxRegSrc; }
   bool getHasPqrClass() const { return HasPqrClass; }
+  bool getExplicitSignExt() const { return ExplicitSignExt; }
 
   const SBFInstrInfo *getInstrInfo() const override { return &InstrInfo; }
   const SBFFrameLowering *getFrameLowering() const override {

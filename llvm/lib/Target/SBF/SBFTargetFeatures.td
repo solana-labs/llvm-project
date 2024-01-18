@@ -46,6 +46,9 @@ def FeatureCallxRegSrc : SubtargetFeature<"callx-reg-src", "CallxRegSrc", "true"
 def FeaturePqrInstr : SubtargetFeature<"pqr-instr", "HasPqrClass", "true",
                                     "Enable the PQR instruction class">;
 
+def FeatureExplicitSignExt : SubtargetFeature<"explicit-sext", "ExplicitSignExt", "true",
+                                    "Use explicit sign extension">;
+
 class Proc<string Name, list<SubtargetFeature> Features>
  : Processor<Name, NoItineraries, Features>;
 
@@ -56,4 +59,4 @@ def : Proc<"v3", []>;
 def : Proc<"probe", []>;
 def : Proc<"sbfv2", [FeatureSolana, FeatureDynamicFrames, FeatureRelocAbs64, FeatureStaticSyscalls,
                         FeatureDisableNeg, FeatureReverseSubImm, FeatureDisableLddw, FeatureCallxRegSrc,
-                          FeaturePqrInstr]>;
+                        FeaturePqrInstr, FeatureExplicitSignExt]>;

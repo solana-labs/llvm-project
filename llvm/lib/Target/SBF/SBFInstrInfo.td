@@ -65,6 +65,8 @@ def SBFCallxSrc : Predicate<"Subtarget->getCallXRegSrc()">, AssemblerPredicate<(
 def NoSBFCallxSrc : Predicate<"!Subtarget->getCallXRegSrc()">;
 def SBFPqrInstr : Predicate<"Subtarget->getHasPqrClass()">;
 def SBFNoPqrInstr : Predicate<"!Subtarget->getHasPqrClass()">;
+def SBFExplicitSext : Predicate<"Subtarget->getExplicitSignExt()">;
+def SBFNoExplicitSext : Predicate<"!Subtarget->getExplicitSignExt()">;
 
 def brtarget : Operand<OtherVT> {
   let PrintMethod = "printBrTargetOperand";
@@ -967,14 +969,30 @@ def : Pat<(SBFWrapper tglobaladdr:$in),
                             tglobaladdr:$in)>, Requires<[SBFNoLddw]>;
 
 
-def : Pat<(i64 (sext GPR32:$src)),
-          (SRA_ri (SLL_ri (MOV_32_64 GPR32:$src), 32), 32)>;
+let Predicates = [SBFNoExplicitSext] in {
+  def : Pat<(i64 (sext GPR32:$src)),
+              (SRA_ri (SLL_ri (MOV_32_64 GPR32:$src), 32), 32)>;
 
-def : Pat<(i64 (zext GPR32:$src)), (MOV_32_64 GPR32:$src)>;
+  def : Pat<(i64 (zext GPR32:$src)), (MOV_32_64 GPR32:$src)>;
 
-// For i64 -> i32 truncation, use the 32-bit subregister directly.
-def : Pat<(i32 (trunc GPR:$src)),
-          (i32 (EXTRACT_SUBREG GPR:$src, sub_32))>;
+  // For i64 -> i32 truncation, use the 32-bit subregister directly.
+  def : Pat<(i32 (trunc GPR:$src)),
+            (i32 (EXTRACT_SUBREG GPR:$src, sub_32))>;
+}
+
+let Predicates = [SBFExplicitSext] in {
+  def : Pat<(i64 (sext GPR32:$src)),
+                (MOV_32_64 GPR32:$src)>;
+
+  // For zero extending, we ignore the high bits.
+  def : Pat<(i64 (zext GPR32:$src)),
+            (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GPR32:$src, sub_32)>;
+
+  // For truncation, we need a bit mask before placing the value in a subregister.
+  def : Pat<(i32 (trunc GPR:$src)),
+                (AND_ri_32 (i32 (EXTRACT_SUBREG GPR:$src, sub_32)), 0xffffffff)>;
+}
+
 
 // For i32 -> i64 anyext, we don't care about the high bits.
 def : Pat<(i64 (anyext GPR32:$src)),
