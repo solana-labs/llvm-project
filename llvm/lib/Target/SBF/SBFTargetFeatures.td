@@ -25,9 +25,6 @@ def FeatureSolana : SubtargetFeature<"solana", "IsSolana", "true",
 def FeatureDynamicFrames : SubtargetFeature<"dynamic-frames", "HasDynamicFrames", "true",
                                             "Enable dynamic frames">;
 
-def FeatureSdiv : SubtargetFeature<"sdiv", "HasSdiv", "true",
-                                   "Enable native SBF_SDIV support">;
-
 def FeatureRelocAbs64 : SubtargetFeature<"reloc-abs64", "UseRelocAbs64", "true",
                                    "Fix 64bit data relocations">;
 
@@ -46,6 +43,9 @@ def FeatureDisableLddw : SubtargetFeature<"no-lddw", "NoLddw", "true",
 def FeatureCallxRegSrc : SubtargetFeature<"callx-reg-src", "CallxRegSrc", "true",
                                     "Encode Callx destination register in the src field">;
 
+def FeaturePqrInstr : SubtargetFeature<"pqr-instr", "HasPqrClass", "true",
+                                    "Enable the PQR instruction class">;
+
 class Proc<string Name, list<SubtargetFeature> Features>
  : Processor<Name, NoItineraries, Features>;
 
@@ -54,5 +54,6 @@ def : Proc<"v1", []>;
 def : Proc<"v2", []>;
 def : Proc<"v3", []>;
 def : Proc<"probe", []>;
-def : Proc<"sbfv2", [FeatureSolana, FeatureDynamicFrames, FeatureSdiv, FeatureRelocAbs64, FeatureStaticSyscalls,
-                        FeatureDisableNeg, FeatureReverseSubImm, FeatureDisableLddw, FeatureCallxRegSrc]>;
+def : Proc<"sbfv2", [FeatureSolana, FeatureDynamicFrames, FeatureRelocAbs64, FeatureStaticSyscalls,
+                        FeatureDisableNeg, FeatureReverseSubImm, FeatureDisableLddw, FeatureCallxRegSrc,
+                          FeaturePqrInstr]>;
