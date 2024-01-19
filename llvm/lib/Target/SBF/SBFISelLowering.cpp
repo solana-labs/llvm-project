@@ -471,7 +471,7 @@ SDValue SBFTargetLowering::LowerFormalArguments(
       SDValue Const = DAG.getConstant(SBFRegisterInfo::FrameLength - VA.getLocMemOffset(), DL, MVT::i64);
       SDValue SDV = DAG.getCopyFromReg(Chain, DL, reg, getPointerTy(MF.getDataLayout()));
       SDV = DAG.getNode(ISD::SUB, DL, PtrVT, SDV, Const);
-      SDV = DAG.getLoad(LocVT, DL, Chain, SDV, MachinePointerInfo(), 0);
+      SDV = DAG.getLoad(LocVT, DL, Chain, SDV, MachinePointerInfo());
       InVals.push_back(SDV);
     } else {
       fail(DL, DAG, "defined with too many args");
