@@ -62,7 +62,7 @@ def SBFNoNeg: Predicate<"Subtarget->getDisableNeg()">;
 def SBFRevSub : Predicate<"Subtarget->getReverseSubImm()">;
 def SBFNoRevSub : Predicate<"!Subtarget->getReverseSubImm()">;
 def SBFCallxSrc : Predicate<"Subtarget->getCallXRegSrc()">, AssemblerPredicate<(all_of FeatureCallxRegSrc)>;
-def NoSBFCallxSrc : Predicate<"!Subtarget->getCallXRegSrc()">;
+def SBFNoCallxSrc : Predicate<"!Subtarget->getCallXRegSrc()">;
 def SBFPqrInstr : Predicate<"Subtarget->getHasPqrClass()">;
 def SBFNoPqrInstr : Predicate<"!Subtarget->getHasPqrClass()">;
 
@@ -583,7 +583,7 @@ let isCall=1, hasDelaySlot=0, Uses = [R11],
     // Potentially clobbered registers
     Defs = [R0, R1, R2, R3, R4, R5] in {
   def JAL     : CALL<"call">;
-  def JALX    : CALLX<"callx">, Requires<[NoSBFCallxSrc]>;
+  def JALX    : CALLX<"callx">, Requires<[SBFNoCallxSrc]>;
   let DecoderNamespace = "SBFv2" in {
     def JALX_v2 : CALLX_SRC_REG<"callx">, Requires<[SBFCallxSrc]>;
   }
@@ -680,7 +680,7 @@ def : Pat<(i64 (and (i64 GPR:$src), 0xffffFFFF)),
 def : Pat<(SBFcall tglobaladdr:$dst), (JAL tglobaladdr:$dst)>;
 def : Pat<(SBFcall texternalsym:$dst), (JAL texternalsym:$dst)>;
 def : Pat<(SBFcall imm:$dst), (JAL imm:$dst)>;
-def : Pat<(SBFcall GPR:$dst), (JALX GPR:$dst)>, Requires<[NoSBFCallxSrc]>;
+def : Pat<(SBFcall GPR:$dst), (JALX GPR:$dst)>, Requires<[SBFNoCallxSrc]>;
 def : Pat<(SBFcall GPR:$dst), (JALX_v2 GPR:$dst)>, Requires<[SBFCallxSrc]>;
 
 // Loads
