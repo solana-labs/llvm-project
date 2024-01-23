@@ -12,6 +12,7 @@ entry:
 ; Zero extending involves no operation
 ; CHECK: mov32 w0, w1
 ; CHECK: add32 w0, w2
+; CHECK: and32 w0, -1
 ; CHECK: mul64 r0, 3
 }
 

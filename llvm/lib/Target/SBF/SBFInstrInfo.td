@@ -984,13 +984,17 @@ let Predicates = [SBFExplicitSext] in {
   def : Pat<(i64 (sext GPR32:$src)),
                 (MOV_32_64 GPR32:$src)>;
 
-  // For zero extending, we ignore the high bits.
+  // For zero extending, we use a mask to remove potential
+  // high bits from 'mov32 reg, reg'.
   def : Pat<(i64 (zext GPR32:$src)),
-            (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GPR32:$src, sub_32)>;
+            (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
+               (AND_ri_32 GPR32:$src, 0xffffffff), sub_32)>;
 
-  // For truncation, we need a bit mask before placing the value in a subregister.
+  // For truncation, we need a bit mask before placing the value
+  // in a subregister.
   def : Pat<(i32 (trunc GPR:$src)),
-                (AND_ri_32 (i32 (EXTRACT_SUBREG GPR:$src, sub_32)), 0xffffffff)>;
+                (AND_ri_32 (i32 (EXTRACT_SUBREG GPR:$src, sub_32)),
+                                   0xffffffff)>;
 }
 
 
