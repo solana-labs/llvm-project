@@ -473,8 +473,7 @@ SDValue SBFTargetLowering::LowerFormalArguments(
       // Arguments relative to SBF::R5
       unsigned reg = MF.addLiveIn(SBF::R5, &SBF::GPRRegClass);
       SDValue Const = DAG.getConstant(Offset, DL, MVT::i64);
-      SDValue SDV =
-          DAG.getCopyFromReg(Chain, DL, reg, getPointerTy(MF.getDataLayout()));
+      SDValue SDV = DAG.getCopyFromReg(Chain, DL, reg, getPointerTy(MF.getDataLayout()));
       SDV = DAG.getNode(ISD::SUB, DL, PtrVT, SDV, Const);
       SDV = DAG.getLoad(LocVT, DL, Chain, SDV, MachinePointerInfo());
       InVals.push_back(SDV);
@@ -612,7 +611,7 @@ SDValue SBFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       SDValue DstAddr;
       MachinePointerInfo DstInfo;
       if (Subtarget->getHasDynamicFrames()) {
-        // When dynamic frames are enable, the frame size is only calculated
+        // When dynamic frames are enabled, the frame size is only calculated
         // after lowering instructions, so we must place arguments at the start
         // of the frame.
         int64_t Offset = -(int64_t)VA.getLocMemOffset() - 8;
