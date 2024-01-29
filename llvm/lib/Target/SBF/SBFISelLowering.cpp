@@ -465,7 +465,7 @@ SDValue SBFTargetLowering::LowerFormalArguments(
       unsigned Offset;
       if (Subtarget->getHasDynamicFrames()) {
         // In SBFv2, the arguments are stored on the start of the frame.
-        Offset = VA.getLocMemOffset() + 8;
+        Offset = VA.getLocMemOffset() + PtrVT.getFixedSizeInBits() / 8;
       } else {
         Offset = SBFRegisterInfo::FrameLength - VA.getLocMemOffset();
       }
@@ -614,7 +614,8 @@ SDValue SBFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
         // When dynamic frames are enabled, the frame size is only calculated
         // after lowering instructions, so we must place arguments at the start
         // of the frame.
-        int64_t Offset = -(int64_t)VA.getLocMemOffset() - 8;
+        int64_t Offset =
+            -(int64_t)VA.getLocMemOffset() - (PtrVT.getFixedSizeInBits() / 8);
         int FrameIndex = MF.getFrameInfo().CreateFixedObject(
             VA.getLocVT().getFixedSizeInBits() / 8, Offset, false);
         DstAddr = DAG.getFrameIndex(FrameIndex, PtrVT);
