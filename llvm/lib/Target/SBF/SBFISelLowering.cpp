@@ -11,11 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "SBFISelLowering.h"
-#include "SBF.h"
 #include "SBFRegisterInfo.h"
 #include "SBFSubtarget.h"
-#include "SBFTargetMachine.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -26,7 +23,6 @@
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/DiagnosticPrinter.h"
 #include "llvm/IR/IntrinsicsBPF.h" // TODO: jle.
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
@@ -466,9 +462,17 @@ SDValue SBFTargetLowering::LowerFormalArguments(
       EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(DAG.getDataLayout());
       EVT LocVT = VA.getLocVT();
 
+      unsigned Offset;
+      if (Subtarget->getHasDynamicFrames()) {
+        // In SBFv2, the arguments are stored on the start of the frame.
+        Offset = VA.getLocMemOffset() + PtrVT.getFixedSizeInBits() / 8;
+      } else {
+        Offset = SBFRegisterInfo::FrameLength - VA.getLocMemOffset();
+      }
+
       // Arguments relative to SBF::R5
       unsigned reg = MF.addLiveIn(SBF::R5, &SBF::GPRRegClass);
-      SDValue Const = DAG.getConstant(SBFRegisterInfo::FrameLength - VA.getLocMemOffset(), DL, MVT::i64);
+      SDValue Const = DAG.getConstant(Offset, DL, MVT::i64);
       SDValue SDV = DAG.getCopyFromReg(Chain, DL, reg, getPointerTy(MF.getDataLayout()));
       SDV = DAG.getNode(ISD::SUB, DL, PtrVT, SDV, Const);
       SDV = DAG.getLoad(LocVT, DL, Chain, SDV, MachinePointerInfo());
@@ -587,7 +591,10 @@ SDValue SBFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   SDValue InFlag;
 
   if (HasStackArgs) {
-    SDValue FramePtr = DAG.getCopyFromReg(Chain, CLI.DL, SBF::R10, getPointerTy(MF.getDataLayout()));
+    SDValue FramePtr = DAG.getCopyFromReg(Chain,
+                                          CLI.DL,
+                                          Subtarget->getRegisterInfo()->getFrameRegister(MF),
+                                          getPointerTy(MF.getDataLayout()));
 
     // Stack arguments have to be walked in reverse order by inserting
     // chained stores, this ensures their order is not changed by the scheduler
@@ -601,9 +608,27 @@ SDValue SBFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       assert(VA.isMemLoc());
 
       EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(DAG.getDataLayout());
-      SDValue Const = DAG.getConstant(SBFRegisterInfo::FrameLength - VA.getLocMemOffset(), CLI.DL, MVT::i64);
-      SDValue PtrOff = DAG.getNode(ISD::SUB, CLI.DL, PtrVT, FramePtr, Const);
-      Chain = DAG.getStore(Chain, CLI.DL, Arg, PtrOff, MachinePointerInfo());
+      SDValue DstAddr;
+      MachinePointerInfo DstInfo;
+      if (Subtarget->getHasDynamicFrames()) {
+        // When dynamic frames are enabled, the frame size is only calculated
+        // after lowering instructions, so we must place arguments at the start
+        // of the frame.
+        int64_t Offset = -static_cast<int64_t>(VA.getLocMemOffset() +
+                                               PtrVT.getFixedSizeInBits() / 8);
+        int FrameIndex = MF.getFrameInfo().CreateFixedObject(
+            VA.getLocVT().getFixedSizeInBits() / 8, Offset, false);
+        DstAddr = DAG.getFrameIndex(FrameIndex, PtrVT);
+        DstInfo = MachinePointerInfo::getFixedStack(MF, FrameIndex, Offset);
+      } else {
+        SDValue Const =
+            DAG.getConstant(SBFRegisterInfo::FrameLength - VA.getLocMemOffset(),
+                            CLI.DL, MVT::i64);
+        DstAddr = DAG.getNode(ISD::SUB, CLI.DL, PtrVT, FramePtr, Const);
+        DstInfo = MachinePointerInfo();
+      }
+
+      Chain = DAG.getStore(Chain, CLI.DL, Arg, DstAddr, DstInfo);
     }
 
     // Pass the current stack frame pointer via SBF::R5, gluing the
