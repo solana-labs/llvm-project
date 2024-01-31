@@ -532,7 +532,7 @@ SDValue SBFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     CCInfo.AnalyzeCallOperands(Outs, getHasAlu32() ? CC_SBF32 : CC_SBF64);
   }
 
-  unsigned NumBytes = CCInfo.getNextStackOffset();
+  unsigned NumBytes = CCInfo.getStackSize();
 
   if (!Subtarget->isSolana()) {
     if (Outs.size() > MaxArgs)

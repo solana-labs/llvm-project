@@ -472,7 +472,7 @@ SDValue BPFTargetLowering::LowerFormalArguments(
       SDValue Const = DAG.getConstant(BPFRegisterInfo::FrameLength - VA.getLocMemOffset(), DL, MVT::i64);
       SDValue SDV = DAG.getCopyFromReg(Chain, DL, reg, getPointerTy(MF.getDataLayout()));
       SDV = DAG.getNode(ISD::SUB, DL, PtrVT, SDV, Const);
-      SDV = DAG.getLoad(LocVT, DL, Chain, SDV, MachinePointerInfo(), 0);
+      SDV = DAG.getLoad(LocVT, DL, Chain, SDV, MachinePointerInfo());
       InVals.push_back(SDV);
     } else {
       fail(DL, DAG, "defined with too many args");
@@ -759,7 +759,7 @@ SDValue BPFTargetLowering::LowerCallResult(
     fail(DL, DAG, "only small returns supported");
     for (unsigned i = 0, e = Ins.size(); i != e; ++i)
       InVals.push_back(DAG.getConstant(0, DL, Ins[i].VT));
-    return DAG.getCopyFromReg(Chain, DL, 1, Ins[0].VT, InFlag).getValue(1);
+    return DAG.getCopyFromReg(Chain, DL, 1, Ins[0].VT, InGlue).getValue(1);
   }
 
   CCInfo.AnalyzeCallResult(Ins, getHasAlu32() ? RetCC_BPF32 : RetCC_BPF64);

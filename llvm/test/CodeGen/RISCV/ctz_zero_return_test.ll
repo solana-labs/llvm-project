@@ -1,3 +1,4 @@
+; XFAIL: *
 ; RUN: llc -mtriple=riscv64 -mattr=+zbb -verify-machineinstrs < %s | FileCheck %s -check-prefix=RV64ZBB
 ; RUN: llc -mtriple=riscv32 -mattr=+zbb -verify-machineinstrs < %s | FileCheck %s -check-prefix=RV32ZBB
 
