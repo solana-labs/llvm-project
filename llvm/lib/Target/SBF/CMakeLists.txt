@@ -39,6 +39,7 @@ add_llvm_target(SBFCodeGen
   Analysis
   AsmPrinter
   CodeGen
+  CodeGenTypes
   Core
   MC
   SBFDesc

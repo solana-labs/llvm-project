@@ -18,12 +18,8 @@ namespace llvm {
 class SBFTargetMachine;
 class PassRegistry;
 
-ModulePass *createSBFAdjustOpt();
 ModulePass *createSBFCheckAndAdjustIR();
 
-FunctionPass *createSBFAbstractMemberAccess(SBFTargetMachine *TM);
-FunctionPass *createSBFPreserveDIType();
-FunctionPass *createSBFIRPeephole();
 FunctionPass *createSBFISelDag(SBFTargetMachine &TM);
 FunctionPass *createSBFMISimplifyPatchablePass();
 FunctionPass *createSBFMIPeepholePass();
@@ -31,17 +27,13 @@ FunctionPass *createSBFMIPeepholeTruncElimPass();
 FunctionPass *createSBFMIPreEmitPeepholePass();
 FunctionPass *createSBFMIPreEmitCheckingPass();
 
-void initializeSBFAbstractMemberAccessLegacyPassPass(PassRegistry &);
-void initializeSBFAdjustOptPass(PassRegistry&);
 void initializeSBFCheckAndAdjustIRPass(PassRegistry&);
 void initializeSBFDAGToDAGISelPass(PassRegistry &);
-void initializeSBFIRPeepholePass(PassRegistry &);
 void initializeSBFMIPeepholePass(PassRegistry&);
 void initializeSBFMIPeepholeTruncElimPass(PassRegistry &);
 void initializeSBFMIPreEmitCheckingPass(PassRegistry&);
 void initializeSBFMIPreEmitPeepholePass(PassRegistry &);
 void initializeSBFMISimplifyPatchablePass(PassRegistry &);
-void initializeSBFPreserveDITypePass(PassRegistry &);
 
 class SBFAbstractMemberAccessPass
     : public PassInfoMixin<SBFAbstractMemberAccessPass> {

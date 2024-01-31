@@ -1,4 +1,4 @@
-; RUN: opt --sbf-ir-peephole -mtriple=sbf -S %s | FileCheck %s
+; RUN: opt -passes=sbf-ir-peephole -mtriple=sbf -S %s | FileCheck %s
 ; Source:
 ;   #define AA 40
 ;   struct t {
