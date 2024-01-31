@@ -41,14 +41,6 @@ static cl::opt<bool> DisableSBFavoidSpeculation(
 
 namespace {
 
-class SBFAdjustOpt final : public ModulePass {
-public:
-  static char ID;
-
-  SBFAdjustOpt() : ModulePass(ID) {}
-  bool runOnModule(Module &M) override;
-};
-
 class SBFAdjustOptImpl {
   struct PassThroughInfo {
     Instruction *Input;
@@ -77,14 +69,6 @@ private:
 };
 
 } // End anonymous namespace
-
-char SBFAdjustOpt::ID = 0;
-INITIALIZE_PASS(SBFAdjustOpt, "sbf-adjust-opt", "SBF Adjust Optimization",
-                false, false)
-
-ModulePass *llvm::createSBFAdjustOpt() { return new SBFAdjustOpt(); }
-
-bool SBFAdjustOpt::runOnModule(Module &M) { return SBFAdjustOptImpl(&M).run(); }
 
 bool SBFAdjustOptImpl::run() {
   bool Changed = adjustICmpToBuiltin();

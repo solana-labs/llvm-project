@@ -38,7 +38,6 @@ class SBFSubtarget : public SBFGenSubtargetInfo {
 private:
   void initializeEnvironment(const Triple &TT);
   void initSubtargetFeatures(StringRef CPU, StringRef FS);
-  bool probeJmpExt();
 
 protected:
   // unused

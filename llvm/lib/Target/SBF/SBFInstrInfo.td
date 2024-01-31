@@ -36,7 +36,7 @@ def SDT_SBFMEMCPY       : SDTypeProfile<0, 4, [SDTCisVT<0, i64>,
 def SBFcall         : SDNode<"SBFISD::CALL", SDT_SBFCall,
                              [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
                               SDNPVariadic]>;
-def SBFretflag      : SDNode<"SBFISD::RET_FLAG", SDTNone,
+def SBFretglue     : SDNode<"SBFISD::RET_GLUE", SDTNone,
                              [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 def SBFcallseq_start: SDNode<"ISD::CALLSEQ_START", SDT_SBFCallSeqStart,
                              [SDNPHasChain, SDNPOutGlue]>;
@@ -609,7 +609,7 @@ class RET<string OpcodeStr>
                    (outs),
                    (ins),
                    !strconcat(OpcodeStr, ""),
-                   [(SBFretflag)]> {
+                   [(SBFretglue)]> {
   let Inst{31-0} = 0;
   let SBFClass = SBF_JMP;
 }

@@ -46,8 +46,6 @@ class SBFAsmParser : public MCTargetAsmParser {
   bool ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
                         SMLoc NameLoc, OperandVector &Operands) override;
 
-  bool ParseDirective(AsmToken DirectiveID) override;
-
 #define GET_ASSEMBLER_HEADER
 #include "SBFGenAsmMatcher.inc"
 
@@ -456,8 +454,6 @@ bool SBFAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
   getParser().Lex(); // Consume the EndOfStatement.
   return false;
 }
-
-bool SBFAsmParser::ParseDirective(AsmToken DirectiveID) { return true; }
 
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeSBFAsmParser() {
   RegisterMCAsmParser<SBFAsmParser> XX(getTheSBFXTarget());

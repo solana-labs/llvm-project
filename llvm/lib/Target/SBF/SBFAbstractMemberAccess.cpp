@@ -188,33 +188,7 @@ private:
 
 std::map<std::string, GlobalVariable *> SBFAbstractMemberAccess::GEPGlobals;
 
-class SBFAbstractMemberAccessLegacyPass final : public FunctionPass {
-  SBFTargetMachine *TM;
-
-  bool runOnFunction(Function &F) override {
-    return SBFAbstractMemberAccess(TM).run(F);
-  }
-
-public:
-  static char ID;
-
-  // Add optional SBFTargetMachine parameter so that SBF backend can add the
-  // phase with target machine to find out the endianness. The default
-  // constructor (without parameters) is used by the pass manager for managing
-  // purposes.
-  SBFAbstractMemberAccessLegacyPass(SBFTargetMachine *TM = nullptr)
-      : FunctionPass(ID), TM(TM) {}
-};
-
 } // End anonymous namespace
-
-char SBFAbstractMemberAccessLegacyPass::ID = 0;
-INITIALIZE_PASS(SBFAbstractMemberAccessLegacyPass, DEBUG_TYPE,
-                "SBF Abstract Member Access", false, false)
-
-FunctionPass *llvm::createSBFAbstractMemberAccess(SBFTargetMachine *TM) {
-  return new SBFAbstractMemberAccessLegacyPass(TM);
-}
 
 bool SBFAbstractMemberAccess::run(Function &F) {
   LLVM_DEBUG(dbgs() << "********** Abstract Member Accesses **********\n");

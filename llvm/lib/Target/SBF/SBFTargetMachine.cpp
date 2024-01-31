@@ -18,7 +18,6 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
-#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Passes/PassBuilder.h"
@@ -39,10 +38,6 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeSBFTarget() {
   RegisterTargetMachine<SBFTargetMachine> XX(getTheSBFXTarget());
 
   PassRegistry &PR = *PassRegistry::getPassRegistry();
-  initializeSBFAbstractMemberAccessLegacyPassPass(PR);
-  initializeSBFPreserveDITypePass(PR);
-  initializeSBFIRPeepholePass(PR);
-  initializeSBFAdjustOptPass(PR);
   initializeSBFCheckAndAdjustIRPass(PR);
   initializeSBFMIPeepholePass(PR);
   initializeSBFMIPeepholeTruncElimPass(PR);
@@ -102,6 +97,15 @@ TargetPassConfig *SBFTargetMachine::createPassConfig(PassManagerBase &PM) {
 }
 
 void SBFTargetMachine::registerPassBuilderCallbacks(PassBuilder &PB) {
+  PB.registerPipelineParsingCallback(
+      [](StringRef PassName, FunctionPassManager &FPM,
+         ArrayRef<PassBuilder::PipelineElement>) {
+        if (PassName == "sbf-ir-peephole") {
+          FPM.addPass(SBFIRPeepholePass());
+          return true;
+        }
+        return false;
+      });
   PB.registerPipelineStartEPCallback(
       [=](ModulePassManager &MPM, OptimizationLevel) {
         FunctionPassManager FPM;

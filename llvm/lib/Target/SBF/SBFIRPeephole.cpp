@@ -94,22 +94,7 @@ static bool SBFIRPeepholeImpl(Function &F) {
 
   return Changed;
 }
-
-class SBFIRPeephole final : public FunctionPass {
-  bool runOnFunction(Function &F) override;
-
-public:
-  static char ID;
-  SBFIRPeephole() : FunctionPass(ID) {}
-};
 } // End anonymous namespace
-
-char SBFIRPeephole::ID = 0;
-INITIALIZE_PASS(SBFIRPeephole, DEBUG_TYPE, "SBF IR Peephole", false, false)
-
-FunctionPass *llvm::createSBFIRPeephole() { return new SBFIRPeephole(); }
-
-bool SBFIRPeephole::runOnFunction(Function &F) { return SBFIRPeepholeImpl(F); }
 
 PreservedAnalyses SBFIRPeepholePass::run(Function &F,
                                          FunctionAnalysisManager &AM) {
