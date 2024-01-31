@@ -1,4 +1,3 @@
-# XFAIL: *
 # RUN: not llvm-mc -triple riscv32 < %s 2>&1 \
 # RUN:   | FileCheck --implicit-check-not=error: %s
 

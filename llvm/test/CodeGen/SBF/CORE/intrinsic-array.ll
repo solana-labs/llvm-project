@@ -1,8 +1,6 @@
 ; RUN: opt -O2 %s | llvm-dis > %t1
 ; RUN: llc -sbf-enable-btf-emission -filetype=asm -o - %t1 | FileCheck %s
 ; RUN: llc -sbf-enable-btf-emission -mattr=+alu32 -filetype=asm -o - %t1 | FileCheck %s
-; RUN: llc -sbf-enable-btf-emission -filetype=asm -opaque-pointers -o - %t1 | FileCheck %s
-; RUN: llc -sbf-enable-btf-emission -mattr=+alu32 -filetype=asm -opaque-pointers -o - %t1 | FileCheck %s
 ;
 ; Source code:
 ;   #define _(x) (__builtin_preserve_access_index(x))

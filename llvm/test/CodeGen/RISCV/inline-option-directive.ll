@@ -1,4 +1,3 @@
-; XFAIL: *
 ; RUN: llc -mtriple=riscv64 < %s -o - | FileCheck --check-prefixes=CHECK-ATTRIBUTES %s
 ; RUN: llc -mtriple=riscv64 < %s -filetype=obj | llvm-readelf -h - \
 ; RUN:     | FileCheck --check-prefixes=CHECK-EFLAGS %s
