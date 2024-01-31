@@ -125,26 +125,7 @@ static bool SBFPreserveDITypeImpl(Function &F) {
   return true;
 }
 
-class SBFPreserveDIType final : public FunctionPass {
-  bool runOnFunction(Function &F) override;
-
-public:
-  static char ID;
-  SBFPreserveDIType() : FunctionPass(ID) {}
-};
 } // End anonymous namespace
-
-char SBFPreserveDIType::ID = 0;
-INITIALIZE_PASS(SBFPreserveDIType, DEBUG_TYPE, "SBF Preserve Debuginfo Type",
-                false, false)
-
-FunctionPass *llvm::createSBFPreserveDIType() {
-  return new SBFPreserveDIType();
-}
-
-bool SBFPreserveDIType::runOnFunction(Function &F) {
-  return SBFPreserveDITypeImpl(F);
-}
 
 PreservedAnalyses SBFPreserveDITypePass::run(Function &F,
                                              FunctionAnalysisManager &AM) {

@@ -588,7 +588,7 @@ SDValue SBFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       llvm_unreachable("call arg pass bug");
   }
 
-  SDValue InFlag;
+  SDValue InGlue;
 
   if (HasStackArgs) {
     SDValue FramePtr = DAG.getCopyFromReg(Chain,
@@ -634,16 +634,16 @@ SDValue SBFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     // Pass the current stack frame pointer via SBF::R5, gluing the
     // instruction to instructions passing the first 4 arguments in
     // registers below.
-    Chain = DAG.getCopyToReg(Chain, CLI.DL, SBF::R5, FramePtr, InFlag);
-    InFlag = Chain.getValue(1);
+    Chain = DAG.getCopyToReg(Chain, CLI.DL, SBF::R5, FramePtr, InGlue);
+    InGlue = Chain.getValue(1);
   }
 
   // Build a sequence of copy-to-reg nodes chained together with token chain and
-  // flag operands which copy the outgoing args into registers.  The InFlag is
+  // flag operands which copy the outgoing args into registers.  The InGlue is
   // necessary since all emitted instructions must be stuck together.
   for (auto &Reg : RegsToPass) {
-    Chain = DAG.getCopyToReg(Chain, CLI.DL, Reg.first, Reg.second, InFlag);
-    InFlag = Chain.getValue(1);
+    Chain = DAG.getCopyToReg(Chain, CLI.DL, Reg.first, Reg.second, InGlue);
+    InGlue = Chain.getValue(1);
   }
 
   // If the callee is a GlobalAddress node (quite common, every direct call is)
@@ -677,19 +677,21 @@ SDValue SBFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     Ops.push_back(DAG.getRegister(SBF::R5, MVT::i64));
   }
 
-  if (InFlag.getNode())
-    Ops.push_back(InFlag);
+  if (InGlue.getNode())
+    Ops.push_back(InGlue);
 
   Chain = DAG.getNode(SBFISD::CALL, CLI.DL, NodeTys, Ops);
-  InFlag = Chain.getValue(1);
+  InGlue = Chain.getValue(1);
+
+  DAG.addNoMergeSiteInfo(Chain.getNode(), CLI.NoMerge);
 
   // Create the CALLSEQ_END node.
-  Chain = DAG.getCALLSEQ_END(Chain, NumBytes, 0, InFlag, CLI.DL);
-  InFlag = Chain.getValue(1);
+  Chain = DAG.getCALLSEQ_END(Chain, NumBytes, 0, InGlue, CLI.DL);
+  InGlue = Chain.getValue(1);
 
   // Handle result values, copying them out of physregs into vregs that we
   // return.
-  return LowerCallResult(Chain, InFlag, CallConv, IsVarArg, Ins, CLI.DL, DAG,
+  return LowerCallResult(Chain, InGlue, CallConv, IsVarArg, Ins, CLI.DL, DAG,
                          InVals);
 }
 
@@ -715,7 +717,7 @@ SBFTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
                                const SmallVectorImpl<ISD::OutputArg> &Outs,
                                const SmallVectorImpl<SDValue> &OutVals,
                                const SDLoc &DL, SelectionDAG &DAG) const {
-  unsigned Opc = SBFISD::RET_FLAG;
+  unsigned Opc = SBFISD::RET_GLUE;
 
   // CCValAssign - represent the assignment of the return value to a location
   SmallVector<CCValAssign, 16> RVLocs;
@@ -763,7 +765,7 @@ SBFTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
 }
 
 SDValue SBFTargetLowering::LowerCallResult(
-    SDValue Chain, SDValue InFlag, CallingConv::ID CallConv, bool IsVarArg,
+    SDValue Chain, SDValue InGlue, CallingConv::ID CallConv, bool IsVarArg,
     const SmallVectorImpl<ISD::InputArg> &Ins, const SDLoc &DL,
     SelectionDAG &DAG, SmallVectorImpl<SDValue> &InVals) const {
 
@@ -781,7 +783,7 @@ SDValue SBFTargetLowering::LowerCallResult(
     fail(DL, DAG, "only small returns supported");
     for (unsigned i = 0, e = Ins.size(); i != e; ++i)
       InVals.push_back(DAG.getConstant(0, DL, Ins[i].VT));
-    return DAG.getCopyFromReg(Chain, DL, 1, Ins[0].VT, InFlag).getValue(1);
+    return DAG.getCopyFromReg(Chain, DL, 1, Ins[0].VT, InGlue).getValue(1);
   }
 
   CCInfo.AnalyzeCallResult(Ins, getHasAlu32() ? RetCC_SBF32 : RetCC_SBF64);
@@ -789,8 +791,8 @@ SDValue SBFTargetLowering::LowerCallResult(
   // Copy all of the result registers out of their specified physreg.
   for (auto &Val : RVLocs) {
     Chain = DAG.getCopyFromReg(Chain, DL, Val.getLocReg(),
-                               Val.getValVT(), InFlag).getValue(1);
-    InFlag = Chain.getValue(2);
+                               Val.getValVT(), InGlue).getValue(1);
+    InGlue = Chain.getValue(2);
     InVals.push_back(Chain.getValue(0));
   }
 
@@ -956,8 +958,8 @@ const char *SBFTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch ((SBFISD::NodeType)Opcode) {
   case SBFISD::FIRST_NUMBER:
     break;
-  case SBFISD::RET_FLAG:
-    return "SBFISD::RET_FLAG";
+  case SBFISD::RET_GLUE:
+    return "SBFISD::RET_GLUE";
   case SBFISD::CALL:
     return "SBFISD::CALL";
   case SBFISD::SELECT_CC:

@@ -98,7 +98,7 @@ bool SBFMIPeephole::isCopyFrom32Def(MachineInstr *CopyMI)
   // Most likely, this physical register is aliased to
   // function call return value or current function parameters.
   Register Reg = opnd.getReg();
-  if (!Register::isVirtualRegister(Reg))
+  if (!Reg.isVirtual())
     return false;
 
   if (MRI->getRegClass(Reg) == &SBF::GPRRegClass)

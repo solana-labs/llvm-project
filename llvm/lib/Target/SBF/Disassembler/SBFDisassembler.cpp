@@ -173,11 +173,11 @@ DecodeStatus SBFDisassembler::getInstruction(MCInst &Instr, uint64_t &Size,
   if ((InstClass == SBF_LDX || InstClass == SBF_STX) &&
       getInstSize(Insn) != SBF_DW &&
       (InstMode == SBF_MEM || InstMode == SBF_ATOMIC) &&
-      STI.getFeatureBits()[SBF::ALU32])
+      STI.hasFeature(SBF::ALU32))
     Result = decodeInstruction(DecoderTableSBFALU3264, Instr, Insn, Address,
                                this, STI);
-  else if (isMov32(Insn) && !STI.getFeatureBits()[SBF::ALU32] &&
-           STI.getFeatureBits()[SBF::FeatureDisableLddw])
+  else if (isMov32(Insn) && !STI.hasFeature(SBF::ALU32) &&
+           STI.hasFeature(SBF::FeatureDisableLddw))
     Result =
         decodeInstruction(DecoderTableSBFv264, Instr, Insn, Address, this, STI);
   else
@@ -206,7 +206,7 @@ DecodeStatus SBFDisassembler::getInstruction(MCInst &Instr, uint64_t &Size,
     break;
   }
   case SBF::JALX: {
-    if (STI.getFeatureBits()[SBF::FeatureCallxRegSrc]) {
+    if (STI.hasFeature(SBF::FeatureCallxRegSrc)) {
       Result = decodeInstruction(DecoderTableSBFv264, Instr, Insn, Address,
                                  this, STI);
     }
