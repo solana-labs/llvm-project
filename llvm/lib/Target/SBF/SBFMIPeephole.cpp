@@ -20,12 +20,14 @@
 //    instructions generated due to bad RA on subregister.
 //===----------------------------------------------------------------------===//
 
+#include "MCTargetDesc/SBFMCTargetDesc.h"
 #include "SBF.h"
 #include "SBFInstrInfo.h"
 #include "SBFTargetMachine.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/Support/Debug.h"
 #include <set>
 
@@ -65,7 +67,9 @@ public:
 
   // Main entry point for this pass.
   bool runOnMachineFunction(MachineFunction &MF) override {
-    if (skipFunction(MF.getFunction()))
+    const TargetSubtargetInfo &Target = MF.getSubtarget();
+    if (skipFunction(MF.getFunction()) ||
+        Target.getFeatureBits()[SBF::FeatureExplicitSignExt])
       return false;
 
     initialize(MF);
