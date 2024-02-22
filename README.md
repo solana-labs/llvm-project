@@ -1,6 +1,6 @@
 # The LLVM Compiler Infrastructure modified to support Berkley Packet Filter modules written in Rust
 
-This fork of LLVM is used by [this fork of Rust](https://github.com/solana-labs/rust)
+This fork of LLVM is used by [this fork of Rust](https://github.com/anza-xyz/rust)
 
 ---
 
