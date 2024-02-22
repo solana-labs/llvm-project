@@ -65,7 +65,7 @@ bool SBFAsmPrinter::doInitialization(Module &M) {
 
   // Only emit BTF when debuginfo available.
   // Unsupported for Solana:
-  // https://github.com/solana-labs/llvm-project/issues/37
+  // https://github.com/anza-xyz/llvm-project/issues/37
   if (MAI->doesSupportDebugInformation() && !M.debug_compile_units().empty() &&
       SBFEnableBTFEmission) {
     BTF = new BTFX::BTFDebug(this);
