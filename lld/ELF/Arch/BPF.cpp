@@ -64,7 +64,7 @@ RelType BPF::getDynRel(RelType type) const {
         // the symbol isn't preemptible, we emit a _RELATIVE relocation instead
         // and skip emitting the symbol.
         //
-        // See https://github.com/solana-labs/llvm-project/blob/6b6aef5dbacef31a3c7b3a54f7f1ba54cafc7077/lld/ELF/Relocations.cpp#L1179
+        // See https://github.com/anza-xyz/llvm-project/blob/6b6aef5dbacef31a3c7b3a54f7f1ba54cafc7077/lld/ELF/Relocations.cpp#L1179
         return R_BPF_64_64;
     default:
         return type;

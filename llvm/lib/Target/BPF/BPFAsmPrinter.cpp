@@ -60,7 +60,7 @@ bool BPFAsmPrinter::doInitialization(Module &M) {
   AsmPrinter::doInitialization(M);
 
   // Only emit BTF when debuginfo available.
-  // Unsupported for Solana: https://github.com/solana-labs/llvm-project/issues/37
+  // Unsupported for Solana: https://github.com/anza-xyz/llvm-project/issues/37
   if (MAI->doesSupportDebugInformation() && !M.debug_compile_units().empty() &&
       !TM.getMCSubtargetInfo()->hasFeature(BPF::FeatureSolana) && TM.getTargetTriple().getArch() != Triple::sbf) {
     BTF = new BTFDebug(this);
