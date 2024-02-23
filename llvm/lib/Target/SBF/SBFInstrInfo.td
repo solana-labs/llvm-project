@@ -324,6 +324,7 @@ let Constraints = "$dst = $src2" in {
     let Predicates = [SBFNoPqrInstr] in {
         defm MUL : ALU<SBF_MUL, "mul", mul>;
         defm DIV : ALU<SBF_DIV, "div", udiv>;
+        defm MOD : ALU<SBF_MOD, "mod", urem>;
     }
 
     let Predicates = [SBFPqrInstr] in {

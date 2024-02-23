@@ -123,7 +123,6 @@ SBFTargetLowering::SBFTargetLowering(const TargetMachine &TM,
     if (Subtarget->isSolana() && !STI.getHasPqrClass()) {
       setOperationAction(ISD::SDIV, VT, Expand);
       setOperationAction(ISD::SREM, VT, Expand);
-      setOperationAction(ISD::UREM, VT, Expand);
       setOperationAction(ISD::MULHU, VT, Expand);
       setOperationAction(ISD::MULHS, VT, Expand);
     }
