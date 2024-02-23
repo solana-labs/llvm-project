@@ -16,15 +16,13 @@ entry:
 ; CHECK-v2: lmul64 r{{[0-9]+}}, r2
 ; CHECK-V2: lmul64 r{{[0-9]+}}, 7
 
+; CHECK-v1: mod64 r{{[0-9]+}}, r{{[0-9]+}}
 ; CHECK-v1: div64 r{{[0-9]+}}, r{{[0-9]+}}
-; CHECK-v1: mul64 r{{[0-9]+}}, r{{[0-9]+}}
-; CHECK-v1: sub64 r{{[0-9]+}}, r{{[0-9]+}}
 ; CHECK-v1: add64 r{{[0-9]+}}, r{{[0-9]+}}
-; CHECK-v1: div64 r{{[0-9]+}}, 17
-; CHECK-v1: mul64 r{{[0-9]+}}, 17
 ; CHECK-v1: mov64 r{{[0-9]+}}, r{{[0-9]+}}
-; CHECK-v1: sub64 r{{[0-9]+}}, r{{[0-9]+}}
+; CHECK-v1: mod64 r{{[0-9]+}}, 17
 ; CHECK-v1: div64 r{{[0-9]+}}, 7
+; CHECK-v1: add64 r{{[0-9]+}}, r{{[0-9]+}}
 ; CHECK-v1: mul64 r{{[0-9]+}}, r{{[0-9]+}}
 ; CHECK-v1: mul64 r{{[0-9]+}}, 7
 
@@ -79,14 +77,11 @@ entry:
 ; CHECK-v2: lmul32 w{{[0-9]+}}, w{{[0-9]+}}
 ; CHECK-v2: lmul32 w{{[0-9]+}}, 7
 
+; CHECK-v1: mod32 w{{[0-9]+}}, w{{[0-9]+}}
 ; CHECK-v1: div32 w{{[0-9]+}}, w{{[0-9]+}}
-; CHECK-v1: mul32 w{{[0-9]+}}, w{{[0-9]+}}
-; CHECK-v1: sub32 w{{[0-9]+}}, w{{[0-9]+}}
 ; CHECK-v1: add32 w{{[0-9]+}}, w{{[0-9]+}}
-; CHECK-v1: div32 w{{[0-9]+}}, 17
-; CHECK-v1: mul32 w{{[0-9]+}}, 17
 ; CHECK-v1: mov32 w{{[0-9]+}}, w{{[0-9]+}}
-; CHECK-v1: sub32 w{{[0-9]+}}, w{{[0-9]+}}
+; CHECK-v1: mod32 w{{[0-9]+}}, 17
 ; CHECK-v1: div32 w{{[0-9]+}}, 7
 ; CHECK-v1: add32 w{{[0-9]+}}, w{{[0-9]+}}
 ; CHECK-v1: mul32 w{{[0-9]+}}, w{{[0-9]+}}
