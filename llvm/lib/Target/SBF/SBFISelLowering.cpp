@@ -78,7 +78,7 @@ SBFTargetLowering::SBFTargetLowering(const TargetMachine &TM,
 
   setOperationAction(ISD::INTRINSIC_W_CHAIN, MVT::Other, Custom);
 
-  for (auto VT : {MVT::i8, MVT::i16, MVT::i32, MVT::i32, MVT::i64}) {
+  for (auto VT : {MVT::i8, MVT::i16, MVT::i32, MVT::i64}) {
     if (Subtarget->isSolana()) {
       // Implement custom lowering for all atomic operations
       setOperationAction(ISD::ATOMIC_SWAP, VT, Custom);

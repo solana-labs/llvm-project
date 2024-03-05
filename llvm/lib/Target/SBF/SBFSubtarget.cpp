@@ -50,13 +50,6 @@ void SBFSubtarget::initializeEnvironment(const Triple &TT) {
 }
 
 void SBFSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
-  // TODO: jle: This invokes an x86 linux kernel call to probe the eBPF ISA
-  // revision in use. This doesn't seem to make much sense for SBF where we
-  // execute on a VM inside of the Solana runtime, not the VM in the linux
-  // kernel.
-  if (CPU == "probe")
-    CPU = sys::detail::getHostCPUNameForBPF();
-
   ParseSubtargetFeatures(CPU, /*TuneCPU*/ CPU, FS);
 
   if (CPU == "v2") {

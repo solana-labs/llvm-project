@@ -53,7 +53,6 @@ def : Proc<"generic", []>;
 def : Proc<"v1", []>;
 def : Proc<"v2", []>;
 def : Proc<"v3", [ALU32]>;
-def : Proc<"probe", []>;
 def : Proc<"sbfv2", [FeatureSolana, FeatureDynamicFrames, FeatureRelocAbs64, FeatureStaticSyscalls,
                         FeatureDisableNeg, FeatureReverseSubImm, FeatureDisableLddw, FeatureCallxRegSrc,
                           FeaturePqrInstr]>;
