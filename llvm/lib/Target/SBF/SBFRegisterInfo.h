@@ -14,6 +14,7 @@
 #define LLVM_LIB_TARGET_SBF_SBFREGISTERINFO_H
 
 #include "llvm/CodeGen/TargetRegisterInfo.h"
+#include <optional>
 
 #define GET_REGINFO_HEADER
 #include "SBFGenRegisterInfo.inc"
@@ -34,6 +35,9 @@ struct SBFRegisterInfo : public SBFGenRegisterInfo {
                            RegScavenger *RS = nullptr) const override;
 
   Register getFrameRegister(const MachineFunction &MF) const override;
+
+  int resolveInternalFrameIndex(const MachineFunction &MF, int FI,
+                                std::optional<int64_t> Imm) const;
 };
 }
 

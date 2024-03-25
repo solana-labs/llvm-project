@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "SBFFunctionInfo.h"
 #include "SBFRegisterInfo.h"
-#include "SBF.h"
 #include "SBFSubtarget.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -102,7 +102,7 @@ bool SBFRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
 
   if (MI.getOpcode() == SBF::MOV_rr) {
-    int Offset = MF.getFrameInfo().getObjectOffset(FrameIndex);
+    int Offset = resolveInternalFrameIndex(MF, FrameIndex, std::nullopt);
 
     if (!MF.getSubtarget<SBFSubtarget>().getHasDynamicFrames()) {
       WarnSize(Offset, MF, DL);
@@ -115,8 +115,9 @@ bool SBFRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     return false;
   }
 
-  int Offset = MF.getFrameInfo().getObjectOffset(FrameIndex) +
-               MI.getOperand(i + 1).getImm();
+  int Offset =
+      resolveInternalFrameIndex(MF, FrameIndex, MI.getOperand(i + 1).getImm());
+
 
   if (!isInt<32>(Offset))
     llvm_unreachable("bug in frame offset");
@@ -144,6 +145,22 @@ bool SBFRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     MI.getOperand(i + 1).ChangeToImmediate(Offset);
   }
   return false;
+}
+
+int SBFRegisterInfo::resolveInternalFrameIndex(
+    const llvm::MachineFunction &MF, int FI, std::optional<int64_t> Imm) const {
+  const MachineFrameInfo &MFI = MF.getFrameInfo();
+  const SBFFunctionInfo *SBFFuncInfo = MF.getInfo<SBFFunctionInfo>();
+  int Offset = MFI.getObjectOffset(FI);
+  if (MF.getSubtarget<SBFSubtarget>().getEnableNewCallConvention() &&
+      SBFFuncInfo->containsFrameIndex(FI)) {
+    uint64_t StackSize = MFI.getStackSize();
+    Offset = -static_cast<int>(StackSize) - Offset;
+  } else if (Imm.has_value()) {
+    Offset += Imm.value();
+  }
+
+  return Offset;
 }
 
 Register SBFRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
