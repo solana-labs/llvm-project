@@ -42,6 +42,10 @@ public:
   }
 
   void registerPassBuilderCallbacks(PassBuilder &PB) override;
+
+  MachineFunctionInfo *
+  createMachineFunctionInfo(BumpPtrAllocator &Allocator, const Function &F,
+                            const TargetSubtargetInfo *STI) const override;
 };
 }
 

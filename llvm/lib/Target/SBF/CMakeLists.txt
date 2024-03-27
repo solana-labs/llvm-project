@@ -34,6 +34,7 @@ add_llvm_target(SBFCodeGen
   SBFMIChecking.cpp
   SBFMISimplifyPatchable.cpp
   BTFDebug.cpp
+  SBFFunctionInfo.cpp
 
   LINK_COMPONENTS
   Analysis

@@ -10,9 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "SBFTargetMachine.h"
 #include "SBF.h"
+#include "SBFTargetMachine.h"
 #include "SBFTargetTransformInfo.h"
+#include "SBFFunctionInfo.h"
 #include "MCTargetDesc/SBFMCAsmInfo.h"
 #include "TargetInfo/SBFTargetInfo.h"
 #include "llvm/CodeGen/Passes.h"
@@ -132,6 +133,13 @@ void SBFPassConfig::addIRPasses() {
 TargetTransformInfo
 SBFTargetMachine::getTargetTransformInfo(const Function &F) const {
   return TargetTransformInfo(SBFTTIImpl(this, F));
+}
+
+MachineFunctionInfo *SBFTargetMachine::createMachineFunctionInfo(
+    llvm::BumpPtrAllocator &Allocator, const llvm::Function &F,
+    const llvm::TargetSubtargetInfo *STI) const {
+  return SBFFunctionInfo::create<SBFFunctionInfo>(
+      Allocator, F, static_cast<const SBFSubtarget *>(STI));
 }
 
 // Install an instruction selector pass using
