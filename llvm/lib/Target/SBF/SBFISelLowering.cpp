@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "SBFFunctionInfo.h"
 #include "SBFRegisterInfo.h"
 #include "SBFSubtarget.h"
 #include "llvm/CodeGen/CallingConvLower.h"
@@ -413,8 +414,15 @@ SDValue SBFTargetLowering::LowerFormalArguments(
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
   if (Subtarget->isSolana() && Ins.size() > MaxArgs) {
-    // Pass args 1-4 via registers, remaining args via stack, referenced via SBF::R5
-    CCInfo.AnalyzeFormalArguments(Ins, getHasAlu32() ? CC_SBF32_X : CC_SBF64_X);
+    if (Subtarget->getEnableNewCallConvention()) {
+      // Pass args 1-5 via registers, remaining args via stack.
+      CCInfo.AnalyzeFormalArguments(Ins, getHasAlu32() ? CC_SBF32 : CC_SBF64);
+    } else {
+      // Pass args 1-4 via registers, remaining args via stack, referenced via
+      // SBF::R5
+      CCInfo.AnalyzeFormalArguments(Ins,
+                                    getHasAlu32() ? CC_SBF32_X : CC_SBF64_X);
+    }
   } else {
     // Pass all args via registers
     CCInfo.AnalyzeFormalArguments(Ins, getHasAlu32() ? CC_SBF32 : CC_SBF64);
@@ -461,20 +469,37 @@ SDValue SBFTargetLowering::LowerFormalArguments(
       EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(DAG.getDataLayout());
       EVT LocVT = VA.getLocVT();
 
-      unsigned Offset;
-      if (Subtarget->getHasDynamicFrames()) {
-        // In SBFv2, the arguments are stored on the start of the frame.
-        Offset = VA.getLocMemOffset() + PtrVT.getFixedSizeInBits() / 8;
+      SDValue SDV;
+      if (Subtarget->getEnableNewCallConvention()) {
+        // In the new convention, arguments are in at the start
+        // of the callee frame
+        uint64_t Size = PtrVT.getFixedSizeInBits() / 8;
+        int64_t Offset = -static_cast<int64_t>(VA.getLocMemOffset() + Size);
+        int FrameIndex =
+            MF.getFrameInfo().CreateFixedObject(Size, Offset, false);
+        SDValue DstAddr = DAG.getFrameIndex(FrameIndex, PtrVT);
+        MachinePointerInfo DstInfo =
+            MachinePointerInfo::getFixedStack(MF, FrameIndex, Offset);
+        SDV = DAG.getLoad(LocVT, DL, Chain, DstAddr, DstInfo);
       } else {
-        Offset = SBFRegisterInfo::FrameLength - VA.getLocMemOffset();
+        unsigned Offset;
+        if (Subtarget->getHasDynamicFrames()) {
+          // In the old convention, the arguments are stored on
+          // the start of caller the frame.
+          Offset = VA.getLocMemOffset() + PtrVT.getFixedSizeInBits() / 8;
+        } else {
+          Offset = SBFRegisterInfo::FrameLength - VA.getLocMemOffset();
+        }
+
+        // Arguments relative to SBF::R5
+        unsigned reg = MF.addLiveIn(SBF::R5, &SBF::GPRRegClass);
+        SDValue Const = DAG.getConstant(Offset, DL, MVT::i64);
+        SDV = DAG.getCopyFromReg(Chain, DL, reg,
+                                 getPointerTy(MF.getDataLayout()));
+        SDV = DAG.getNode(ISD::SUB, DL, PtrVT, SDV, Const);
+        SDV = DAG.getLoad(LocVT, DL, Chain, SDV, MachinePointerInfo());
       }
 
-      // Arguments relative to SBF::R5
-      unsigned reg = MF.addLiveIn(SBF::R5, &SBF::GPRRegClass);
-      SDValue Const = DAG.getConstant(Offset, DL, MVT::i64);
-      SDValue SDV = DAG.getCopyFromReg(Chain, DL, reg, getPointerTy(MF.getDataLayout()));
-      SDV = DAG.getNode(ISD::SUB, DL, PtrVT, SDV, Const);
-      SDV = DAG.getLoad(LocVT, DL, Chain, SDV, MachinePointerInfo());
       InVals.push_back(SDV);
     } else {
       fail(DL, DAG, "defined with too many args");
@@ -524,8 +549,14 @@ SDValue SBFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
   if (Subtarget->isSolana() && Outs.size() > MaxArgs) {
-    // Pass args 1-4 via registers, remaining args via stack, referenced via SBF::R5
-    CCInfo.AnalyzeCallOperands(Outs, getHasAlu32() ? CC_SBF32_X : CC_SBF64_X);
+    if (Subtarget->getEnableNewCallConvention()) {
+      // Pass args 1-5 via registers, remaining args via stack
+      CCInfo.AnalyzeCallOperands(Outs, getHasAlu32() ? CC_SBF32 : CC_SBF64);
+    } else {
+      // Pass args 1-4 via registers, remaining args via stack, referenced via
+      // SBF::R5
+      CCInfo.AnalyzeCallOperands(Outs, getHasAlu32() ? CC_SBF32_X : CC_SBF64_X);
+    }
   } else {
     // Pass all args via registers
     CCInfo.AnalyzeCallOperands(Outs, getHasAlu32() ? CC_SBF32 : CC_SBF64);
@@ -595,6 +626,7 @@ SDValue SBFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                           Subtarget->getRegisterInfo()->getFrameRegister(MF),
                                           getPointerTy(MF.getDataLayout()));
 
+    SBFFunctionInfo * SBFFuncInfo = MF.getInfo<SBFFunctionInfo>();
     // Stack arguments have to be walked in reverse order by inserting
     // chained stores, this ensures their order is not changed by the scheduler
     // and that the push instruction sequence generated is correct, otherwise they
@@ -610,13 +642,19 @@ SDValue SBFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       SDValue DstAddr;
       MachinePointerInfo DstInfo;
       if (Subtarget->getHasDynamicFrames()) {
-        // When dynamic frames are enabled, the frame size is only calculated
-        // after lowering instructions, so we must place arguments at the start
-        // of the frame.
-        int64_t Offset = -static_cast<int64_t>(VA.getLocMemOffset() +
-                                               PtrVT.getFixedSizeInBits() / 8);
+        // In the new call convention, arguments are stored in the callee frame
+        // The positive offset signals that the variable does not occupy space
+        // in the caller frame.
+        int64_t Offset = static_cast<int64_t>(VA.getLocMemOffset() +
+                                              PtrVT.getFixedSizeInBits() / 8);
+        if (!Subtarget->getEnableNewCallConvention())
+          // In the old call convention, we place argument at the start of the
+          // frame in a fixed stack offset.
+          Offset = -Offset;
+
         int FrameIndex = MF.getFrameInfo().CreateFixedObject(
             VA.getLocVT().getFixedSizeInBits() / 8, Offset, false);
+        SBFFuncInfo->storeFrameIndexArgument(FrameIndex);
         DstAddr = DAG.getFrameIndex(FrameIndex, PtrVT);
         DstInfo = MachinePointerInfo::getFixedStack(MF, FrameIndex, Offset);
       } else {
