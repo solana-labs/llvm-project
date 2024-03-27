@@ -1,4 +1,4 @@
-; RUN: llc -O2 -march=sbf -mcpu=sbfv2 < %s | FileCheck %s
+; RUN: llc -O2 -march=sbf -mattr=+dynamic-frames < %s | FileCheck %s
 
 ; Function Attrs: nounwind uwtable
 define i32 @foo(i32 %a, i32 %b, i32 %c) #0 {
