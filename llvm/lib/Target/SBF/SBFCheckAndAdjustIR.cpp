@@ -20,14 +20,10 @@
 #include "SBFTargetMachine.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/GlobalVariable.h"
-#include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
-#include "llvm/IR/Type.h"
-#include "llvm/IR/User.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Pass.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 #define DEBUG_TYPE "sbf-check-and-opt-ir"
 
@@ -46,7 +42,6 @@ private:
   void checkIR(Module &M);
   bool adjustIR(Module &M);
   bool removePassThroughBuiltin(Module &M);
-  bool removeCompareBuiltin(Module &M);
 };
 } // End anonymous namespace
 
@@ -121,50 +116,8 @@ bool SBFCheckAndAdjustIR::removePassThroughBuiltin(Module &M) {
   return Changed;
 }
 
-bool SBFCheckAndAdjustIR::removeCompareBuiltin(Module &M) {
-  // Remove __builtin_bpf_compare()'s which are used to prevent
-  // certain IR optimizations. Now major IR optimizations are done,
-  // remove them.
-  bool Changed = false;
-  CallInst *ToBeDeleted = nullptr;
-  for (Function &F : M)
-    for (auto &BB : F)
-      for (auto &I : BB) {
-        if (ToBeDeleted) {
-          ToBeDeleted->eraseFromParent();
-          ToBeDeleted = nullptr;
-        }
-
-        auto *Call = dyn_cast<CallInst>(&I);
-        if (!Call)
-          continue;
-        auto *GV = dyn_cast<GlobalValue>(Call->getCalledOperand());
-        if (!GV)
-          continue;
-        if (!GV->getName().startswith("llvm.bpf.compare"))
-          continue;
-
-        Changed = true;
-        Value *Arg0 = Call->getArgOperand(0);
-        Value *Arg1 = Call->getArgOperand(1);
-        Value *Arg2 = Call->getArgOperand(2);
-
-        auto OpVal = cast<ConstantInt>(Arg0)->getValue().getZExtValue();
-        CmpInst::Predicate Opcode = (CmpInst::Predicate)OpVal;
-
-        auto *ICmp = new ICmpInst(Opcode, Arg1, Arg2);
-        ICmp->insertBefore(Call);
-
-        Call->replaceAllUsesWith(ICmp);
-        ToBeDeleted = Call;
-      }
-  return Changed;
-}
-
 bool SBFCheckAndAdjustIR::adjustIR(Module &M) {
-  bool Changed = removePassThroughBuiltin(M);
-  Changed = removeCompareBuiltin(M) || Changed;
-  return Changed;
+  return removePassThroughBuiltin(M);
 }
 
 bool SBFCheckAndAdjustIR::runOnModule(Module &M) {
