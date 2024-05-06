@@ -23,7 +23,6 @@
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/DiagnosticPrinter.h"
-#include "llvm/IR/IntrinsicsBPF.h" // TODO: jle.
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
@@ -367,24 +366,9 @@ SDValue SBFTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::ATOMIC_LOAD_UMIN:
   case ISD::ATOMIC_LOAD_XOR:
     return LowerATOMICRMW(Op, DAG);
-  case ISD::INTRINSIC_W_CHAIN: {
-    unsigned IntNo = cast<ConstantSDNode>(Op->getOperand(1))->getZExtValue();
-    switch (IntNo) {
-    case Intrinsic::bpf_load_byte:
-    case Intrinsic::bpf_load_half:
-    case Intrinsic::bpf_load_word:
-      if (Subtarget->isSolana()) {
-        report_fatal_error(
-            "llvm.bpf.load.* intrinsics are not supported in SBF", false);
-      }
-      break;
-    default:
-      break;
-    }
-
+  case ISD::INTRINSIC_W_CHAIN:
     // continue the expansion as defined with tablegen
     return SDValue();
-  }
   case ISD::DYNAMIC_STACKALLOC:
     report_fatal_error("Unsupported dynamic stack allocation");
   default:
