@@ -24,7 +24,6 @@
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/IntrinsicInst.h"
-#include "llvm/IR/IntrinsicsBPF.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -77,7 +76,6 @@ private:
 
   // Node preprocessing cases
   void PreprocessLoad(SDNode *Node, SelectionDAG::allnodes_iterator &I);
-  void PreprocessTrunc(SDNode *Node, SelectionDAG::allnodes_iterator &I);
 
   // Find constants from a constant structure
   typedef std::vector<unsigned char> val_vec_type;
@@ -203,26 +201,6 @@ void SBFDAGToDAGISel::Select(SDNode *Node) {
       errs() << "Unsupport signed division for DAG: ";
       Node->print(errs(), CurDAG);
       errs() << "\nPlease convert to unsigned div/mod.\n";
-    }
-    break;
-  }
-  case ISD::INTRINSIC_W_CHAIN: {
-    unsigned IntNo = cast<ConstantSDNode>(Node->getOperand(1))->getZExtValue();
-    switch (IntNo) {
-    case Intrinsic::bpf_load_byte:
-    case Intrinsic::bpf_load_half:
-    case Intrinsic::bpf_load_word: {
-      SDLoc DL(Node);
-      SDValue Chain = Node->getOperand(0);
-      SDValue N1 = Node->getOperand(1);
-      SDValue Skb = Node->getOperand(2);
-      SDValue N3 = Node->getOperand(3);
-
-      SDValue R6Reg = CurDAG->getRegister(SBF::R6, MVT::i64);
-      Chain = CurDAG->getCopyToReg(Chain, DL, R6Reg, Skb, SDValue());
-      Node = CurDAG->UpdateNodeOperands(Node, Chain, N1, R6Reg, N3);
-      break;
-    }
     }
     break;
   }
@@ -377,8 +355,6 @@ void SBFDAGToDAGISel::PreprocessISelDAG() {
     unsigned Opcode = Node->getOpcode();
     if (Opcode == ISD::LOAD)
       PreprocessLoad(Node, I);
-    else if (Opcode == ISD::AND)
-      PreprocessTrunc(Node, I);
   }
 }
 
@@ -506,39 +482,6 @@ bool SBFDAGToDAGISel::fillConstantStruct(const DataLayout &DL,
       return false;
   }
   return true;
-}
-
-void SBFDAGToDAGISel::PreprocessTrunc(SDNode *Node,
-                                      SelectionDAG::allnodes_iterator &I) {
-  ConstantSDNode *MaskN = dyn_cast<ConstantSDNode>(Node->getOperand(1));
-  if (!MaskN)
-    return;
-
-  // The Reg operand should be a virtual register, which is defined
-  // outside the current basic block. DAG combiner has done a pretty
-  // good job in removing truncating inside a single basic block except
-  // when the Reg operand comes from bpf_load_[byte | half | word] for
-  // which the generic optimizer doesn't understand their results are
-  // zero extended.
-  SDValue BaseV = Node->getOperand(0);
-  if (BaseV.getOpcode() != ISD::INTRINSIC_W_CHAIN)
-    return;
-
-  unsigned IntNo = cast<ConstantSDNode>(BaseV->getOperand(1))->getZExtValue();
-  uint64_t MaskV = MaskN->getZExtValue();
-
-  if (!((IntNo == Intrinsic::bpf_load_byte && MaskV == 0xFF) ||
-        (IntNo == Intrinsic::bpf_load_half && MaskV == 0xFFFF) ||
-        (IntNo == Intrinsic::bpf_load_word && MaskV == 0xFFFFFFFF)))
-    return;
-
-  LLVM_DEBUG(dbgs() << "Remove the redundant AND operation in: ";
-             Node->dump(); dbgs() << '\n');
-
-  I--;
-  CurDAG->ReplaceAllUsesWith(SDValue(Node, 0), BaseV);
-  I++;
-  CurDAG->DeleteNode(Node);
 }
 
 FunctionPass *llvm::createSBFISelDag(SBFTargetMachine &TM) {
