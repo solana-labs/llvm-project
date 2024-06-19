@@ -57,8 +57,6 @@ private:
   Module *M;
   SmallVector<PassThroughInfo, 16> PassThroughs;
 
-  void adjustBasicBlock(BasicBlock &BB);
-  bool serializeICMPCrossBB(BasicBlock &BB);
   void adjustInst(Instruction &I);
   bool serializeICMPInBB(Instruction &I);
   bool avoidSpeculation(Instruction &I);
@@ -70,7 +68,6 @@ private:
 bool SBFAdjustOptImpl::run() {
   for (Function &F : *M)
     for (auto &BB : F) {
-      adjustBasicBlock(BB);
       for (auto &I : BB)
         adjustInst(I);
     }
@@ -119,86 +116,6 @@ bool SBFAdjustOptImpl::serializeICMPInBB(Instruction &I) {
   // an "or" instruction.
   PassThroughInfo Info(Icmp1, &I, 0);
   PassThroughs.push_back(Info);
-  return true;
-}
-
-// To avoid combining conditionals in the same basic block by
-// instrcombine optimization.
-bool SBFAdjustOptImpl::serializeICMPCrossBB(BasicBlock &BB) {
-  // For:
-  //   B1:
-  //     comp1 = icmp <opcode> ...;
-  //     if (comp1) goto B2 else B3;
-  //   B2:
-  //     comp2 = icmp <opcode> ...;
-  //     if (comp2) goto B4 else B5;
-  //   B4:
-  //     ...
-  // changed to:
-  //   B1:
-  //     comp1 = icmp <opcode> ...;
-  //     comp1 = __builtin_bpf_passthrough(seq_num, comp1);
-  //     if (comp1) goto B2 else B3;
-  //   B2:
-  //     comp2 = icmp <opcode> ...;
-  //     if (comp2) goto B4 else B5;
-  //   B4:
-  //     ...
-
-  // Check basic predecessors, if two of them (say B1, B2) are using
-  // icmp instructions to generate conditions and one is the predesessor
-  // of another (e.g., B1 is the predecessor of B2). Add a passthrough
-  // barrier after icmp inst of block B1.
-  BasicBlock *B2 = BB.getSinglePredecessor();
-  if (!B2)
-    return false;
-
-  BasicBlock *B1 = B2->getSinglePredecessor();
-  if (!B1)
-    return false;
-
-  Instruction *TI = B2->getTerminator();
-  auto *BI = dyn_cast<BranchInst>(TI);
-  if (!BI || !BI->isConditional())
-    return false;
-  auto *Cond = dyn_cast<ICmpInst>(BI->getCondition());
-  if (!Cond || B2->getFirstNonPHI() != Cond)
-    return false;
-  Value *B2Op0 = Cond->getOperand(0);
-  auto Cond2Op = Cond->getPredicate();
-
-  TI = B1->getTerminator();
-  BI = dyn_cast<BranchInst>(TI);
-  if (!BI || !BI->isConditional())
-    return false;
-  Cond = dyn_cast<ICmpInst>(BI->getCondition());
-  if (!Cond)
-    return false;
-  Value *B1Op0 = Cond->getOperand(0);
-  auto Cond1Op = Cond->getPredicate();
-
-  if (B1Op0 != B2Op0)
-    return false;
-
-  if (Cond1Op == ICmpInst::ICMP_SGT || Cond1Op == ICmpInst::ICMP_SGE) {
-    if (Cond2Op != ICmpInst::ICMP_SLT && Cond2Op != ICmpInst::ICMP_SLE)
-      return false;
-  } else if (Cond1Op == ICmpInst::ICMP_SLT || Cond1Op == ICmpInst::ICMP_SLE) {
-    if (Cond2Op != ICmpInst::ICMP_SGT && Cond2Op != ICmpInst::ICMP_SGE)
-      return false;
-  } else if (Cond1Op == ICmpInst::ICMP_ULT || Cond1Op == ICmpInst::ICMP_ULE) {
-    if (Cond2Op != ICmpInst::ICMP_UGT && Cond2Op != ICmpInst::ICMP_UGE)
-      return false;
-  } else if (Cond1Op == ICmpInst::ICMP_UGT || Cond1Op == ICmpInst::ICMP_UGE) {
-    if (Cond2Op != ICmpInst::ICMP_ULT && Cond2Op != ICmpInst::ICMP_ULE)
-      return false;
-  } else {
-    return false;
-  }
-
-  PassThroughInfo Info(Cond, BI, 0);
-  PassThroughs.push_back(Info);
-
   return true;
 }
 
@@ -295,11 +212,6 @@ bool SBFAdjustOptImpl::avoidSpeculation(Instruction &I) {
 
   llvm::append_range(PassThroughs, Candidates);
   return true;
-}
-
-void SBFAdjustOptImpl::adjustBasicBlock(BasicBlock &BB) {
-  if (!DisableSBFserializeICMP && serializeICMPCrossBB(BB))
-    return;
 }
 
 void SBFAdjustOptImpl::adjustInst(Instruction &I) {
