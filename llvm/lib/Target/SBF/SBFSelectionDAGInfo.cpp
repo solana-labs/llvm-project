@@ -27,7 +27,11 @@ SDValue SBFSelectionDAGInfo::EmitTargetCodeForMemcpy(
     return SDValue();
 
   unsigned CopyLen = ConstantSize->getZExtValue();
-  unsigned StoresNumEstimate = alignTo(CopyLen, Alignment) >> Log2(Alignment);
+  // If the alignment is greater than 8, we can only store and load 8 bytes at a
+  // time.
+  uint64_t BytesPerOp = std::min(Alignment.value(), static_cast<uint64_t>(8));
+  unsigned StoresNumEstimate =
+      alignTo(CopyLen, Alignment) >> Log2_64(BytesPerOp);
   // Impose the same copy length limit as MaxStoresPerMemcpy.
   if (StoresNumEstimate > getCommonMaxStoresPerMemFunc())
     return SDValue();
