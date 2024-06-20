@@ -46,12 +46,14 @@ BitVector SBFRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 static void WarnSize(int Offset, MachineFunction &MF, DebugLoc& DL)
 {
   static Function *OldMF = nullptr;
-  if (&(MF.getFunction()) == OldMF) {
-    return;
-  }
-  OldMF = &(MF.getFunction());
   int MaxOffset = -1 * SBFRegisterInfo::FrameLength;
   if (Offset <= MaxOffset) {
+
+    if (&(MF.getFunction()) == OldMF) {
+      return;
+    }
+    OldMF = &(MF.getFunction());
+
     if (MF.getSubtarget<SBFSubtarget>().isSolana()) {
       dbgs() << "Error:";
       if (DL) {
