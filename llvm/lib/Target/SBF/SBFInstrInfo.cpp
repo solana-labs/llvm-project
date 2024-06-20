@@ -52,7 +52,7 @@ void SBFInstrInfo::expandMEMCPY(MachineBasicBlock::iterator MI) const {
   DebugLoc dl = MI->getDebugLoc();
   unsigned LdOpc, StOpc;
 
-  unsigned BytesPerOp = Alignment;
+  unsigned BytesPerOp = std::min(static_cast<unsigned>(Alignment), 8u);
   switch (Alignment) {
   case 1:
     LdOpc = SBF::LDB;
@@ -67,13 +67,9 @@ void SBFInstrInfo::expandMEMCPY(MachineBasicBlock::iterator MI) const {
     StOpc = SBF::STW;
     break;
   case 8:
-    LdOpc = SBF::LDD;
-    StOpc = SBF::STD;
-    break;
   case 16:
     LdOpc = SBF::LDD;
     StOpc = SBF::STD;
-    BytesPerOp = 8;
     break;
   default:
     llvm_unreachable("unsupported memcpy alignment");
