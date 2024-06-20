@@ -52,6 +52,7 @@ void SBFInstrInfo::expandMEMCPY(MachineBasicBlock::iterator MI) const {
   DebugLoc dl = MI->getDebugLoc();
   unsigned LdOpc, StOpc;
 
+  unsigned BytesPerOp = std::min(static_cast<unsigned>(Alignment), 8u);
   switch (Alignment) {
   case 1:
     LdOpc = SBF::LDB;
@@ -66,6 +67,7 @@ void SBFInstrInfo::expandMEMCPY(MachineBasicBlock::iterator MI) const {
     StOpc = SBF::STW;
     break;
   case 8:
+  case 16:
     LdOpc = SBF::LDD;
     StOpc = SBF::STD;
     break;
@@ -73,41 +75,53 @@ void SBFInstrInfo::expandMEMCPY(MachineBasicBlock::iterator MI) const {
     llvm_unreachable("unsupported memcpy alignment");
   }
 
-  unsigned IterationNum = CopyLen >> Log2_64(Alignment);
-  for(unsigned I = 0; I < IterationNum; ++I) {
+  unsigned IterationNum = (CopyLen >> Log2_64(BytesPerOp));
+  for (unsigned I = 0; I < IterationNum; ++I) {
     BuildMI(*BB, MI, dl, get(LdOpc))
-            .addReg(ScratchReg, RegState::Define).addReg(SrcReg)
-            .addImm(I * Alignment);
+        .addReg(ScratchReg, RegState::Define)
+        .addReg(SrcReg)
+        .addImm(I * BytesPerOp);
     BuildMI(*BB, MI, dl, get(StOpc))
-            .addReg(ScratchReg, RegState::Kill).addReg(DstReg)
-            .addImm(I * Alignment);
+        .addReg(ScratchReg, RegState::Kill)
+        .addReg(DstReg)
+        .addImm(I * BytesPerOp);
   }
 
-  unsigned BytesLeft = CopyLen & (Alignment - 1);
-  unsigned Offset = IterationNum * Alignment;
-  bool Hanging4Byte = BytesLeft & 0x4;
-  bool Hanging2Byte = BytesLeft & 0x2;
-  bool Hanging1Byte = BytesLeft & 0x1;
-  if (Hanging4Byte) {
-    BuildMI(*BB, MI, dl, get(SBF::LDW))
-            .addReg(ScratchReg, RegState::Define).addReg(SrcReg).addImm(Offset);
-    BuildMI(*BB, MI, dl, get(SBF::STW))
-            .addReg(ScratchReg, RegState::Kill).addReg(DstReg).addImm(Offset);
-    Offset += 4;
+  unsigned BytesLeft = CopyLen - IterationNum * BytesPerOp;
+  unsigned Offset;
+  if (BytesLeft == 0) {
+    BB->erase(MI);
+    return;
   }
-  if (Hanging2Byte) {
-    BuildMI(*BB, MI, dl, get(SBF::LDH))
-            .addReg(ScratchReg, RegState::Define).addReg(SrcReg).addImm(Offset);
-    BuildMI(*BB, MI, dl, get(SBF::STH))
-            .addReg(ScratchReg, RegState::Kill).addReg(DstReg).addImm(Offset);
-    Offset += 2;
+
+  if (BytesLeft < 2) {
+    Offset = CopyLen - 1;
+    LdOpc = SBF::LDB;
+    StOpc = SBF::STB;
+  } else if (BytesLeft <= 2) {
+    Offset = CopyLen - 2;
+    LdOpc = SBF::LDH;
+    StOpc = SBF::STH;
+  } else if (BytesLeft <= 4) {
+    Offset = CopyLen - 4;
+    LdOpc = SBF::LDW;
+    StOpc = SBF::STW;
+  } else if (BytesLeft <= 8) {
+    Offset = CopyLen - 8;
+    LdOpc = SBF::LDD;
+    StOpc = SBF::STD;
+  } else {
+    llvm_unreachable("There cannot be more than 8 bytes left");
   }
-  if (Hanging1Byte) {
-    BuildMI(*BB, MI, dl, get(SBF::LDB))
-            .addReg(ScratchReg, RegState::Define).addReg(SrcReg).addImm(Offset);
-    BuildMI(*BB, MI, dl, get(SBF::STB))
-            .addReg(ScratchReg, RegState::Kill).addReg(DstReg).addImm(Offset);
-  }
+
+  BuildMI(*BB, MI, dl, get(LdOpc))
+      .addReg(ScratchReg, RegState::Define)
+      .addReg(SrcReg)
+      .addImm(Offset);
+  BuildMI(*BB, MI, dl, get(StOpc))
+      .addReg(ScratchReg, RegState::Kill)
+      .addReg(DstReg)
+      .addImm(Offset);
 
   BB->erase(MI);
 }
