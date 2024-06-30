@@ -70,9 +70,9 @@ lor.end:                                          ; preds = %lor.end.critedge, %
 }
 
 ; CHECK: ldxw r[[LOAD1:[0-9]+]], [r{{[0-9]+}} + 4]
-; CHECK: and64 r[[LOAD1]], 65536
-; CHECK: ldxw r[[LOAD2:[0-9]+]], [r{{[0-9]+}} + 4]
-; CHECK: and64 r[[LOAD2]], 32768
+; CHECK: mov64 r[[LOAD2:[0-9]+]], r[[LOAD1:[0-9]+]]
+; CHECK: and64 r[[LOAD2]], 65536
+; CHECK: and64 r[[LOAD1]], 32768
 
 ; Function Attrs: nounwind readnone speculatable willreturn
 declare void @llvm.dbg.declare(metadata, metadata, metadata) #1

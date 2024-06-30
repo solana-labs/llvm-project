@@ -87,6 +87,7 @@
 #include "llvm/IR/Type.h"
 #include "llvm/IR/User.h"
 #include "llvm/IR/Value.h"
+#include "llvm/IR/ValueHandle.h"
 #include "llvm/Pass.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include <stack>
@@ -333,7 +334,7 @@ bool SBFAbstractMemberAccess::IsPreserveDIAccessIndexCall(const CallInst *Call,
   const auto *GV = dyn_cast<GlobalValue>(Call->getCalledOperand());
   if (!GV)
     return false;
-  if (GV->getName().startswith("llvm.preserve.array.access.index")) {
+  if (GV->getName().starts_with("llvm.preserve.array.access.index")) {
     CInfo.Kind = SBFPreserveArrayAI;
     CInfo.Metadata = Call->getMetadata(LLVMContext::MD_preserve_access_index);
     if (!CInfo.Metadata)
@@ -343,7 +344,7 @@ bool SBFAbstractMemberAccess::IsPreserveDIAccessIndexCall(const CallInst *Call,
     CInfo.RecordAlignment = DL->getABITypeAlign(getBaseElementType(Call));
     return true;
   }
-  if (GV->getName().startswith("llvm.preserve.union.access.index")) {
+  if (GV->getName().starts_with("llvm.preserve.union.access.index")) {
     CInfo.Kind = SBFPreserveUnionAI;
     CInfo.Metadata = Call->getMetadata(LLVMContext::MD_preserve_access_index);
     if (!CInfo.Metadata)
@@ -353,7 +354,7 @@ bool SBFAbstractMemberAccess::IsPreserveDIAccessIndexCall(const CallInst *Call,
     CInfo.Base = Call->getArgOperand(0);
     return true;
   }
-  if (GV->getName().startswith("llvm.preserve.struct.access.index")) {
+  if (GV->getName().starts_with("llvm.preserve.struct.access.index")) {
     CInfo.Kind = SBFPreserveStructAI;
     CInfo.Metadata = Call->getMetadata(LLVMContext::MD_preserve_access_index);
     if (!CInfo.Metadata)
@@ -364,7 +365,7 @@ bool SBFAbstractMemberAccess::IsPreserveDIAccessIndexCall(const CallInst *Call,
     CInfo.RecordAlignment = DL->getABITypeAlign(getBaseElementType(Call));
     return true;
   }
-  if (GV->getName().startswith("llvm.bpf.preserve.field.info")) {
+  if (GV->getName().starts_with("llvm.bpf.preserve.field.info")) {
     CInfo.Kind = SBFPreserveFieldInfoAI;
     CInfo.Metadata = nullptr;
     // Check validity of info_kind as clang did not check this.
@@ -374,7 +375,7 @@ bool SBFAbstractMemberAccess::IsPreserveDIAccessIndexCall(const CallInst *Call,
     CInfo.AccessIndex = InfoKind;
     return true;
   }
-  if (GV->getName().startswith("llvm.bpf.preserve.type.info")) {
+  if (GV->getName().starts_with("llvm.bpf.preserve.type.info")) {
     CInfo.Kind = SBFPreserveFieldInfoAI;
     CInfo.Metadata = Call->getMetadata(LLVMContext::MD_preserve_access_index);
     if (!CInfo.Metadata)
@@ -390,7 +391,7 @@ bool SBFAbstractMemberAccess::IsPreserveDIAccessIndexCall(const CallInst *Call,
       CInfo.AccessIndex = SBFCoreSharedInfo::TYPE_SIZE;
     return true;
   }
-  if (GV->getName().startswith("llvm.bpf.preserve.enum.value")) {
+  if (GV->getName().starts_with("llvm.bpf.preserve.enum.value")) {
     CInfo.Kind = SBFPreserveFieldInfoAI;
     CInfo.Metadata = Call->getMetadata(LLVMContext::MD_preserve_access_index);
     if (!CInfo.Metadata)
@@ -1107,7 +1108,8 @@ bool SBFAbstractMemberAccess::transformGEPChain(CallInst *Call,
   auto *LDInst = new LoadInst(Type::getInt64Ty(BB->getContext()), GV, "", Call);
 
   // Generate a BitCast
-  auto *BCInst = new BitCastInst(Base, Type::getInt8PtrTy(BB->getContext()));
+  auto *BCInst =
+      new BitCastInst(Base, PointerType::getUnqual(BB->getContext()));
   BCInst->insertBefore(Call);
 
   // Generate a GetElementPtr

@@ -87,7 +87,6 @@ static void initLLVM() {
 
 int lld_main(int argc, char **argv, const llvm::ToolContext &) {
   initLLVM();
-  InitLLVM x(argc, argv);
   sys::Process::UseANSIEscapeCodes(true);
 
   if (::getenv("FORCE_LLD_DIAGNOSTICS_CRASH")) {

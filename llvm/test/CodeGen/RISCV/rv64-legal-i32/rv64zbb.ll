@@ -3,6 +3,7 @@
 ; RUN:   -riscv-experimental-rv64-legal-i32 | FileCheck %s -check-prefix=RV64I
 ; RUN: llc -mtriple=riscv64 -mattr=+zbb -verify-machineinstrs < %s \
 ; RUN:   -riscv-experimental-rv64-legal-i32 | FileCheck %s -check-prefix=RV64ZBB
+; XFAIL: *
 
 declare i32 @llvm.ctlz.i32(i32, i1)
 

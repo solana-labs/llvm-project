@@ -61,7 +61,7 @@ SBFTargetMachine::SBFTargetMachine(const Target &T, const Triple &TT,
                                    const TargetOptions &Options,
                                    std::optional<Reloc::Model> RM,
                                    std::optional<CodeModel::Model> CM,
-                                   CodeGenOpt::Level OL, bool JIT)
+                                   CodeGenOptLevel OL, bool JIT)
     : LLVMTargetMachine(T, computeDataLayout(TT, FS), TT, CPU, FS, Options,
                         getEffectiveRelocModel(RM),
                         getEffectiveCodeModel(CM, CodeModel::Small), OL),
@@ -97,7 +97,8 @@ TargetPassConfig *SBFTargetMachine::createPassConfig(PassManagerBase &PM) {
   return new SBFPassConfig(*this, PM);
 }
 
-void SBFTargetMachine::registerPassBuilderCallbacks(PassBuilder &PB) {
+void SBFTargetMachine::registerPassBuilderCallbacks(
+    PassBuilder &PB, bool PopulateClassToPassNames) {
   PB.registerPipelineParsingCallback(
       [](StringRef PassName, FunctionPassManager &FPM,
          ArrayRef<PassBuilder::PipelineElement>) {
@@ -167,7 +168,7 @@ void SBFPassConfig::addMachineSSAOptimization() {
 
 void SBFPassConfig::addPreEmitPass() {
   addPass(createSBFMIPreEmitCheckingPass());
-  if (getOptLevel() != CodeGenOpt::None)
+  if (getOptLevel() != CodeGenOptLevel::None)
     if (!DisableMIPeephole)
       addPass(createSBFMIPreEmitPeepholePass());
 }

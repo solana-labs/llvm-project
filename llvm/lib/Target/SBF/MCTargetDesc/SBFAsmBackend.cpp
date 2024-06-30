@@ -24,7 +24,7 @@ namespace {
 
 class SBFAsmBackend : public MCAsmBackend {
 public:
-  SBFAsmBackend(support::endianness Endian, const MCSubtargetInfo &STI)
+  SBFAsmBackend(endianness Endian, const MCSubtargetInfo &STI)
       : MCAsmBackend(Endian),
         isSBFv2(STI.getCPU() == "sbfv2"),
         isSolana(STI.hasFeature(SBF::FeatureSolana) ||
@@ -88,7 +88,7 @@ void SBFAsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
     support::endian::write<uint64_t>(&Data[Fixup.getOffset()], Value, Endian);
   } else if (Fixup.getKind() == FK_PCRel_4) {
     Value = (uint32_t)((Value - 8) / 8);
-    if (Endian == support::little) {
+    if (Endian == endianness::little) {
       Data[Fixup.getOffset() + 1] = 0x10;
       support::endian::write32le(&Data[Fixup.getOffset() + 4], Value);
     } else {
@@ -117,12 +117,12 @@ MCAsmBackend *llvm::createSBFAsmBackend(const Target &T,
                                         const MCSubtargetInfo &STI,
                                         const MCRegisterInfo &MRI,
                                         const MCTargetOptions &) {
-  return new SBFAsmBackend(support::little, STI);
+  return new SBFAsmBackend(endianness::little, STI);
 }
 
 MCAsmBackend *llvm::createSBFbeAsmBackend(const Target &T,
                                           const MCSubtargetInfo &STI,
                                           const MCRegisterInfo &MRI,
                                           const MCTargetOptions &) {
-  return new SBFAsmBackend(support::big, STI);
+  return new SBFAsmBackend(endianness::big, STI);
 }

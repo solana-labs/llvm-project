@@ -132,7 +132,7 @@ BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
 
     setOperationAction(ISD::SDIVREM, VT, Expand);
     setOperationAction(ISD::UDIVREM, VT, Expand);
-    if (!STI.hasSdivSmod()) {
+    if (!STI.hasSdivSmod() && !Subtarget->isSolana()) {
       setOperationAction(ISD::SDIV, VT, Custom);
       setOperationAction(ISD::SREM, VT, Custom);
     }
@@ -246,15 +246,6 @@ bool BPFTargetLowering::allowsMisalignedMemoryAccesses(
   return isSolana;
 }
 
-bool BPFTargetLowering::lowerAtomicStoreAsStoreSDNode(
-    const StoreInst &SI) const {
-  return Subtarget->isSolana();
-}
-
-bool BPFTargetLowering::lowerAtomicLoadAsLoadSDNode(const LoadInst &LI) const {
-  return Subtarget->isSolana();
-}
-
 bool BPFTargetLowering::isOffsetFoldingLegal(
     const GlobalAddressSDNode *GA) const {
   return false;
@@ -346,10 +337,6 @@ void BPFTargetLowering::ReplaceNodeResults(
   switch (Opcode) {
   default:
     report_fatal_error("unhandled custom legalization: " + Twine(Opcode));
-  case ISD::ATOMIC_LOAD_ADD:
-  case ISD::ATOMIC_LOAD_AND:
-  case ISD::ATOMIC_LOAD_OR:
-  case ISD::ATOMIC_LOAD_XOR:
   case ISD::ATOMIC_SWAP:
   case ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS:
   case ISD::ATOMIC_LOAD_ADD:
@@ -426,10 +413,6 @@ SDValue BPFTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
     // continue the expansion as defined with tablegen
     return SDValue();
   }
-  case ISD::DYNAMIC_STACKALLOC:
-    report_fatal_error("Unsupported dynamic stack allocation");
-  default:
-    llvm_unreachable("unimplemented operation");
   }
 }
 
@@ -462,6 +445,7 @@ SDValue BPFTargetLowering::LowerFormalArguments(
     CCInfo.AnalyzeFormalArguments(Ins, getHasAlu32() ? CC_BPF32 : CC_BPF64);
   }
 
+  bool HasMemArgs = false;
   for (auto &VA : ArgLocs) {
     if (VA.isRegLoc()) {
       // Argument passed in registers
@@ -514,7 +498,10 @@ SDValue BPFTargetLowering::LowerFormalArguments(
       SDV = DAG.getLoad(LocVT, DL, Chain, SDV, MachinePointerInfo());
       InVals.push_back(SDV);
     } else {
-      fail(DL, DAG, "defined with too many args");
+      if (VA.isMemLoc())
+        HasMemArgs = true;
+      else
+        report_fatal_error("unhandled argument location");
       InVals.push_back(DAG.getConstant(0, DL, VA.getLocVT()));
     }
   }
@@ -524,8 +511,13 @@ SDValue BPFTargetLowering::LowerFormalArguments(
       fail(DL, DAG, "Functions with VarArgs are not supported");
       assert(false);
     }
-  } else if (IsVarArg || MF.getFunction().hasStructRetAttr()) {
-    fail(DL, DAG, "functions with VarArgs or StructRet are not supported");
+  } else {
+    if (HasMemArgs)
+      fail(DL, DAG, "stack arguments are not supported");
+    if (IsVarArg)
+      fail(DL, DAG, "variadic functions are not supported");
+    if (MF.getFunction().hasStructRetAttr())
+      fail(DL, DAG, "aggregate returns are not supported");
   }
 
   return Chain;
@@ -590,7 +582,8 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   // Walk arg assignments
   bool HasStackArgs = false;
-  unsigned e, i, ae = ArgLocs.size();
+  unsigned e, i;
+  size_t ae = ArgLocs.size();
   for (i = 0, e = (Subtarget->isSolana()) ? ae : std::min(ae, MaxArgs); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
     SDValue Arg = OutVals[i];
@@ -747,7 +740,7 @@ BPFTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
       assert(false);
     }
   } else if (MF.getFunction().getReturnType()->isAggregateType()) {
-    fail(DL, DAG, "only integer returns supported");
+    fail(DL, DAG, "aggregate returns are not supported");
     return DAG.getNode(Opc, DL, MVT::Other, Chain);
   }
 

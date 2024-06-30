@@ -130,7 +130,7 @@ jobs:
         if: "!startsWith(matrix.os, 'windows') && !startsWith(matrix.os, 'macOS') && contains(inputs.projects, 'libclc')"
         run: |
           # Make sure all of LLVM libraries that llvm-config needs are built.
-          ninja -C "$LLVM_BUILDDIR"
-          cmake -G Ninja -S libclc -B libclc-build -DLLVM_DIR="$LLVM_BUILDDIR"/lib/cmake/llvm -DLIBCLC_TARGETS_TO_BUILD="amdgcn--;amdgcn--amdhsa;r600--;nvptx--;nvptx64--;nvptx--nvidiacl;nvptx64--nvidiacl"
+          ninja -C build
+          cmake -G Ninja -S libclc -B libclc-build -DLLVM_DIR=$(pwd)/build/lib/cmake/llvm -DLIBCLC_TARGETS_TO_BUILD="amdgcn--;amdgcn--amdhsa;r600--;nvptx--;nvptx64--;nvptx--nvidiacl;nvptx64--nvidiacl"
           ninja -C libclc-build
           ninja -C libclc-build test

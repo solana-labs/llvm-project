@@ -229,15 +229,6 @@ bool SBFTargetLowering::allowsMisalignedMemoryAccesses(
   return isSolana;
 }
 
-bool SBFTargetLowering::lowerAtomicStoreAsStoreSDNode(
-    const StoreInst &SI) const {
-  return Subtarget->isSolana();
-}
-
-bool SBFTargetLowering::lowerAtomicLoadAsLoadSDNode(const LoadInst &LI) const {
-  return Subtarget->isSolana();
-}
-
 bool SBFTargetLowering::isOffsetFoldingLegal(
     const GlobalAddressSDNode *GA) const {
   return false;
@@ -494,7 +485,6 @@ SDValue SBFTargetLowering::LowerFormalArguments(
   if (Subtarget->isSolana()) {
     if (IsVarArg) {
       fail(DL, DAG, "Functions with VarArgs are not supported");
-      assert(false);
     }
   } else if (IsVarArg || MF.getFunction().hasStructRetAttr()) {
     fail(DL, DAG, "functions with VarArgs or StructRet are not supported");

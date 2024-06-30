@@ -70,9 +70,6 @@ public:
 
   MVT getScalarShiftAmountTy(const DataLayout &, EVT) const override;
 
-  bool lowerAtomicStoreAsStoreSDNode(const StoreInst &SI) const override;
-  bool lowerAtomicLoadAsLoadSDNode(const LoadInst &LI) const override;
-
 private:
   // Control Instruction Selection Features
   bool HasAlu32;

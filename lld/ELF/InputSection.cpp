@@ -917,21 +917,13 @@ void InputSection::relocateNonAlloc(uint8_t *buf, ArrayRef<RelTy> rels) {
 
   for (size_t i = 0, relsSize = rels.size(); i != relsSize; ++i) {
     const RelTy &rel = rels[i];
-    const RelType type = rel.getType(config->isMips64EL);
+    RelType type = rel.getType(config->isMips64EL);
     const uint64_t offset = rel.r_offset;
 
     // FIX: Temporary remap BPF_64_64 relocations in debug sections.
     if (config->emachine == EM_BPF && type == R_BPF_64_64 && isDebug)
       type = R_BPF_64_ABS64;
 
-    // GCC 8.0 or earlier have a bug that they emit R_386_GOTPC relocations
-    // against _GLOBAL_OFFSET_TABLE_ for .debug_info. The bug has been fixed
-    // in 2017 (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=82630), but we
-    // need to keep this bug-compatible code for a while.
-    if (config->emachine == EM_386 && type == R_386_GOTPC)
-      continue;
-
-    uint64_t offset = rel.r_offset;
     uint8_t *bufLoc = buf + offset;
     int64_t addend = getAddend<ELFT>(rel);
     if (!RelTy::IsRela)

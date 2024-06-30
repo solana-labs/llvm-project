@@ -29,7 +29,7 @@ protected:
   unsigned getRelocType(MCContext &Ctx, const MCValue &Target,
                         const MCFixup &Fixup, bool IsPCRel) const override;
 
-  bool needsRelocateWithSymbol(const MCSymbol &Sym,
+  bool needsRelocateWithSymbol(const MCValue &Val, const MCSymbol &Sym,
                                unsigned Type) const override;
 private:
   bool isSolana;
@@ -42,7 +42,8 @@ private:
 // section relocations with values (offset into the section containing
 // the symbol being relocated).  Forcing a relocation with a symbol
 // will result in the symbol's index being used in the .o file instead.
-bool SBFELFObjectWriter::needsRelocateWithSymbol(const MCSymbol &Sym,
+bool SBFELFObjectWriter::needsRelocateWithSymbol(const MCValue &Val,
+                                                 const MCSymbol &Sym,
                                                  unsigned Type) const {
   return isSolana;
 }
