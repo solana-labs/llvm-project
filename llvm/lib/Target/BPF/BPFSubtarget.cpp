@@ -74,6 +74,10 @@ void BPFSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
 
   ParseSubtargetFeatures(CPU, /*TuneCPU*/ CPU, FS);
 
+  if (IsSolana) {
+    report_fatal_error("The Solana target is not supported in BPF. Use SBF instead.");
+  }
+
   if (CPU == "v2") {
     HasJmpExt = true;
   }

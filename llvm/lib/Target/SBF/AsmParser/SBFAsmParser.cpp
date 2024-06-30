@@ -40,7 +40,7 @@ class SBFAsmParser : public MCTargetAsmParser {
 
   bool parseRegister(MCRegister &Reg, SMLoc &StartLoc,
                      SMLoc &EndLoc) override;
-  OperandMatchResultTy tryParseRegister(MCRegister &Reg, SMLoc &StartLoc,
+  ParseStatus tryParseRegister(MCRegister &Reg, SMLoc &StartLoc,
                                         SMLoc &EndLoc) override;
 
   bool ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
@@ -300,12 +300,12 @@ bool SBFAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
 
 bool SBFAsmParser::parseRegister(MCRegister &Reg, SMLoc &StartLoc,
                                  SMLoc &EndLoc) {
-  if (tryParseRegister(Reg, StartLoc, EndLoc) != MatchOperand_Success)
+  if (!tryParseRegister(Reg, StartLoc, EndLoc).isSuccess())
     return Error(StartLoc, "invalid register name");
   return false;
 }
 
-OperandMatchResultTy SBFAsmParser::tryParseRegister(MCRegister &Reg,
+ParseStatus SBFAsmParser::tryParseRegister(MCRegister &Reg,
                                                     SMLoc &StartLoc,
                                                     SMLoc &EndLoc) {
   const AsmToken &Tok = getParser().getTok();
@@ -316,10 +316,10 @@ OperandMatchResultTy SBFAsmParser::tryParseRegister(MCRegister &Reg,
 
   if (!MatchRegisterName(Name)) {
     getParser().Lex(); // Eat identifier token.
-    return MatchOperand_Success;
+    return ParseStatus::Success;
   }
 
-  return MatchOperand_NoMatch;
+  return ParseStatus::NoMatch;
 }
 
 OperandMatchResultTy SBFAsmParser::parseRegister(OperandVector &Operands) {

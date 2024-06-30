@@ -26,7 +26,7 @@ namespace {
 
 class BPFAsmBackend : public MCAsmBackend {
 public:
-  BPFAsmBackend(support::endianness Endian, const MCSubtargetInfo &STI)
+  BPFAsmBackend(endianness Endian, const MCSubtargetInfo &STI)
       : MCAsmBackend(Endian),
         isSolana(STI.hasFeature(BPF::FeatureSolana) ||
                  STI.getTargetTriple().getArch() == Triple::sbf),
@@ -139,12 +139,12 @@ MCAsmBackend *llvm::createBPFAsmBackend(const Target &T,
                                         const MCSubtargetInfo &STI,
                                         const MCRegisterInfo &MRI,
                                         const MCTargetOptions &) {
-  return new BPFAsmBackend(support::little, STI);
+  return new BPFAsmBackend(endianness::little, STI);
 }
 
 MCAsmBackend *llvm::createBPFbeAsmBackend(const Target &T,
                                           const MCSubtargetInfo &STI,
                                           const MCRegisterInfo &MRI,
                                           const MCTargetOptions &) {
-  return new BPFAsmBackend(support::big, STI);
+  return new BPFAsmBackend(endianness::big, STI);
 }

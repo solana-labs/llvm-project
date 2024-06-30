@@ -60,7 +60,8 @@ public:
 
   void PreprocessISelDAG() override;
 
-  bool SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintCode,
+  bool SelectInlineAsmMemoryOperand(const SDValue &Op,
+                                    InlineAsm::ConstraintCode ConstraintCode,
                                     std::vector<SDValue> &OutOps) override;
 
 
@@ -157,12 +158,13 @@ bool SBFDAGToDAGISel::SelectFIAddr(SDValue Addr, SDValue &Base,
 }
 
 bool SBFDAGToDAGISel::SelectInlineAsmMemoryOperand(
-    const SDValue &Op, unsigned ConstraintCode, std::vector<SDValue> &OutOps) {
+    const SDValue &Op, InlineAsm::ConstraintCode ConstraintCode,
+    std::vector<SDValue> &OutOps) {
   SDValue Op0, Op1;
   switch (ConstraintCode) {
   default:
     return true;
-  case InlineAsm::Constraint_m: // memory
+  case InlineAsm::ConstraintCode::m: // memory
     if (!SelectAddr(Op, Op0, Op1))
       return true;
     break;

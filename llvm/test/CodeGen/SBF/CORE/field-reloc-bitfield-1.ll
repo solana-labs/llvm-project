@@ -37,11 +37,11 @@ entry:
   ret i32 %add1, !dbg !38
 }
 
-; CHECK:             mov64 r1, 20
-; CHECK:             mov64 r0, 4
+; CHECK:             mov64 r1, 16
+; CHECK:             mov64 r0, 8
 ; CHECK-ALU64:       add64 r0, r1
 ; CHECK-ALU32:       add32 w0, w1
-; CHECK-EL:          mov64 r1, 50
+; CHECK-EL:          mov64 r1, 18
 ; CHECK-ALU64:       add64 r0, r1
 ; CHECK-ALU32:       add32 w0, w1
 ; CHECK:             exit

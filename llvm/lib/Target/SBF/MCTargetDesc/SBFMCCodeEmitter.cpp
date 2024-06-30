@@ -118,7 +118,7 @@ void SBFMCCodeEmitter::encodeInstruction(const MCInst &MI,
   unsigned Opcode = MI.getOpcode();
   raw_svector_ostream OS(CB);
   support::endian::Writer OSE(OS,
-                              IsLittleEndian ? support::little : support::big);
+                              IsLittleEndian ? endianness::little : endianness::big);
 
   if (Opcode == SBF::LD_imm64 || Opcode == SBF::LD_pseudo) {
     uint64_t Value = getBinaryCodeForInstr(MI, Fixups, STI);

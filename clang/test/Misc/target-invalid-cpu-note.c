@@ -73,11 +73,7 @@
 
 // RUN: not %clang_cc1 -triple bpf--- -target-cpu not-a-cpu -fsyntax-only %s 2>&1 | FileCheck %s --check-prefix BPF
 // BPF: error: unknown target CPU 'not-a-cpu'
-<<<<<<< HEAD
-// BPF-NEXT: note: valid target CPU values are: generic, v1, v2, v3, v4, probe{{$}}
-=======
-// BPF-NEXT: note: valid target CPU values are: generic, v1, v2, v3, probe, sbfv2{{$}}
->>>>>>> da6907c6359e ([SOL] Update failing tests after upgrade)
+// BPF-NEXT: note: valid target CPU values are: generic, v1, v2, v3, v4, probe, sbfv2{{$}}
 
 // RUN: not %clang_cc1 -triple avr--- -target-cpu not-a-cpu -fsyntax-only %s 2>&1 | FileCheck %s --check-prefix AVR
 // AVR: error: unknown target CPU 'not-a-cpu'

@@ -170,6 +170,7 @@ DecodeStatus SBFDisassembler::getInstruction(MCInst &Instr, uint64_t &Size,
 
   uint8_t InstClass = getInstClass(Insn);
   uint8_t InstMode = getInstMode(Insn);
+
   if ((InstClass == SBF_LDX || InstClass == SBF_STX) &&
       getInstSize(Insn) != SBF_DW &&
       (InstMode == SBF_MEM || InstMode == SBF_ATOMIC) &&

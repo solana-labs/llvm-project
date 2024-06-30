@@ -2446,7 +2446,6 @@ static void disassembleObject(ObjectFile *Obj, bool InlineRelocs) {
     }
   }
 
-  DisassemblerTarget PrimaryTarget(TheTarget, *Obj, TripleName, MCPU, Features);
   // The SBF target specifies the cpu type as an ELF flag, which is not parsed automatically in LLVM objdump.
   // We must set the CPU type here so that the disassembler can decode the SBFv2 features correctly.
   if (MCPU.empty() && Obj->isELF() && Obj->getArch() == Triple::sbf) {
@@ -2455,6 +2454,8 @@ static void disassembleObject(ObjectFile *Obj, bool InlineRelocs) {
       MCPU = "sbfv2";
     }
   }
+
+  DisassemblerTarget PrimaryTarget(TheTarget, *Obj, TripleName, MCPU, Features);
 
   // If we have an ARM object file, we need a second disassembler, because
   // ARM CPUs have two different instruction sets: ARM mode, and Thumb mode.
