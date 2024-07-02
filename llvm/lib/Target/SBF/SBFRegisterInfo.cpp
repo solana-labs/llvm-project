@@ -60,10 +60,12 @@ static void WarnSize(int Offset, MachineFunction &MF, DebugLoc& DL)
         dbgs() << " ";
         DL.print(dbgs());
       }
+      uint64_t StackSize = MF.getFrameInfo().getStackSize();
       dbgs() << " Function " << MF.getFunction().getName()
              << " Stack offset of " << -Offset << " exceeded max offset of "
              << -MaxOffset << " by " << MaxOffset - Offset
-             << " bytes, please minimize large stack variables\n";
+             << " bytes, please minimize large stack variables. "
+             << "Estimated function frame size: " << StackSize << " bytes.\n\n";
     } else {
       DiagnosticInfoUnsupported DiagStackSize(
           MF.getFunction(),
