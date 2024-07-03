@@ -625,37 +625,39 @@ SDValue SBFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(DAG.getDataLayout());
       SDValue DstAddr;
       MachinePointerInfo DstInfo;
+      int FrameIndex;
+      int64_t Offset;
       if (Subtarget->getHasDynamicFrames()) {
         // In the new call convention, arguments are stored in the callee frame
         // The positive offset signals that the variable does not occupy space
         // in the caller frame.
-        int64_t Offset = static_cast<int64_t>(VA.getLocMemOffset() +
-                                              PtrVT.getFixedSizeInBits() / 8);
+        Offset = static_cast<int64_t>(VA.getLocMemOffset() +
+                                      PtrVT.getFixedSizeInBits() / 8);
         if (!Subtarget->getEnableNewCallConvention())
           // In the old call convention, we place argument at the start of the
           // frame in a fixed stack offset.
           Offset = -Offset;
 
-        int FrameIndex = MF.getFrameInfo().CreateFixedObject(
+        FrameIndex = MF.getFrameInfo().CreateFixedObject(
             VA.getLocVT().getFixedSizeInBits() / 8, Offset, false);
-        SBFFuncInfo->storeFrameIndexArgument(FrameIndex);
-        DstAddr = DAG.getFrameIndex(FrameIndex, PtrVT);
-        DstInfo = MachinePointerInfo::getFixedStack(MF, FrameIndex, Offset);
       } else {
-        SDValue Const =
-            DAG.getConstant(SBFRegisterInfo::FrameLength - VA.getLocMemOffset(),
-                            CLI.DL, MVT::i64);
-        DstAddr = DAG.getNode(ISD::SUB, CLI.DL, PtrVT, FramePtr, Const);
-        DstInfo = MachinePointerInfo();
+        Offset = static_cast<int64_t>(VA.getLocMemOffset());
+        FrameIndex = MF.getFrameInfo().CreateFixedObject(
+            VA.getLocVT().getFixedSizeInBits() / 8, Offset, false);
       }
 
+      SBFFuncInfo->storeFrameIndexArgument(FrameIndex);
+      DstAddr = DAG.getFrameIndex(FrameIndex, PtrVT);
+      DstInfo = MachinePointerInfo::getFixedStack(MF, FrameIndex, Offset);
       Chain = DAG.getStore(Chain, CLI.DL, Arg, DstAddr, DstInfo);
     }
 
-    // Pass the current stack frame pointer via SBF::R5, gluing the
-    // instruction to instructions passing the first 4 arguments in
-    // registers below.
-    Chain = DAG.getCopyToReg(Chain, CLI.DL, SBF::R5, FramePtr, InGlue);
+    if (!Subtarget->getEnableNewCallConvention())
+      // Pass the current stack frame pointer via SBF::R5, gluing the
+      // instruction to instructions passing the first 4 arguments in
+      // registers below.
+      Chain = DAG.getCopyToReg(Chain, CLI.DL, SBF::R5, FramePtr, InGlue);
+
     InGlue = Chain.getValue(1);
   }
 
