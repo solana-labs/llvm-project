@@ -73,8 +73,7 @@ define dso_local i64 @select_s(i32 %a, i32 %b, i64 %c, i64 %d) local_unnamed_add
 entry:
   %cmp = icmp sgt i32 %a, %b
   %c.d = select i1 %cmp, i64 %c, i64 %d
-; CHECK: lsh64 r{{[0-9]+}}, 32
-; CHECK-NEXT: arsh64 r{{[0-9]+}}, 32
+; CHECK: add32 w{{[0-9]+}}, 0
 ; CHECK: {{jslt|jsgt}} r{{[0-9]+}}, r{{[0-9]+}},
   ret i64 %c.d
 }
@@ -117,8 +116,7 @@ entry:
   %cmp = icmp sgt i32 %call, 6
 ; The shifts can't be optimized out because %call comes from function call
 ; return i32 so the high bits might be invalid.
-; CHECK: lsh64 r{{[0-9]+}}, 32
-; CHECK-NEXT: arsh64 r{{[0-9]+}}, 32
+; CHECK: add32 w{{[0-9]+}}, 0
   %cond = zext i1 %cmp to i32
 ; CHECK: {{jslt|jsgt}} r{{[0-9]+}}, {{[0-9]+}},
   ret i32 %cond
