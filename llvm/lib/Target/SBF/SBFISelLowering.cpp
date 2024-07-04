@@ -78,44 +78,6 @@ SBFTargetLowering::SBFTargetLowering(const TargetMachine &TM,
 
   setOperationAction(ISD::INTRINSIC_W_CHAIN, MVT::Other, Custom);
 
-  for (auto VT : {MVT::i8, MVT::i16, MVT::i32, MVT::i64}) {
-    if (Subtarget->isSolana()) {
-      // Implement custom lowering for all atomic operations
-      setOperationAction(ISD::ATOMIC_SWAP, VT, Custom);
-      setOperationAction(ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS, VT, Custom);
-      setOperationAction(ISD::ATOMIC_LOAD_ADD, VT, Custom);
-      setOperationAction(ISD::ATOMIC_LOAD_AND, VT, Custom);
-      setOperationAction(ISD::ATOMIC_LOAD_MAX, VT, Custom);
-      setOperationAction(ISD::ATOMIC_LOAD_MIN, VT, Custom);
-      setOperationAction(ISD::ATOMIC_LOAD_NAND, VT, Custom);
-      setOperationAction(ISD::ATOMIC_LOAD_OR, VT, Custom);
-      setOperationAction(ISD::ATOMIC_LOAD_SUB, VT, Custom);
-      setOperationAction(ISD::ATOMIC_LOAD_UMAX, VT, Custom);
-      setOperationAction(ISD::ATOMIC_LOAD_UMIN, VT, Custom);
-      setOperationAction(ISD::ATOMIC_LOAD_XOR, VT, Custom);
-      continue;
-    }
-
-    if (VT == MVT::i64) {
-      continue;
-    }
-
-    // Set unsupported atomic operations as Custom so we can emit better error
-    // messages than fatal error from selectiondag.
-    if (VT == MVT::i32) {
-      if (STI.getHasAlu32())
-        continue;
-    } else {
-      setOperationAction(ISD::ATOMIC_LOAD_ADD, VT, Custom);
-    }
-
-    setOperationAction(ISD::ATOMIC_LOAD_AND, VT, Custom);
-    setOperationAction(ISD::ATOMIC_LOAD_OR, VT, Custom);
-    setOperationAction(ISD::ATOMIC_LOAD_XOR, VT, Custom);
-    setOperationAction(ISD::ATOMIC_SWAP, VT, Custom);
-    setOperationAction(ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS, VT, Custom);
-  }
-
   for (auto VT : { MVT::i32, MVT::i64 }) {
     if (VT == MVT::i32 && !STI.getHasAlu32())
       continue;
@@ -229,15 +191,6 @@ bool SBFTargetLowering::allowsMisalignedMemoryAccesses(
   return isSolana;
 }
 
-bool SBFTargetLowering::lowerAtomicStoreAsStoreSDNode(
-    const StoreInst &SI) const {
-  return Subtarget->isSolana();
-}
-
-bool SBFTargetLowering::lowerAtomicLoadAsLoadSDNode(const LoadInst &LI) const {
-  return Subtarget->isSolana();
-}
-
 bool SBFTargetLowering::isOffsetFoldingLegal(
     const GlobalAddressSDNode *GA) const {
   return false;
@@ -317,28 +270,6 @@ void SBFTargetLowering::ReplaceNodeResults(SDNode *N,
   switch (Opcode) {
   default:
     report_fatal_error("Unhandled custom legalization");
-  case ISD::ATOMIC_SWAP:
-  case ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS:
-  case ISD::ATOMIC_LOAD_ADD:
-  case ISD::ATOMIC_LOAD_AND:
-  case ISD::ATOMIC_LOAD_MAX:
-  case ISD::ATOMIC_LOAD_MIN:
-  case ISD::ATOMIC_LOAD_NAND:
-  case ISD::ATOMIC_LOAD_OR:
-  case ISD::ATOMIC_LOAD_SUB:
-  case ISD::ATOMIC_LOAD_UMAX:
-  case ISD::ATOMIC_LOAD_UMIN:
-  case ISD::ATOMIC_LOAD_XOR:
-    if (Subtarget->isSolana()) {
-      // We do lowering during legalization, see LowerOperation()
-      return;
-    }
-
-    if (HasAlu32 || Opcode == ISD::ATOMIC_LOAD_ADD)
-      err_msg = "Unsupported atomic operations, please use 32/64 bit version";
-    else
-      err_msg = "Unsupported atomic operations, please use 64 bit version";
-    break;
   }
 
   SDLoc DL(N);
@@ -353,19 +284,6 @@ SDValue SBFTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
     return LowerGlobalAddress(Op, DAG);
   case ISD::SELECT_CC:
     return LowerSELECT_CC(Op, DAG);
-  case ISD::ATOMIC_SWAP:
-  case ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS:
-  case ISD::ATOMIC_LOAD_ADD:
-  case ISD::ATOMIC_LOAD_AND:
-  case ISD::ATOMIC_LOAD_MAX:
-  case ISD::ATOMIC_LOAD_MIN:
-  case ISD::ATOMIC_LOAD_NAND:
-  case ISD::ATOMIC_LOAD_OR:
-  case ISD::ATOMIC_LOAD_SUB:
-  case ISD::ATOMIC_LOAD_UMAX:
-  case ISD::ATOMIC_LOAD_UMIN:
-  case ISD::ATOMIC_LOAD_XOR:
-    return LowerATOMICRMW(Op, DAG);
   case ISD::INTRINSIC_W_CHAIN:
     // continue the expansion as defined with tablegen
     return SDValue();
@@ -867,114 +785,6 @@ SDValue SBFTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
   return DAG.getNode(SBFISD::SELECT_CC, DL, VTs, Ops);
 }
 
-SDValue SBFTargetLowering::LowerATOMICRMW(SDValue Op, SelectionDAG &DAG) const {
-  SDLoc DL(Op);
-  AtomicSDNode *AN = cast<AtomicSDNode>(Op);
-  assert(AN && "Expected custom lowering of an atomic load node");
-
-  SDValue Chain = AN->getChain();
-  SDValue Ptr = AN->getBasePtr();
-  EVT PtrVT = AN->getMemoryVT();
-  EVT RetVT = Op.getValueType();
-
-  // Load the current value
-  SDValue Load =
-      DAG.getExtLoad(ISD::EXTLOAD, DL, RetVT, Chain, Ptr, MachinePointerInfo(),
-                     PtrVT, AN->getAlign());
-  Chain = Load.getValue(1);
-
-  // Most ops return the current value, except CMP_SWAP_WITH_SUCCESS see below
-  SDValue Ret = Load;
-  SDValue RetFlag;
-
-  // Val contains the new value we want to set. For CMP_SWAP, Cmp contains the
-  // expected current value.
-  SDValue Cmp, Val;
-  if (AN->isCompareAndSwap()) {
-    Cmp = Op.getOperand(2);
-    Val = Op.getOperand(3);
-
-    // The Cmp value must match the pointer type
-    EVT CmpVT = Cmp->getValueType(0);
-    if (CmpVT != RetVT) {
-      Cmp = RetVT.bitsGT(CmpVT) ? DAG.getNode(ISD::SIGN_EXTEND, DL, RetVT, Cmp)
-                                : DAG.getNode(ISD::TRUNCATE, DL, RetVT, Cmp);
-    }
-  } else {
-    Val = AN->getVal();
-  }
-
-  // The new value type must match the pointer type
-  EVT ValVT = Val->getValueType(0);
-  if (ValVT != RetVT) {
-    Val = RetVT.bitsGT(ValVT) ? DAG.getNode(ISD::SIGN_EXTEND, DL, RetVT, Val)
-                              : DAG.getNode(ISD::TRUNCATE, DL, RetVT, Val);
-    ValVT = Val->getValueType(0);
-  }
-
-  SDValue NewVal;
-  switch (Op.getOpcode()) {
-  case ISD::ATOMIC_SWAP:
-    NewVal = Val;
-    break;
-  case ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS: {
-    EVT RetFlagVT = AN->getValueType(1);
-    NewVal = DAG.getSelectCC(DL, Load, Cmp, Val, Load, ISD::SETEQ);
-    RetFlag = DAG.getSelectCC(
-        DL, Load, Cmp, DAG.getBoolConstant(true, DL, RetFlagVT, RetFlagVT),
-        DAG.getBoolConstant(false, DL, RetFlagVT, RetFlagVT), ISD::SETEQ);
-    break;
-  }
-  case ISD::ATOMIC_LOAD_ADD:
-    NewVal = DAG.getNode(ISD::ADD, DL, ValVT, Load, Val);
-    break;
-  case ISD::ATOMIC_LOAD_SUB:
-    NewVal = DAG.getNode(ISD::SUB, DL, ValVT, Load, Val);
-    break;
-  case ISD::ATOMIC_LOAD_AND:
-    NewVal = DAG.getNode(ISD::AND, DL, ValVT, Load, Val);
-    break;
-  case ISD::ATOMIC_LOAD_NAND: {
-    NewVal =
-        DAG.getNOT(DL, DAG.getNode(ISD::AND, DL, ValVT, Load, Val), ValVT);
-    break;
-  }
-  case ISD::ATOMIC_LOAD_OR:
-    NewVal = DAG.getNode(ISD::OR, DL, ValVT, Load, Val);
-    break;
-  case ISD::ATOMIC_LOAD_XOR:
-    NewVal = DAG.getNode(ISD::XOR, DL, ValVT, Load, Val);
-    break;
-  case ISD::ATOMIC_LOAD_MIN:
-    NewVal = DAG.getNode(ISD::SMIN, DL, ValVT, Load, Val);
-    break;
-  case ISD::ATOMIC_LOAD_UMIN:
-    NewVal = DAG.getNode(ISD::UMIN, DL, ValVT, Load, Val);
-    break;
-  case ISD::ATOMIC_LOAD_MAX:
-    NewVal = DAG.getNode(ISD::SMAX, DL, ValVT, Load, Val);
-    break;
-  case ISD::ATOMIC_LOAD_UMAX:
-    NewVal = DAG.getNode(ISD::UMAX, DL, ValVT, Load, Val);
-    break;
-  default:
-    llvm_unreachable("unknown atomicrmw op");
-  }
-
-  Chain =
-      DAG.getTruncStore(Chain, DL, NewVal, Ptr, MachinePointerInfo(), PtrVT);
-
-  if (RetFlag) {
-    // CMP_SWAP_WITH_SUCCESS returns {value, success, chain}
-    Ret = DAG.getMergeValues({Ret, RetFlag, Chain}, DL);
-  } else {
-    // All the other ops return {value, chain}
-    Ret = DAG.getMergeValues({Ret, Chain}, DL);
-  }
-
-  return Ret;
-}
-
 const char *SBFTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch ((SBFISD::NodeType)Opcode) {
   case SBFISD::FIRST_NUMBER:
@@ -1078,7 +888,6 @@ SBFTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
                        Opc == SBF::Select_32_64);
 
   bool isMemcpyOp = Opc == SBF::MEMCPY;
-  bool isAtomicFence = Opc == SBF::ATOMIC_FENCE;
 
 #ifndef NDEBUG
   bool isSelectRIOp = (Opc == SBF::Select_Ri ||
@@ -1086,19 +895,12 @@ SBFTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
                        Opc == SBF::Select_Ri_32 ||
                        Opc == SBF::Select_Ri_32_64);
 
-
-  assert((isSelectRROp || isSelectRIOp || isMemcpyOp || isAtomicFence) &&
+  assert((isSelectRROp || isSelectRIOp || isMemcpyOp) &&
          "Unexpected instr type to insert");
 #endif
 
   if (isMemcpyOp)
     return EmitInstrWithCustomInserterMemcpy(MI, BB);
-
-  if (isAtomicFence) {
-    // this is currently a nop
-    MI.eraseFromParent();
-    return BB;
-  }
 
   bool is32BitCmp = (Opc == SBF::Select_32 ||
                      Opc == SBF::Select_32_64 ||

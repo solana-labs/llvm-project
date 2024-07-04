@@ -52,8 +52,7 @@ public:
     SBF_IND = 0x2,
     SBF_MEM = 0x3,
     SBF_LEN = 0x4,
-    SBF_MSH = 0x5,
-    SBF_ATOMIC = 0x6
+    SBF_MSH = 0x5
   };
 
   SBFDisassembler(const MCSubtargetInfo &STI, MCContext &Ctx)
@@ -171,8 +170,7 @@ DecodeStatus SBFDisassembler::getInstruction(MCInst &Instr, uint64_t &Size,
   uint8_t InstClass = getInstClass(Insn);
   uint8_t InstMode = getInstMode(Insn);
   if ((InstClass == SBF_LDX || InstClass == SBF_STX) &&
-      getInstSize(Insn) != SBF_DW &&
-      (InstMode == SBF_MEM || InstMode == SBF_ATOMIC) &&
+      getInstSize(Insn) != SBF_DW && (InstMode == SBF_MEM) &&
       STI.hasFeature(SBF::ALU32))
     Result = decodeInstruction(DecoderTableSBFALU3264, Instr, Insn, Address,
                                this, STI);

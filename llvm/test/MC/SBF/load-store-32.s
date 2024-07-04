@@ -17,12 +17,9 @@
   stxb [r0 + 0], w7    // BPF_STX | BPF_B
   stxh [r1 + 8], w8   // BPF_STX | BPF_H
   stxw [r2 + 16], w9  // BPF_STX | BPF_W
-  stxxaddw [r2 + 16], w9  // BPF_STX | BPF_W | BPF_XADD
 // CHECK-32: 73 70 00 00 00 00 00 00 	stxb [r0 + 0x0], w7
 // CHECK-32: 6b 81 08 00 00 00 00 00 	stxh [r1 + 0x8], w8
 // CHECK-32: 63 92 10 00 00 00 00 00 	stxw [r2 + 0x10], w9
-// CHECK-32: c3 92 10 00 00 00 00 00 	stxxaddw [r2 + 0x10], w9
 // CHECK: 73 70 00 00 00 00 00 00 	stxb [r0 + 0x0], r7
 // CHECK: 6b 81 08 00 00 00 00 00 	stxh [r1 + 0x8], r8
 // CHECK: 63 92 10 00 00 00 00 00 	stxw [r2 + 0x10], r9
-// CHECK: c3 92 10 00 00 00 00 00 	stxxaddw [r2 + 0x10], r9

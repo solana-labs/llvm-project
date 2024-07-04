@@ -153,18 +153,12 @@ void SBFMCCodeEmitter::encodeInstruction(const MCInst &MI,
 uint64_t SBFMCCodeEmitter::getMemoryOpValue(const MCInst &MI, unsigned Op,
                                             SmallVectorImpl<MCFixup> &Fixups,
                                             const MCSubtargetInfo &STI) const {
-  // For CMPXCHG instructions, output is implicitly in R0/W0,
-  // so memory operand starts from operand 0.
-  int MemOpStartIndex = 1, Opcode = MI.getOpcode();
-  if (Opcode == SBF::CMPXCHGW32 || Opcode == SBF::CMPXCHGD)
-    MemOpStartIndex = 0;
-
   uint64_t Encoding;
-  const MCOperand Op1 = MI.getOperand(MemOpStartIndex);
+  const MCOperand Op1 = MI.getOperand(1);
   assert(Op1.isReg() && "First operand is not register.");
   Encoding = MRI.getEncodingValue(Op1.getReg());
   Encoding <<= 16;
-  MCOperand Op2 = MI.getOperand(MemOpStartIndex + 1);
+  MCOperand Op2 = MI.getOperand(2);
   assert(Op2.isImm() && "Second operand is not immediate.");
   Encoding |= Op2.getImm() & 0xffff;
   return Encoding;

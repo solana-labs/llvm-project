@@ -100,13 +100,6 @@ def SBF_IMM  : SBFModeModifer<0x0>;
 def SBF_ABS  : SBFModeModifer<0x1>;
 def SBF_IND  : SBFModeModifer<0x2>;
 def SBF_MEM  : SBFModeModifer<0x3>;
-def SBF_ATOMIC : SBFModeModifer<0x6>;
-
-class SBFAtomicFlag<bits<4> val> {
-  bits<4> Value = val;
-}
-
-def SBF_FETCH : SBFAtomicFlag<0x1>;
 
 class InstSBF<dag outs, dag ins, string asmstr, list<dag> pattern>
   : Instruction {
