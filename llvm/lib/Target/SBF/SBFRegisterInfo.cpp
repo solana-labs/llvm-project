@@ -66,6 +66,8 @@ static void WarnSize(int Offset, MachineFunction &MF, DebugLoc& DL)
              << -MaxOffset << " by " << MaxOffset - Offset
              << " bytes, please minimize large stack variables. "
              << "Estimated function frame size: " << StackSize << " bytes.\n\n";
+      report_fatal_error("Exceeding the maximum stack offset may cause "
+                         "undefined behavior, including the loss of funds.");
     } else {
       DiagnosticInfoUnsupported DiagStackSize(
           MF.getFunction(),
