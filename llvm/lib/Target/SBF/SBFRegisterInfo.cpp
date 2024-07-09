@@ -47,7 +47,7 @@ static void WarnSize(int Offset, MachineFunction &MF, DebugLoc& DL)
 {
   static Function *OldMF = nullptr;
   int MaxOffset = -1 * SBFRegisterInfo::FrameLength;
-  if (Offset <= MaxOffset) {
+  if (Offset < MaxOffset) {
 
     if (&(MF.getFunction()) == OldMF) {
       return;
@@ -156,8 +156,21 @@ int SBFRegisterInfo::resolveInternalFrameIndex(
   const MachineFrameInfo &MFI = MF.getFrameInfo();
   const SBFFunctionInfo *SBFFuncInfo = MF.getInfo<SBFFunctionInfo>();
   int Offset = MFI.getObjectOffset(FI);
-  if (MF.getSubtarget<SBFSubtarget>().getEnableNewCallConvention() &&
+
+  if (!MF.getSubtarget<SBFSubtarget>().getHasDynamicFrames() &&
       SBFFuncInfo->containsFrameIndex(FI)) {
+    Offset = SBFRegisterInfo::FrameLength - Offset;
+    if (static_cast<uint64_t>(Offset) < MFI.getStackSize()) {
+      dbgs() << "Error: A function call in method "
+             << MF.getFunction().getName()
+             << " overwrites values in the frame. Please, decrease stack usage "
+             << "or remove parameters from the call.\n\n";
+      report_fatal_error(
+          "The function call may cause undefined behavior during execution.");
+    }
+    Offset = -Offset;
+  } else if (MF.getSubtarget<SBFSubtarget>().getEnableNewCallConvention() &&
+             SBFFuncInfo->containsFrameIndex(FI)) {
     uint64_t StackSize = MFI.getStackSize();
     Offset = -static_cast<int>(StackSize) - Offset;
   } else if (Imm.has_value()) {
