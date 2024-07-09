@@ -24,10 +24,10 @@ declare void @llvm.lifetime.end.p0i8(i64, i8* nocapture) #1
 ; CHECK: Error: warn_stack.c
 ; CHECK: please minimize large stack variables 
 define void @warn() local_unnamed_addr #0 !dbg !20 {
-  %1 = alloca [512 x i8], align 1
-  %2 = getelementptr inbounds [512 x i8], [512 x i8]* %1, i64 0, i64 0, !dbg !26
+  %1 = alloca [4124 x i8], align 1
+  %2 = getelementptr inbounds [4124 x i8], [4124 x i8]* %1, i64 0, i64 0, !dbg !26
   call void @llvm.lifetime.start.p0i8(i64 512, i8* nonnull %2) #4, !dbg !26
-  tail call void @llvm.dbg.declare(metadata [512 x i8]* %1, metadata !22, metadata !16), !dbg !27
+  tail call void @llvm.dbg.declare(metadata [4124 x i8]* %1, metadata !22, metadata !16), !dbg !27
   call void @doit(i8* nonnull %2) #4, !dbg !28
   call void @llvm.lifetime.end.p0i8(i64 512, i8* nonnull %2) #4, !dbg !29
   ret void, !dbg !29
