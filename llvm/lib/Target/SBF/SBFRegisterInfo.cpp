@@ -67,7 +67,7 @@ static void WarnSize(int Offset, MachineFunction &MF, DebugLoc& DL)
              << " bytes, please minimize large stack variables. "
              << "Estimated function frame size: " << StackSize << " bytes."
              << " Exceeding the maximum stack offset may cause "
-                "unexpected behavior during execution.\n\n";
+                "undefined behavior during execution.\n\n";
     } else {
       DiagnosticInfoUnsupported DiagStackSize(
           MF.getFunction(),

@@ -23,7 +23,7 @@ declare void @llvm.lifetime.end.p0i8(i64, i8* nocapture) #1
 
 ; CHECK: Error: warn_stack.c
 ; CHECK: please minimize large stack variables
-; CHECK: Exceeding the maximum stack offset may cause unexpected behavior during execution.
+; CHECK: Exceeding the maximum stack offset may cause undefined behavior during execution.
 define void @warn() local_unnamed_addr #0 !dbg !20 {
   %1 = alloca [4124 x i8], align 1
   %2 = getelementptr inbounds [4124 x i8], [4124 x i8]* %1, i64 0, i64 0, !dbg !26
