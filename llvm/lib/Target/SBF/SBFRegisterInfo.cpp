@@ -65,9 +65,9 @@ static void WarnSize(int Offset, MachineFunction &MF, DebugLoc& DL)
              << " Stack offset of " << -Offset << " exceeded max offset of "
              << -MaxOffset << " by " << MaxOffset - Offset
              << " bytes, please minimize large stack variables. "
-             << "Estimated function frame size: " << StackSize << " bytes.\n\n";
-      report_fatal_error("Exceeding the maximum stack offset may cause "
-                         "undefined behavior, including the loss of funds.");
+             << "Estimated function frame size: " << StackSize << " bytes."
+             << " Exceeding the maximum stack offset may cause "
+                "undefined behavior during execution.\n\n";
     } else {
       DiagnosticInfoUnsupported DiagStackSize(
           MF.getFunction(),
@@ -166,9 +166,9 @@ int SBFRegisterInfo::resolveInternalFrameIndex(
       dbgs() << "Error: A function call in method "
              << MF.getFunction().getName()
              << " overwrites values in the frame. Please, decrease stack usage "
-             << "or remove parameters from the call.\n\n";
-      report_fatal_error(
-          "The function call may cause undefined behavior during execution.");
+             << "or remove parameters from the call."
+             << "The function call may cause undefined behavior "
+                "during execution.\n\n";
     }
     Offset = -Offset;
   } else if (MF.getSubtarget<SBFSubtarget>().getEnableNewCallConvention() &&

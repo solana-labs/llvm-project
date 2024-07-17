@@ -1,4 +1,4 @@
-; RUN: not --crash llc < %s -march=sbf 2>&1 | FileCheck %s
+; RUN: llc < %s -march=sbf 2>&1 | FileCheck %s
 
 ; Function Attrs: noinline nounwind optnone ssp uwtable(sync)
 define i32 @func(i32 noundef %0, i32 noundef %1, i32 noundef %2, i32 noundef %3, i32 noundef %4, i32 noundef %5) #0 {
