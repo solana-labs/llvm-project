@@ -288,3 +288,45 @@ entry:
   %0 = atomicrmw umax i64* %ptr, i64 %v release, align 1
   ret i64 %0
 }
+
+; CHECK-LABEL: test_load_64
+; CHECK: ldxdw r0, [r1 + 0]
+; CHECK: mov64 r2, 0
+; CHECK: jeq r0, 0, LBB24_2
+; CHECK: mov64 r2, r0
+; CHECK: LBB24_2:
+; CHECK: stxdw [r1 + 0], r2
+define dso_local i64 @test_load_64(ptr nocapture %p) local_unnamed_addr {
+entry:
+  %0 = load atomic i64, ptr %p seq_cst, align 8
+  ret i64 %0
+}
+
+; CHECK-LABEL: test_load_32
+; CHECK: ldxw w0, [r1 + 0]
+; CHECK: mov32 w2, 0
+; CHECK: jeq r0, 0, LBB25_2
+; CHECK: mov32 w2, w0
+; CHECK: LBB25_2:
+; CHECK: stxw [r1 + 0], w2
+define dso_local i32 @test_load_32(ptr nocapture %p) local_unnamed_addr {
+entry:
+  %0 = load atomic i32, ptr %p seq_cst, align 8
+  ret i32 %0
+}
+
+; CHECK-LABEL: test_store_64
+; CHECK: stxdw [r1 + 0], r2
+define dso_local void @test_store_64(ptr nocapture %p, i64 %val) local_unnamed_addr {
+entry:
+  store atomic i64 %val, ptr %p seq_cst, align 8
+  ret void
+}
+
+; CHECK-LABEL: test_store_32
+; CHECK: stxw [r1 + 0], w2
+define dso_local void @test_store_32(ptr nocapture %p, i32 %val) local_unnamed_addr {
+entry:
+  store atomic i32 %val, ptr %p seq_cst, align 8
+  ret void
+}
