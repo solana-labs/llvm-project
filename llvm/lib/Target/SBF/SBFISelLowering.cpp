@@ -93,6 +93,8 @@ SBFTargetLowering::SBFTargetLowering(const TargetMachine &TM,
       setOperationAction(ISD::ATOMIC_LOAD_UMAX, VT, Custom);
       setOperationAction(ISD::ATOMIC_LOAD_UMIN, VT, Custom);
       setOperationAction(ISD::ATOMIC_LOAD_XOR, VT, Custom);
+      setOperationAction(ISD::ATOMIC_LOAD, VT, Expand);
+      setOperationAction(ISD::ATOMIC_STORE, VT, Expand);
       continue;
     }
 
