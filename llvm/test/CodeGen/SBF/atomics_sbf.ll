@@ -330,3 +330,25 @@ entry:
   store atomic i32 %val, ptr %p seq_cst, align 8
   ret void
 }
+
+; CHECK-LABEL: test_weak_cas_32
+; CHECK: ldxw w4, [r1 + 0]
+; CHECK: mov32 r2, w2
+; CHECK: jeq r4, r2,
+; CHECK: stxw [r1 + 0], w3
+define dso_local void @test_weak_cas_32(i32* nocapture %p, i32 %old, i32 %new) local_unnamed_addr {
+entry:
+  cmpxchg weak i32* %p, i32 %old, i32 %new seq_cst seq_cst
+  ret void
+}
+
+; CHECK-LABEL: test_weak_cas_64
+; CHECK: ldxdw r4, [r1 + 0]
+; CHECK: jeq r4, r2,
+; CHECK: mov64 r3, r4
+; CHECK: stxdw [r1 + 0], r3
+define dso_local void @test_weak_cas_64(i64* nocapture %p, i64 %old, i64 %new) local_unnamed_addr {
+entry:
+  cmpxchg weak i64* %p, i64 %old, i64 %new seq_cst seq_cst
+  ret void
+}
