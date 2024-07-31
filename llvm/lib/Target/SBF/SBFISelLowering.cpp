@@ -605,11 +605,6 @@ SDValue SBFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   SDValue InGlue;
 
   if (HasStackArgs) {
-    SDValue FramePtr = DAG.getCopyFromReg(Chain,
-                                          CLI.DL,
-                                          Subtarget->getRegisterInfo()->getFrameRegister(MF),
-                                          getPointerTy(MF.getDataLayout()));
-
     SBFFunctionInfo * SBFFuncInfo = MF.getInfo<SBFFunctionInfo>();
     // Stack arguments have to be walked in reverse order by inserting
     // chained stores, this ensures their order is not changed by the scheduler
@@ -652,13 +647,17 @@ SDValue SBFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       Chain = DAG.getStore(Chain, CLI.DL, Arg, DstAddr, DstInfo);
     }
 
-    if (!Subtarget->getEnableNewCallConvention())
+    if (!Subtarget->getEnableNewCallConvention()) {
       // Pass the current stack frame pointer via SBF::R5, gluing the
       // instruction to instructions passing the first 4 arguments in
       // registers below.
+      SDValue FramePtr = DAG.getCopyFromReg(
+          Chain, CLI.DL, Subtarget->getRegisterInfo()->getFrameRegister(MF),
+          getPointerTy(MF.getDataLayout()));
       Chain = DAG.getCopyToReg(Chain, CLI.DL, SBF::R5, FramePtr, InGlue);
+      InGlue = Chain.getValue(1);
+    }
 
-    InGlue = Chain.getValue(1);
   }
 
   // Build a sequence of copy-to-reg nodes chained together with token chain and
