@@ -17,6 +17,10 @@ Target &llvm::getTheSBFXTarget() {
 }
 
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeSBFTargetInfo() {
+  TargetRegistry::RegisterTarget(
+      getTheSBFXTarget(), "sbf", "SBF new (little endian)", "SBF",
+      [](Triple::ArchType Aarch) { return Aarch == Triple::ArchType::sbf; },
+      true);
   RegisterTarget<Triple::sbf, /*HasJIT=*/true> XX(
       getTheSBFXTarget(), "sbf", "SBF new (little endian)", "SBF");
 }
