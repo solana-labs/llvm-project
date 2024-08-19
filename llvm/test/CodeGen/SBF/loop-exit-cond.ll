@@ -49,11 +49,10 @@ for.cond:                                         ; preds = %for.inc, %if.then
   %cmp1 = icmp slt i32 %2, %3
   br i1 %cmp1, label %for.body, label %for.cond.cleanup
 
-; CHECK:      mov32 r[[LEN:[0-9]+]], w1
-; CHECK:      add32 w[[IDX32:[0-9]+]], 1
-; CHECK:      mov64 r[[IDX:[0-9]+]], r[[IDX32:[0-9]+]]
-; CHECK:      lsh64 r[[IDX:[0-9]+]], 32
-; CHECK:      arsh64 r[[IDX:[0-9]+]], 32
+; CHECK:      mov32 w[[LEN32:[0-9]+]], w1
+; CHECK:      add32 w[[IDX:[0-9]+]], 1
+; CHECK:      mov32 w[[LEN:[0-9]+]], w[[LEN32]]
+; CHECK:      add32 w[[LEN]], 0
 ; CHECK-NEXT: jslt r[[IDX]], r[[LEN]],
 
 for.cond.cleanup:                                 ; preds = %for.cond

@@ -185,6 +185,69 @@ bool SBFMIPeephole::eliminateZExtSeq() {
       }
 
       // Eliminate the 32-bit to 64-bit zero extension sequence when possible.
+      // (new MOV32/ADD32)
+      //
+      //   w0@1 := SUB_ri w0@0, 1  # user instruction that sign-extends
+      //   w0@2 := ADD_ri w0@1, 0  # sign extend inserted by SBPFISelLowering
+      //   r0@3 := SUBREG_TO_REG 0, w0@2, sub_32
+      //
+      //   to
+      //
+      //   w0@1 := SUB_ri w0@0, 1  # user instruction that sign-extends
+      //   r0@3 := SUBREG_TO_REG 0, w0@1, sub_32
+      if (MI.getOpcode() == SBF::SUBREG_TO_REG &&
+          MI.getOperand(1).getImm() == 0 &&
+          MI.getOperand(3).getImm() == SBF::sub_32) {
+        Register DstReg = MI.getOperand(0).getReg();
+        Register SextReg = MI.getOperand(2).getReg();
+        MachineInstr *SextMI = MRI->getVRegDef(SextReg);
+
+        LLVM_DEBUG(dbgs() << "Starting SUBREG_TO_REG found:\n");
+        LLVM_DEBUG(MI.dump());
+
+        if (!SextMI || SextMI->isPHI() ||
+            SextMI->getOpcode() != SBF::ADD_ri_32 ||
+            SextMI->getOperand(2).getImm() != 0)
+          continue;
+
+        LLVM_DEBUG(dbgs() << "  ADD32 REG, 0 found:\n");
+        LLVM_DEBUG(SextMI->dump());
+
+        Register UserReg = SextMI->getOperand(1).getReg();
+        MachineInstr *UserMI = MRI->getVRegDef(UserReg);
+        if (!UserMI || UserMI->isPHI())
+          continue;
+
+        // Check if source register of "ADD32 REG, 0" is already in sign
+        // extended form.
+        switch (UserMI->getOpcode()) {
+        case SBF::ADD_ri_32:
+        case SBF::SUB_ri_32:
+        case SBF::MUL_ri_32:
+          break;
+        default:
+          continue;
+        }
+
+        LLVM_DEBUG(dbgs() << "  Sign-extending instruction found:\n");
+        LLVM_DEBUG(UserMI->dump());
+
+        BuildMI(MBB, MI, MI.getDebugLoc(), TII->get(SBF::SUBREG_TO_REG), DstReg)
+            .addImm(0)
+            .addReg(UserReg)
+            .addImm(SBF::sub_32);
+        SextMI->eraseFromParent();
+
+        // Can't erase the SUBREG_TO_REG in it's own iteration.
+        // Mark it to ToErase, and erase in the next iteration.
+        ToErase = &MI;
+        ZExtElemNum++;
+        Eliminated = true;
+        break;
+      }
+
+      // Eliminate the 32-bit to 64-bit zero extension sequence when possible.
+      // (old SLL/SRL)
       //
       //   MOV_32_64 rB, wA
       //   SLL_ri    rB, rB, 32

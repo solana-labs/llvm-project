@@ -181,12 +181,10 @@ entry:
 
 ; CHECK-LABEL: test_min_32
 ; CHECK: ldxw w0, [r1 + 0]
-; CHECK: mov64 r4, r0
-; CHECK: lsh64 r4, 32
-; CHECK: arsh64 r4, 32
-; CHECK: mov32 r5, w2
-; CHECK: lsh64 r5, 32
-; CHECK: arsh64 r5, 32
+; CHECK: mov32 w4, w0
+; CHECK-NEXT: add32 w4, 0
+; CHECK: mov32 w5, w2
+; CHECK-NEXT: add32 w5, 0
 ; CHECK: mov32 w3, w0
 ; CHECK: jslt r4, r5, LBB16_2
 ; CHECK: mov32 w3, w2
@@ -211,12 +209,10 @@ entry:
 
 ; CHECK-LABEL: test_max_32
 ; CHECK: ldxw w0, [r1 + 0]
-; CHECK: mov64 r4, r0
-; CHECK: lsh64 r4, 32
-; CHECK: arsh64 r4, 32
-; CHECK: mov32 r5, w2
-; CHECK: lsh64 r5, 32
-; CHECK: arsh64 r5, 32
+; CHECK: mov32 w4, w0
+; CHECK-NEXT: add32 w4, 0
+; CHECK: mov32 w5, w2
+; CHECK-NEXT: add32 w5, 0
 ; CHECK: mov32 w3, w0
 ; CHECK: jsgt r4, r5, LBB18_2
 ; CHECK: mov32 w3, w2
