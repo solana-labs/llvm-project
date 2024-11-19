@@ -27,11 +27,6 @@
 using namespace llvm;
 using namespace llvm::PatternMatch;
 
-static cl::opt<bool>
-    DisableSBFserializeICMP("sbf-disable-serialize-icmp", cl::Hidden,
-                            cl::desc("SBF: Disable Serializing ICMP insns."),
-                            cl::init(false));
-
 static cl::opt<bool> DisableSBFavoidSpeculation(
     "sbf-disable-avoid-speculation", cl::Hidden,
     cl::desc("SBF: Disable Avoiding Speculative Code Motion."),
@@ -58,7 +53,6 @@ private:
   SmallVector<PassThroughInfo, 16> PassThroughs;
 
   void adjustInst(Instruction &I);
-  bool serializeICMPInBB(Instruction &I);
   bool avoidSpeculation(Instruction &I);
   bool insertPassThrough();
 };
@@ -84,40 +78,6 @@ bool SBFAdjustOptImpl::insertPassThrough() {
   return !PassThroughs.empty();
 }
 
-// To avoid combining conditionals in the same basic block by
-// instrcombine optimization.
-bool SBFAdjustOptImpl::serializeICMPInBB(Instruction &I) {
-  // For:
-  //   comp1 = icmp <opcode> ...;
-  //   comp2 = icmp <opcode> ...;
-  //   ... or comp1 comp2 ...
-  // changed to:
-  //   comp1 = icmp <opcode> ...;
-  //   comp2 = icmp <opcode> ...;
-  //   new_comp1 = __builtin_bpf_passthrough(seq_num, comp1)
-  //   ... or new_comp1 comp2 ...
-  Value *Op0, *Op1;
-  // Use LogicalOr (accept `or i1` as well as `select i1 Op0, true, Op1`)
-  if (!match(&I, m_LogicalOr(m_Value(Op0), m_Value(Op1))))
-    return false;
-  auto *Icmp1 = dyn_cast<ICmpInst>(Op0);
-  if (!Icmp1)
-    return false;
-  auto *Icmp2 = dyn_cast<ICmpInst>(Op1);
-  if (!Icmp2)
-    return false;
-
-  Value *Icmp1Op0 = Icmp1->getOperand(0);
-  Value *Icmp2Op0 = Icmp2->getOperand(0);
-  if (Icmp1Op0 != Icmp2Op0)
-    return false;
-
-  // Now we got two icmp instructions which feed into
-  // an "or" instruction.
-  PassThroughInfo Info(Icmp1, &I, 0);
-  PassThroughs.push_back(Info);
-  return true;
-}
 
 // To avoid speculative hoisting certain computations out of
 // a basic block.
@@ -215,8 +175,6 @@ bool SBFAdjustOptImpl::avoidSpeculation(Instruction &I) {
 }
 
 void SBFAdjustOptImpl::adjustInst(Instruction &I) {
-  if (!DisableSBFserializeICMP && serializeICMPInBB(I))
-    return;
   if (!DisableSBFavoidSpeculation && avoidSpeculation(I))
     return;
 }
