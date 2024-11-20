@@ -54,28 +54,19 @@ static void WarnSize(int Offset, MachineFunction &MF, DebugLoc& DL)
     }
     OldMF = &(MF.getFunction());
 
-    if (MF.getSubtarget<SBFSubtarget>().isSolana()) {
-      dbgs() << "Error:";
-      if (DL) {
-        dbgs() << " ";
-        DL.print(dbgs());
-      }
-      uint64_t StackSize = MF.getFrameInfo().getStackSize();
-      dbgs() << " Function " << MF.getFunction().getName()
-             << " Stack offset of " << -Offset << " exceeded max offset of "
-             << -MaxOffset << " by " << MaxOffset - Offset
-             << " bytes, please minimize large stack variables. "
-             << "Estimated function frame size: " << StackSize << " bytes."
-             << " Exceeding the maximum stack offset may cause "
-                "undefined behavior during execution.\n\n";
-    } else {
-      DiagnosticInfoUnsupported DiagStackSize(
-          MF.getFunction(),
-          "SBF stack limit of 512 bytes is exceeded. "
-          "Please move large on stack variables into SBF per-cpu array map.\n",
-          DL, DiagnosticSeverity::DS_Error);
-      MF.getFunction().getContext().diagnose(DiagStackSize);
+    dbgs() << "Error:";
+    if (DL) {
+      dbgs() << " ";
+      DL.print(dbgs());
     }
+    uint64_t StackSize = MF.getFrameInfo().getStackSize();
+    dbgs() << " Function " << MF.getFunction().getName()
+           << " Stack offset of " << -Offset << " exceeded max offset of "
+           << -MaxOffset << " by " << MaxOffset - Offset
+           << " bytes, please minimize large stack variables. "
+           << "Estimated function frame size: " << StackSize << " bytes."
+           << " Exceeding the maximum stack offset may cause "
+              "undefined behavior during execution.\n\n";
   }
 }
 

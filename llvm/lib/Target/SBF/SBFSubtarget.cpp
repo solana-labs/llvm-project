@@ -35,7 +35,6 @@ SBFSubtarget &SBFSubtarget::initializeSubtargetDependencies(const Triple &TT,
 
 void SBFSubtarget::initializeEnvironment(const Triple &TT) {
   assert(TT.getArch() == Triple::sbf && "expected Triple::sbf");
-  IsSolana = true;
   HasJmpExt = false;
   HasAlu32 = false;
   UseDwarfRIS = false;
@@ -74,6 +73,4 @@ SBFSubtarget::SBFSubtarget(const Triple &TT, const std::string &CPU,
       FrameLowering(initializeSubtargetDependencies(TT, CPU, FS)),
       TLInfo(TM, *this) {
   assert(TT.getArch() == Triple::sbf && "expected Triple::sbf");
-  IsSolana = true;
-  TSInfo.setSolanaFlag(IsSolana);
 }

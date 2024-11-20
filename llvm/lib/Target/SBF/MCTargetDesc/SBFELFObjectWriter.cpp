@@ -22,7 +22,7 @@ namespace {
 
 class SBFELFObjectWriter : public MCELFObjectTargetWriter {
 public:
-  SBFELFObjectWriter(uint8_t OSABI, bool isSolana, bool relocAbs64, bool isSBFv2);
+  SBFELFObjectWriter(uint8_t OSABI, bool relocAbs64, bool isSBFv2);
   ~SBFELFObjectWriter() override = default;
 
 protected:
@@ -32,7 +32,6 @@ protected:
   bool needsRelocateWithSymbol(const MCValue &Val, const MCSymbol &Sym,
                                unsigned Type) const override;
 private:
-  bool isSolana;
   bool relocAbs64;
 };
 
@@ -45,15 +44,15 @@ private:
 bool SBFELFObjectWriter::needsRelocateWithSymbol(const MCValue &Val,
                                                  const MCSymbol &Sym,
                                                  unsigned Type) const {
-  return isSolana;
+  return true;
 }
 
-SBFELFObjectWriter::SBFELFObjectWriter(uint8_t OSABI, bool isSolana,
+SBFELFObjectWriter::SBFELFObjectWriter(uint8_t OSABI,
                                        bool relocAbs64, bool isSBFv2)
   : MCELFObjectTargetWriter(/*Is64Bit*/ true, OSABI,
                             isSBFv2 ? ELF::EM_SBF : ELF::EM_BPF,
                             /*HasRelocationAddend*/ false),
-      isSolana(isSolana), relocAbs64(relocAbs64) {}
+      relocAbs64(relocAbs64) {}
 
 unsigned SBFELFObjectWriter::getRelocType(MCContext &Ctx, const MCValue &Target,
                                           const MCFixup &Fixup,
@@ -73,7 +72,7 @@ unsigned SBFELFObjectWriter::getRelocType(MCContext &Ctx, const MCValue &Target,
     Ctx.reportError(Fixup.getLoc(), "2-byte relocations not supported");
     return ELF::R_SBF_NONE;
   case FK_Data_8:
-    return (isSolana && !relocAbs64) ? ELF::R_SBF_64_64 : ELF::R_SBF_64_ABS64;
+    return relocAbs64 ? ELF::R_SBF_64_ABS64 : ELF::R_SBF_64_64;
   case FK_Data_4:
     if (const MCSymbolRefExpr *A = Target.getSymA()) {
       const MCSymbol &Sym = A->getSymbol();
@@ -106,11 +105,11 @@ unsigned SBFELFObjectWriter::getRelocType(MCContext &Ctx, const MCValue &Target,
             return ELF::R_SBF_64_ABS32;
       }
     }
-    return isSolana ? ELF::R_SBF_64_32 : ELF::R_SBF_64_ABS32;
+    return ELF::R_SBF_64_32;
   }
 }
 
 std::unique_ptr<MCObjectTargetWriter>
-llvm::createSBFELFObjectWriter(uint8_t OSABI, bool isSolana, bool useRelocAbs64, bool isSBFv2) {
-  return std::make_unique<SBFELFObjectWriter>(OSABI, isSolana, useRelocAbs64, isSBFv2);
+llvm::createSBFELFObjectWriter(uint8_t OSABI, bool useRelocAbs64, bool isSBFv2) {
+  return std::make_unique<SBFELFObjectWriter>(OSABI, useRelocAbs64, isSBFv2);
 }

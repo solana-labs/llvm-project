@@ -54,7 +54,6 @@ def SBFIsLittleEndian : Predicate<"CurDAG->getDataLayout().isLittleEndian()">;
 def SBFIsBigEndian    : Predicate<"!CurDAG->getDataLayout().isLittleEndian()">;
 def SBFHasALU32 : Predicate<"Subtarget->getHasAlu32()">;
 def SBFNoALU32 : Predicate<"!Subtarget->getHasAlu32()">;
-def SBFSubtargetSolana : Predicate<"Subtarget->isSolana()">;
 def SBFHasLddw : Predicate<"!Subtarget->getNoLddw()">;
 def SBFNoLddw : Predicate<"Subtarget->getNoLddw()">;
 def SBFHasNeg : Predicate<"!Subtarget->getDisableNeg()">;
@@ -819,7 +818,7 @@ def : Pat<(atomic_load_sub_32 ADDRri:$addr, GPR32:$val),
 def : Pat<(atomic_load_sub_64 ADDRri:$addr, GPR:$val),
           (XFADDD ADDRri:$addr, (NEG_64 GPR:$val))>;
 
-let Predicates = [SBFSubtargetSolana], usesCustomInserter = 1, isCodeGenOnly = 1 in {
+let usesCustomInserter = 1, isCodeGenOnly = 1 in {
   def ATOMIC_FENCE : Pseudo<
     (outs),
     (ins),

@@ -191,22 +191,7 @@ void SBFDAGToDAGISel::Select(SDNode *Node) {
   switch (Opcode) {
   default:
     break;
-
-  case ISD::SDIV: {
-    if (!Subtarget->isSolana()) {
-      DebugLoc Empty;
-      const DebugLoc &DL = Node->getDebugLoc();
-      if (DL != Empty)
-        errs() << "Error at line " << DL.getLine() << ": ";
-      else
-        errs() << "Error: ";
-      errs() << "Unsupport signed division for DAG: ";
-      Node->print(errs(), CurDAG);
-      errs() << "\nPlease convert to unsigned div/mod.\n";
-    }
-    break;
-  }
-
+    
   case ISD::FrameIndex: {
     int FI = cast<FrameIndexSDNode>(Node)->getIndex();
     EVT VT = Node->getValueType(0);

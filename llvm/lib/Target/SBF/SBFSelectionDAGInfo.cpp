@@ -13,6 +13,8 @@
 #include "SBFTargetMachine.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "SBFSelectionDAGInfo.h"
+
 using namespace llvm;
 
 #define DEBUG_TYPE "sbf-selectiondag-info"
