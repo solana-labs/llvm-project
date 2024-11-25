@@ -28,6 +28,10 @@ using namespace llvm;
 SBFInstrInfo::SBFInstrInfo()
     : SBFGenInstrInfo(SBF::ADJCALLSTACKDOWN, SBF::ADJCALLSTACKUP) {}
 
+void SBFInstrInfo::setHasExplicitSext(bool HasExplicitSext) {
+  this->HasExpliciSext = HasExplicitSext;
+}
+
 void SBFInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                MachineBasicBlock::iterator I,
                                const DebugLoc &DL, MCRegister DestReg,
@@ -35,9 +39,12 @@ void SBFInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   if (SBF::GPRRegClass.contains(DestReg, SrcReg))
     BuildMI(MBB, I, DL, get(SBF::MOV_rr), DestReg)
         .addReg(SrcReg, getKillRegState(KillSrc));
-  else if (SBF::GPR32RegClass.contains(DestReg, SrcReg))
-    BuildMI(MBB, I, DL, get(SBF::MOV_rr_32), DestReg)
+  else if (SBF::GPR32RegClass.contains(DestReg, SrcReg)) {
+    unsigned OpCode = HasExpliciSext
+                          ? SBF::MOV_rr_32_no_sext_v2 : SBF::MOV_rr_32_no_sext_v1;
+    BuildMI(MBB, I, DL, get(OpCode), DestReg)
         .addReg(SrcReg, getKillRegState(KillSrc));
+  }
   else
     llvm_unreachable("Impossible reg-to-reg copy");
 }
