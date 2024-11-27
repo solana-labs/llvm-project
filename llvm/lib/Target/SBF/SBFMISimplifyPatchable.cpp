@@ -92,10 +92,31 @@ void SBFMISimplifyPatchable::initialize(MachineFunction &MFParm) {
   LLVM_DEBUG(dbgs() << "*** SBF simplify patchable insts pass ***\n\n");
 }
 
+static bool isST(unsigned Opcode) {
+  return Opcode == SBF::STB_imm || Opcode == SBF::STH_imm ||
+         Opcode == SBF::STW_imm || Opcode == SBF::STD_imm;
+}
+
+static bool isSTX32(unsigned Opcode) {
+  return Opcode == SBF::STB32 || Opcode == SBF::STH32 || Opcode == SBF::STW32;
+}
+
+static bool isSTX64(unsigned Opcode) {
+  return Opcode == SBF::STB || Opcode == SBF::STH || Opcode == SBF::STW ||
+         Opcode == SBF::STD;
+}
+
+static bool isLDX32(unsigned Opcode) {
+  return Opcode == SBF::LDB32 || Opcode == SBF::LDH32 || Opcode == SBF::LDW32;
+}
+
+static bool isLDX64(unsigned Opcode) {
+  return Opcode == SBF::LDB || Opcode == SBF::LDH || Opcode == SBF::LDW ||
+         Opcode == SBF::LDD;
+}
+
 bool SBFMISimplifyPatchable::isLoadInst(unsigned Opcode) {
-  return Opcode == SBF::LDD || Opcode == SBF::LDW || Opcode == SBF::LDH ||
-         Opcode == SBF::LDB || Opcode == SBF::LDW32 || Opcode == SBF::LDH32 ||
-         Opcode == SBF::LDB32;
+  return isLDX32(Opcode) || isLDX64(Opcode);
 }
 
 void SBFMISimplifyPatchable::checkADDrr(MachineRegisterInfo *MRI,
@@ -116,14 +137,12 @@ void SBFMISimplifyPatchable::checkADDrr(MachineRegisterInfo *MRI,
     MachineInstr *DefInst = MO.getParent();
     unsigned Opcode = DefInst->getOpcode();
     unsigned COREOp;
-    if (Opcode == SBF::LDB || Opcode == SBF::LDH || Opcode == SBF::LDW ||
-        Opcode == SBF::LDD || Opcode == SBF::STB || Opcode == SBF::STH ||
-        Opcode == SBF::STW || Opcode == SBF::STD)
-      COREOp = SBF::CORE_MEM;
-    else if (Opcode == SBF::LDB32 || Opcode == SBF::LDH32 ||
-             Opcode == SBF::LDW32 || Opcode == SBF::STB32 ||
-             Opcode == SBF::STH32 || Opcode == SBF::STW32)
-      COREOp = SBF::CORE_ALU32_MEM;
+    if (isLDX64(Opcode))
+      COREOp = SBF::CORE_LD64;
+    else if (isLDX32(Opcode))
+      COREOp = SBF::CORE_LD32;
+    else if (isSTX64(Opcode) || isSTX32(Opcode) || isST(Opcode))
+      COREOp = SBF::CORE_ST;
     else
       continue;
 
@@ -135,9 +154,7 @@ void SBFMISimplifyPatchable::checkADDrr(MachineRegisterInfo *MRI,
     // Reject the form:
     //   %1 = ADD_rr %2, %3
     //   *(type *)(%2 + 0) = %1
-    if (Opcode == SBF::STB || Opcode == SBF::STH || Opcode == SBF::STW ||
-        Opcode == SBF::STD || Opcode == SBF::STB32 || Opcode == SBF::STH32 ||
-        Opcode == SBF::STW32) {
+    if (isSTX64(Opcode) || isSTX32(Opcode)) {
       const MachineOperand &Opnd = DefInst->getOperand(0);
       if (Opnd.isReg() && Opnd.getReg() == MO.getReg())
         continue;

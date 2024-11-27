@@ -43,6 +43,9 @@ def FeaturePqrInstr : SubtargetFeature<"pqr-instr", "HasPqrClass", "true",
 def FeatureCallConv : SubtargetFeature<"new-call-conv", "NewCallConvention", "true",
                                     "Enable new call convetion for SBFv2">;
 
+def FeatureStoreImm : SubtargetFeature<"store-imm", "HasStoreImm", "true",
+                                           "Enable store imm instructions">;
+
 class Proc<string Name, list<SubtargetFeature> Features>
  : Processor<Name, NoItineraries, Features>;
 
