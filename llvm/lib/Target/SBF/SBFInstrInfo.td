@@ -65,8 +65,8 @@ def SBFNoCallxSrc : Predicate<"!Subtarget->getCallXRegSrc()">;
 def SBFPqrInstr : Predicate<"Subtarget->getHasPqrClass()">;
 def SBFNoPqrInstr : Predicate<"!Subtarget->getHasPqrClass()">;
 def SBFHasStoreImm : Predicate<"Subtarget->getHasStoreImm()">;
-def SBFExplicitSignExt : Predicate<"Subtarget->getExplicitSignExt()">;
-def SBFNoExplicitSignExt : Predicate<"!Subtarget->getExplicitSignExt()">;
+def SBFExplicitSignExt : Predicate<"Subtarget->getHasExplicitSignExt()">;
+def SBFNoExplicitSignExt : Predicate<"!Subtarget->getHasExplicitSignExt()">;
 
 def brtarget : Operand<OtherVT> {
   let PrintMethod = "printBrTargetOperand";

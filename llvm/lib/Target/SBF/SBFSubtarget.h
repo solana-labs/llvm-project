@@ -81,7 +81,7 @@ protected:
   bool HasStoreImm;
 
   // Whether we have the explicit sign extension instruction (mov32)
-  bool ExplicitSignExt;
+  bool HasExplicitSignExt;
 
 public:
   // This constructor initializes the data members to match that
@@ -108,7 +108,7 @@ public:
     return HasDynamicFrames && NewCallConvention;
   }
   bool getHasStoreImm() const { return HasStoreImm; }
-  bool getExplicitSignExt() const { return ExplicitSignExt; }
+  bool getHasExplicitSignExt() const { return HasExplicitSignExt; }
   const SBFInstrInfo *getInstrInfo() const override { return &InstrInfo; }
   const SBFFrameLowering *getFrameLowering() const override {
     return &FrameLowering;

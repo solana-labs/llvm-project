@@ -46,7 +46,7 @@ def FeatureCallConv : SubtargetFeature<"new-call-conv", "NewCallConvention", "tr
 def FeatureStoreImm : SubtargetFeature<"store-imm", "HasStoreImm", "true",
                                            "Enable store imm instructions">;
 
-def FeatureExplicitSext : SubtargetFeature<"explicit-sext", "ExplicitSignExt",
+def FeatureExplicitSext : SubtargetFeature<"explicit-sext", "HasExplicitSignExt",
                     "true", "Enable the explicit sign extension instruction mov32">;
 
 class Proc<string Name, list<SubtargetFeature> Features>

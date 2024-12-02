@@ -939,7 +939,8 @@ SBFTargetLowering::EmitSubregExt(MachineInstr &MI, MachineBasicBlock *BB,
   MachineRegisterInfo &RegInfo = F->getRegInfo();
 
   if (!isSigned) {
-    unsigned MovOp = Subtarget->getExplicitSignExt()
+    unsigned MovOp =
+        Subtarget->getHasExplicitSignExt()
                          ? SBF::MOV_rr : SBF::MOV_32_64;
     Register PromotedReg0 = RegInfo.createVirtualRegister(RC);
     BuildMI(BB, DL, TII.get(MovOp), PromotedReg0).addReg(Reg);
@@ -947,7 +948,7 @@ SBFTargetLowering::EmitSubregExt(MachineInstr &MI, MachineBasicBlock *BB,
   }
   Register PromotedReg0 = RegInfo.createVirtualRegister(RC);
   BuildMI(BB, DL, TII.get(SBF::MOV_32_64), PromotedReg0).addReg(Reg);
-  if (Subtarget->getExplicitSignExt())
+  if (Subtarget->getHasExplicitSignExt())
     return PromotedReg0;
 
   Register PromotedReg1 = RegInfo.createVirtualRegister(RC);
