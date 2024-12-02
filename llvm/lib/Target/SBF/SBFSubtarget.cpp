@@ -47,6 +47,7 @@ void SBFSubtarget::initializeEnvironment(const Triple &TT) {
   CallxRegSrc = false;
   HasPqrClass = false;
   NewCallConvention = false;
+  HasStoreImm = false;
 }
 
 void SBFSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
