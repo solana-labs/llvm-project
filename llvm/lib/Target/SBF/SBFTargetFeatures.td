@@ -46,6 +46,9 @@ def FeatureCallConv : SubtargetFeature<"new-call-conv", "NewCallConvention", "tr
 def FeatureStoreImm : SubtargetFeature<"store-imm", "HasStoreImm", "true",
                                            "Enable store imm instructions">;
 
+def FeatureExplicitSext : SubtargetFeature<"explicit-sext", "HasExplicitSignExt",
+                    "true", "Enable the explicit sign extension instruction mov32">;
+
 class Proc<string Name, list<SubtargetFeature> Features>
  : Processor<Name, NoItineraries, Features>;
 
@@ -55,4 +58,4 @@ def : Proc<"v2", []>;
 def : Proc<"v3", [ALU32]>;
 def : Proc<"sbfv2", [FeatureDynamicFrames, FeatureRelocAbs64, FeatureStaticSyscalls,
                         FeatureDisableNeg, FeatureReverseSubImm, FeatureDisableLddw, FeatureCallxRegSrc,
-                          FeaturePqrInstr, FeatureCallConv]>;
+                          FeaturePqrInstr, FeatureCallConv, FeatureExplicitSext]>;

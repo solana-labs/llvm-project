@@ -65,6 +65,8 @@ def SBFNoCallxSrc : Predicate<"!Subtarget->getCallXRegSrc()">;
 def SBFPqrInstr : Predicate<"Subtarget->getHasPqrClass()">;
 def SBFNoPqrInstr : Predicate<"!Subtarget->getHasPqrClass()">;
 def SBFHasStoreImm : Predicate<"Subtarget->getHasStoreImm()">;
+def SBFExplicitSignExt : Predicate<"Subtarget->getHasExplicitSignExt()">;
+def SBFNoExplicitSignExt : Predicate<"!Subtarget->getHasExplicitSignExt()">;
 
 def brtarget : Operand<OtherVT> {
   let PrintMethod = "printBrTargetOperand";
@@ -415,16 +417,26 @@ def MOV_ri : MATH_RI<SBF_ALU64, SBF_MOV,
                     (ins i64imm:$imm),
                     "mov64 $dst, $imm",
                     [(set GPR:$dst, (i64 i64immSExt32:$imm))]>;
-def MOV_rr_32 : MATH_RR<SBF_ALU, SBF_MOV,
-                    (outs GPR32:$dst),
-                    (ins GPR32:$src),
-                    "mov32 $dst, $src",
-                    []>;
+
 def MOV_ri_32 : MATH_RI<SBF_ALU, SBF_MOV,
                     (outs GPR32:$dst),
                     (ins i32imm:$imm),
                     "mov32 $dst, $imm",
                     [(set GPR32:$dst, (i32 i32immSExt32:$imm))]>;
+
+let Predicates = [SBFExplicitSignExt], DecoderNamespace = "SBFv2" in {
+    def MOV_rr_32_no_sext_v2 : MATH_RR<SBF_ALU64, SBF_MOV,
+                                (outs GPR32:$dst),
+                                (ins GPR32:$src),
+                                "mov64 $dst, $src",
+                                []>;
+}
+
+def MOV_rr_32_no_sext_v1 : MATH_RR<SBF_ALU, SBF_MOV,
+                        (outs GPR32:$dst),
+                        (ins GPR32:$src),
+                        "mov32 $dst, $src",
+                        []>, Requires<[SBFNoExplicitSignExt]>;
 }
 
 def FI_ri
@@ -993,10 +1005,13 @@ let Constraints = "$dst = $src" in {
     }
 }
 
-let isCodeGenOnly = 1 in {
+let DecoderNamespace = "SBFv2" in {
   def MOV_32_64 : MATH_RR<SBF_ALU, SBF_MOV,
                          (outs GPR:$dst), (ins GPR32:$src),
                          "mov32 $dst, $src", []>;
+}
+
+let isCodeGenOnly = 1 in {
   def MOV_32_64_addr : MATH_RI<SBF_ALU, SBF_MOV,
                            (outs GPR:$dst), (ins u64imm:$imm),
                            "mov32 $dst, $imm", []>, Requires<[SBFNoLddw]>;
@@ -1023,19 +1038,39 @@ def : Pat<(SBFWrapper tglobaladdr:$in),
         (HOR_addr (MOV_32_64_addr tglobaladdr:$in),
                             tglobaladdr:$in)>, Requires<[SBFNoLddw]>;
 
-
+// SBFv2 sign extension
 def : Pat<(i64 (sext GPR32:$src)),
-          (SRA_ri (SLL_ri (MOV_32_64 GPR32:$src), 32), 32)>;
+          (MOV_32_64 GPR32:$src)>, Requires<[SBFExplicitSignExt]>;
 
-def : Pat<(i64 (zext GPR32:$src)), (MOV_32_64 GPR32:$src)>;
+// SBFv1 sign extension
+def : Pat<(i64 (sext GPR32:$src)),
+          (SRA_ri (SLL_ri (MOV_32_64 GPR32:$src), 32), 32)>,
+                Requires<[SBFNoExplicitSignExt]>;
 
-// For i64 -> i32 truncation, use the 32-bit subregister directly.
+// SBFv2 zero extension
+def : Pat<(i64 (zext GPR32:$src)), (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
+                                    GPR32:$src, sub_32)>, Requires<[SBFExplicitSignExt]>;
+
+// SBFv1 zero extension
+def : Pat<(i64 (zext GPR32:$src)), (MOV_32_64 GPR32:$src)>,
+                                Requires<[SBFNoExplicitSignExt]>;
+
+// SBFv2 truncation
 def : Pat<(i32 (trunc GPR:$src)),
-          (i32 (EXTRACT_SUBREG GPR:$src, sub_32))>;
+          (AND_ri_32 (i32 (EXTRACT_SUBREG GPR:$src, sub_32)),
+          (i32 0xffffffff))>, Requires<[SBFExplicitSignExt]>;
 
-// For i32 -> i64 anyext, we don't care about the high bits.
+// SBFv1 truncation
+def : Pat<(i32 (trunc GPR:$src)),
+          (i32 (EXTRACT_SUBREG GPR:$src, sub_32))>, Requires<[SBFNoExplicitSignExt]>;
+
+// SBFv2 anyext
 def : Pat<(i64 (anyext GPR32:$src)),
-          (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GPR32:$src, sub_32)>;
+          (MOV_32_64 GPR32:$src)>, Requires<[SBFExplicitSignExt]>;
+
+// SBFv1 anyext
+def : Pat<(i64 (anyext GPR32:$src)),
+          (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GPR32:$src, sub_32)>, Requires<[SBFNoExplicitSignExt]>;
 
 class STORE32<SBFWidthModifer SizeOp, string Mnemonic, list<dag> Pattern>
     : TYPE_LD_ST<SBF_MEM.Value, SizeOp.Value,

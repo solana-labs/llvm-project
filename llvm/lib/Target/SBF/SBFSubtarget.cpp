@@ -30,6 +30,7 @@ SBFSubtarget &SBFSubtarget::initializeSubtargetDependencies(const Triple &TT,
                                                             StringRef FS) {
   initializeEnvironment(TT);
   initSubtargetFeatures(CPU, FS);
+  InstrInfo.setHasExplicitSignExt(HasExplicitSignExt);
   return *this;
 }
 

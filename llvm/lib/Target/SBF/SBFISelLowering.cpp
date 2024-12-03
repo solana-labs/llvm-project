@@ -933,24 +933,29 @@ SBFTargetLowering::EmitSubregExt(MachineInstr &MI, MachineBasicBlock *BB,
                                  unsigned Reg, bool isSigned) const {
   const TargetInstrInfo &TII = *BB->getParent()->getSubtarget().getInstrInfo();
   const TargetRegisterClass *RC = getRegClassFor(MVT::i64);
-  int RShiftOp = isSigned ? SBF::SRA_ri : SBF::SRL_ri;
   MachineFunction *F = BB->getParent();
   DebugLoc DL = MI.getDebugLoc();
 
   MachineRegisterInfo &RegInfo = F->getRegInfo();
 
   if (!isSigned) {
+    unsigned MovOp =
+        Subtarget->getHasExplicitSignExt()
+                         ? SBF::MOV_rr : SBF::MOV_32_64;
     Register PromotedReg0 = RegInfo.createVirtualRegister(RC);
-    BuildMI(BB, DL, TII.get(SBF::MOV_32_64), PromotedReg0).addReg(Reg);
+    BuildMI(BB, DL, TII.get(MovOp), PromotedReg0).addReg(Reg);
     return PromotedReg0;
   }
   Register PromotedReg0 = RegInfo.createVirtualRegister(RC);
+  BuildMI(BB, DL, TII.get(SBF::MOV_32_64), PromotedReg0).addReg(Reg);
+  if (Subtarget->getHasExplicitSignExt())
+    return PromotedReg0;
+
   Register PromotedReg1 = RegInfo.createVirtualRegister(RC);
   Register PromotedReg2 = RegInfo.createVirtualRegister(RC);
-  BuildMI(BB, DL, TII.get(SBF::MOV_32_64), PromotedReg0).addReg(Reg);
   BuildMI(BB, DL, TII.get(SBF::SLL_ri), PromotedReg1)
     .addReg(PromotedReg0).addImm(32);
-  BuildMI(BB, DL, TII.get(RShiftOp), PromotedReg2)
+  BuildMI(BB, DL, TII.get(SBF::SRA_ri), PromotedReg2)
     .addReg(PromotedReg1).addImm(32);
 
   return PromotedReg2;

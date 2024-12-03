@@ -58,9 +58,11 @@ public:
                         MachineBasicBlock *FBB, ArrayRef<MachineOperand> Cond,
                         const DebugLoc &DL,
                         int *BytesAdded = nullptr) const override;
+  void setHasExplicitSignExt(bool HasExplicitSext);
+
 private:
   void expandMEMCPY(MachineBasicBlock::iterator) const;
-
+  bool HasExplicitSignExt;
 };
 }
 

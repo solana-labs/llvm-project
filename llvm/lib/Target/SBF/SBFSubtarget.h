@@ -80,6 +80,9 @@ protected:
   // Whether we have store imm instructions
   bool HasStoreImm;
 
+  // Whether we have the explicit sign extension instruction (mov32)
+  bool HasExplicitSignExt;
+
 public:
   // This constructor initializes the data members to match that
   // of the specified triple.
@@ -105,6 +108,7 @@ public:
     return HasDynamicFrames && NewCallConvention;
   }
   bool getHasStoreImm() const { return HasStoreImm; }
+  bool getHasExplicitSignExt() const { return HasExplicitSignExt; }
   const SBFInstrInfo *getInstrInfo() const override { return &InstrInfo; }
   const SBFFrameLowering *getFrameLowering() const override {
     return &FrameLowering;
