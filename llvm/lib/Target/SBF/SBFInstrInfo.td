@@ -1015,6 +1015,12 @@ let isCodeGenOnly = 1 in {
   def MOV_32_64_addr : MATH_RI<SBF_ALU, SBF_MOV,
                            (outs GPR:$dst), (ins u64imm:$imm),
                            "mov32 $dst, $imm", []>, Requires<[SBFNoLddw]>;
+
+  def MOV_32_64_no_sext : MATH_RR<SBF_ALU64, SBF_MOV,
+                                    (outs GPR:$dst),
+                                    (ins GPR32:$src),
+                                    "mov64 $dst, $src",
+                                    []>;
 }
 
 let DecoderNamespace = "SBFv2", Predicates = [SBFNoLddw] in {

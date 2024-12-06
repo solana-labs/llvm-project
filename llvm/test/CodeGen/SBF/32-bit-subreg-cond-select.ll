@@ -1,4 +1,4 @@
-; RUN: llc -O2 -march=sbf -mattr=+alu32 < %s | FileCheck %s
+; RUN: llc -O2 -march=sbf -mattr=+alu32,+explicit-sext -verify-machineinstrs < %s | FileCheck %s
 ;
 ; unsigned int select_cc_32 (unsigned a, unsigned b, int c, int d)
 ; {
@@ -56,19 +56,23 @@ entry:
   ret i32 %c.d
 }
 ; CHECK-LABEL: select_cc_32
-; CHECK: mov32 r{{[0-9]+}}, w{{[0-9]+}}
+; CHECK: mov64 r{{[0-9]+}}, w{{[0-9]+}}
+; CHECK: mov64 r{{[0-9]+}}, w{{[0-9]+}}
+; CHECK: jgt r{{[0-9]+}}, r{{[0-9]+}}
 ; CHECK-NOT: lsh64 r{{[0-9]+}}, 32
 ; CHECK-NOT: rsh64 r{{[0-9]+}}, 32
 
 ; Function Attrs: norecurse nounwind readnone
 define dso_local i64 @select_cc_32_64(i32 %a, i32 %b, i64 %c, i64 %d) local_unnamed_addr #0 {
 entry:
-  %cmp = icmp ugt i32 %a, %b
+  %cmp = icmp sgt i32 %a, %b
   %c.d = select i1 %cmp, i64 %c, i64 %d
   ret i64 %c.d
 }
 ; CHECK-LABEL: select_cc_32_64
 ; CHECK: mov32 r{{[0-9]+}}, w{{[0-9]+}}
+; CHECK: mov32 r{{[0-9]+}}, w{{[0-9]+}}
+; CHECK: jsgt r{{[0-9]+}}, r{{[0-9]+}}
 ; CHECK-NOT: lsh64 r{{[0-9]+}}, 32
 ; CHECK-NOT: rsh64 r{{[0-9]+}}, 32
 
@@ -80,6 +84,7 @@ entry:
   ret i32 %c.d
 }
 ; CHECK-LABEL: select_cc_64_32
+; CHECK: jsgt r{{[0-9]+}}, r{{[0-9]+}}
 ; CHECK-NOT: lsh64 r{{[0-9]+}}, 32
 
 ; Function Attrs: norecurse nounwind readnone
@@ -91,18 +96,20 @@ entry:
 }
 ; CHECK-LABEL: selecti_cc_32
 ; CHECK: mov32 r{{[0-9]+}}, w{{[0-9]+}}
+; CHECK: jgt r{{[0-9]+}}, 10
 ; CHECK-NOT: lsh64 r{{[0-9]+}}, 32
 ; CHECK-NOT: rsh64 r{{[0-9]+}}, 32
 
 ; Function Attrs: norecurse nounwind readnone
 define dso_local i64 @selecti_cc_32_64(i32 %a, i64 %c, i64 %d) local_unnamed_addr #0 {
 entry:
-  %cmp = icmp ugt i32 %a, 11
+  %cmp = icmp sgt i32 %a, 11
   %c.d = select i1 %cmp, i64 %c, i64 %d
   ret i64 %c.d
 }
 ; CHECK-LABEL: selecti_cc_32_64
 ; CHECK: mov32 r{{[0-9]+}}, w{{[0-9]+}}
+; CHECK: jsgt r{{[0-9]+}}, 11,
 ; CHECK-NOT: lsh64 r{{[0-9]+}}, 32
 ; CHECK-NOT: rsh64 r{{[0-9]+}}, 32
 
@@ -114,4 +121,5 @@ entry:
   ret i32 %c.d
 }
 ; CHECK-LABEL: selecti_cc_64_32
+; CHECK: jsgt r{{[0-9]+}}, 12
 ; CHECK-NOT: lsh64 r{{[0-9]+}}, 32
