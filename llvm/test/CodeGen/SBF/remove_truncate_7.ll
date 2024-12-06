@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=sbf -mattr=+alu32 -verify-machineinstrs | FileCheck %s
+; RUN: llc < %s -march=sbf -mattr=+alu32,+explicit-sext -verify-machineinstrs | FileCheck %s
 ;
 ; Source:
 ;  struct __sk_buff {
