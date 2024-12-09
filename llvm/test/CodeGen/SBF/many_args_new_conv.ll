@@ -6,7 +6,7 @@ entry:
 ; CHECK-LABEL: caller_no_alloca
 
 ; No changes to the stack pointer
-; CHECK-NOT: add64 r11
+; CHECK-NOT: add64 r10
 
 ; Saving arguments on the stack
 ; CHECK: mov64 r4, 55
@@ -30,26 +30,26 @@ entry:
 ; Function Attrs: nounwind uwtable
 define i32 @caller_alloca(i32 %a, i32 %b, i32 %c) #0 {
 ; CHECK-LABEL: caller_alloca
-; CHECK: add64 r11, -24
-; CHECK: ldxw r1, [r10 - 4]
+; CHECK: add64 r10, -64
+; CHECK: ldxw r1, [r10 + 60]
 
-; Saving arguments in the stack
+; Saving arguments in the callee's frame
 ; CHECK: mov64 r4, 55
 
-; Offset in the callee: (-56) - (-24) = -32
-; CHECK: stxdw [r10 - 56], r4
-; CHECK: mov64 r4, 60
-; Offset in the callee: (-64) - (-24) = -40
-; CHECK: stxdw [r10 - 64], r4
-; CHECK: mov64 r4, 50
-; Offset in the callee: (-48) - (-24) = -24
-; CHECK: stxdw [r10 - 48], r4
-; CHECK: mov64 r4, 4
-; Offset in the callee: (-40) - (-24) = -16
-; CHECK: stxdw [r10 - 40], r4
-; CHECK: mov64 r4, 3
-; Offset in the callee: (-32) - (-24) = -8
+; Offset in the callee: frame_size - 32
 ; CHECK: stxdw [r10 - 32], r4
+; CHECK: mov64 r4, 60
+; Offset in the callee: frame_size - 40
+; CHECK: stxdw [r10 - 40], r4
+; CHECK: mov64 r4, 50
+; Offset in the callee: frame_size - 24
+; CHECK: stxdw [r10 - 24], r4
+; CHECK: mov64 r4, 4
+; Offset in the callee: frame_size - 16
+; CHECK: stxdw [r10 - 16], r4
+; CHECK: mov64 r4, 3
+; Offset in the callee: frame_size - 8
+; CHECK: stxdw [r10 - 8], r4
 ; CHECK: mov64 r4, 1
 ; CHECK: mov64 r5, 2
 ; CHECK: call callee_no_alloca
@@ -67,17 +67,19 @@ entry:
 ; Function Attrs: nounwind uwtable
 define i32 @callee_alloca(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e, i32 %f, i32 %p, i32 %y, i32 %a1, i32 %a2) #1 {
 ; CHECK-LABEL: callee_alloca
+; CHECK: add64 r10, -128
 ; Loading arguments
-; CHECK: ldxdw r2, [r10 - 8]
-; CHECK: ldxdw r2, [r10 - 16]
-; CHECK: ldxdw r2, [r10 - 24]
-; CHECK: ldxdw r2, [r10 - 32]
-; CHECK: ldxdw r2, [r10 - 40]
+; CHECK: ldxdw r2, [r10 + 120]
+; CHECK: ldxdw r2, [r10 + 112]
+; CHECK: ldxdw r2, [r10 + 104]
+; CHECK: ldxdw r2, [r10 + 96]
+; CHECK: ldxdw r2, [r10 + 88]
 ; Loading allocated i32
-; CHECK: ldxw r0, [r10 - 44]
+; CHECK: ldxw r0, [r10 + 24]
+; CHECK: add64 r10, 128
 
 entry:
-  %o = alloca i32
+  %o = alloca i512
   %g = add i32 %a, %b
   %h = sub i32 %g, %c
   %i = add i32 %h, %d
@@ -95,12 +97,15 @@ entry:
 ; Function Attrs: nounwind uwtable
 define i32 @callee_no_alloca(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e, i32 %f, i32 %p, i32 %y, i32 %a1, i32 %a2) #1 {
 ; CHECK-LABEL: callee_no_alloca
+; CHECK: add64 r10, -64
 ; Loading arguments
-; CHECK: ldxdw r1, [r10 - 8]
-; CHECK: ldxdw r1, [r10 - 16]
-; CHECK: ldxdw r1, [r10 - 24]
-; CHECK: ldxdw r1, [r10 - 32]
-; CHECK: ldxdw r1, [r10 - 40]
+; CHECK: ldxdw r1, [r10 + 56]
+; CHECK: ldxdw r1, [r10 + 48]
+; CHECK: ldxdw r1, [r10 + 40]
+; CHECK: ldxdw r1, [r10 + 32]
+; CHECK: ldxdw r1, [r10 + 24]
+
+; CHECK: add64 r10, 64
 entry:
   %g = add i32 %a, %b
   %h = sub i32 %g, %c

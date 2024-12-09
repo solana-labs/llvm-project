@@ -86,7 +86,8 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeSBFDisassembler() {
 
 static const unsigned GPRDecoderTable[] = {
     SBF::R0, SBF::R1, SBF::R2, SBF::R3, SBF::R4,  SBF::R5,
-    SBF::R6, SBF::R7, SBF::R8, SBF::R9, SBF::R10, SBF::R11};
+    SBF::R6, SBF::R7, SBF::R8, SBF::R9, SBF::R10
+};
 
 static DecodeStatus DecodeGPRRegisterClass(MCInst &Inst, unsigned RegNo,
                                            uint64_t /*Address*/,
@@ -101,12 +102,13 @@ static DecodeStatus DecodeGPRRegisterClass(MCInst &Inst, unsigned RegNo,
 
 static const unsigned GPR32DecoderTable[] = {
     SBF::W0, SBF::W1, SBF::W2, SBF::W3, SBF::W4,  SBF::W5,
-    SBF::W6, SBF::W7, SBF::W8, SBF::W9, SBF::W10, SBF::W11};
+    SBF::W6, SBF::W7, SBF::W8, SBF::W9, SBF::W10
+};
 
 static DecodeStatus
 DecodeGPR32RegisterClass(MCInst &Inst, unsigned RegNo, uint64_t /*Address*/,
                          const MCDisassembler * /*Decoder*/) {
-  if (RegNo > 11)
+  if (RegNo > 10)
     return MCDisassembler::Fail;
 
   unsigned Reg = GPR32DecoderTable[RegNo];
@@ -118,7 +120,7 @@ static DecodeStatus decodeMemoryOpValue(MCInst &Inst, unsigned Insn,
                                         uint64_t Address,
                                         const MCDisassembler *Decoder) {
   unsigned Register = (Insn >> 16) & 0xf;
-  if (Register > 11)
+  if (Register > 10)
     return MCDisassembler::Fail;
 
   Inst.addOperand(MCOperand::createReg(GPRDecoderTable[Register]));

@@ -648,7 +648,7 @@ let isBranch = 1, isTerminator = 1, hasDelaySlot=0, isBarrier = 1 in {
 }
 
 // Jump and link
-let isCall=1, hasDelaySlot=0, Uses = [R11],
+let isCall=1, hasDelaySlot=0, Uses = [R10],
     // Potentially clobbered registers
     Defs = [R0, R1, R2, R3, R4, R5] in {
   def JAL     : CALL<"call">;
@@ -689,7 +689,7 @@ let isReturn = 1, isTerminator = 1, hasDelaySlot=0, isBarrier = 1,
 }
 
 // ADJCALLSTACKDOWN/UP pseudo insns
-let Defs = [R11], Uses = [R11], isCodeGenOnly = 1 in {
+let Defs = [R10], Uses = [R10], isCodeGenOnly = 1 in {
 def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i64imm:$amt1, i64imm:$amt2),
                               "#ADJCALLSTACKDOWN $amt1 $amt2",
                               [(SBFcallseq_start timm:$amt1, timm:$amt2)]>;

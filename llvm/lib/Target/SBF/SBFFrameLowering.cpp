@@ -29,8 +29,8 @@ void adjustStackPointer(MachineFunction &MF, MachineBasicBlock &MBB,
     DebugLoc Dl;
     const SBFInstrInfo &TII =
         *static_cast<const SBFInstrInfo *>(MF.getSubtarget().getInstrInfo());
-    BuildMI(MBB, MBBI, Dl, TII.get(SBF::ADD_ri), SBF::R11)
-        .addReg(SBF::R11)
+    BuildMI(MBB, MBBI, Dl, TII.get(SBF::ADD_ri), SBF::R10)
+        .addReg(SBF::R10)
         .addImm(IsSubtract ? -NumBytes : NumBytes);
   }
 }
