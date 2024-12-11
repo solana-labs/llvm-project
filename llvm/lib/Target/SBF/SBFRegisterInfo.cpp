@@ -39,7 +39,6 @@ SBFRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
 BitVector SBFRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
   markSuperRegs(Reserved, SBF::W10); // [W|R]10 is read only frame pointer
-  markSuperRegs(Reserved, SBF::W11); // [W|R]11 is pseudo stack pointer
   return Reserved;
 }
 
@@ -149,11 +148,13 @@ int SBFRegisterInfo::resolveInternalFrameIndex(
   const MachineFrameInfo &MFI = MF.getFrameInfo();
   const SBFFunctionInfo *SBFFuncInfo = MF.getInfo<SBFFunctionInfo>();
   int Offset = MFI.getObjectOffset(FI);
+  const SBFSubtarget & SubTarget = MF.getSubtarget<SBFSubtarget>();
+  uint64_t StackSize = MFI.getStackSize();
 
-  if (!MF.getSubtarget<SBFSubtarget>().getHasDynamicFrames() &&
+  if (!SubTarget.getHasDynamicFrames() &&
       SBFFuncInfo->containsFrameIndex(FI)) {
     Offset = SBFRegisterInfo::FrameLength - Offset;
-    if (static_cast<uint64_t>(Offset) < MFI.getStackSize()) {
+    if (static_cast<uint64_t>(Offset) < StackSize) {
       dbgs() << "Error: A function call in method "
              << MF.getFunction().getName()
              << " overwrites values in the frame. Please, decrease stack usage "
@@ -161,13 +162,18 @@ int SBFRegisterInfo::resolveInternalFrameIndex(
              << "The function call may cause undefined behavior "
                 "during execution.\n\n";
     }
-    Offset = -Offset;
-  } else if (MF.getSubtarget<SBFSubtarget>().getEnableNewCallConvention() &&
-             SBFFuncInfo->containsFrameIndex(FI)) {
-    uint64_t StackSize = MFI.getStackSize();
-    Offset = -static_cast<int>(StackSize) - Offset;
-  } else if (Imm.has_value()) {
-    Offset += Imm.value();
+    return -Offset;
+  }
+
+  if (SubTarget.getHasDynamicFrames() &&
+      SBFFuncInfo->containsFrameIndex(FI)) {
+    return -Offset;
+  }
+
+  Offset += Imm.value_or(0);
+
+  if (SubTarget.getHasDynamicFrames()) {
+    return static_cast<int>(StackSize) + Offset;
   }
 
   return Offset;

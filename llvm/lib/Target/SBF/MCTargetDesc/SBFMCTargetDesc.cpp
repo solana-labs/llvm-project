@@ -48,7 +48,7 @@ static MCInstrInfo *createSBFMCInstrInfo() {
 
 static MCRegisterInfo *createSBFMCRegisterInfo(const Triple &TT) {
   MCRegisterInfo *X = new MCRegisterInfo();
-  InitSBFMCRegisterInfo(X, SBF::R11 /* RAReg doesn't exist */);
+  InitSBFMCRegisterInfo(X, SBF::R10 /* RAReg doesn't exist */);
   return X;
 }
 

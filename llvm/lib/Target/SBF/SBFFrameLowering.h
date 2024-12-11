@@ -21,7 +21,11 @@ class SBFSubtarget;
 class SBFFrameLowering : public TargetFrameLowering {
 public:
   explicit SBFFrameLowering(const SBFSubtarget &sti)
-      : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, Align(8), 0) {}
+      : TargetFrameLowering(
+            TargetFrameLowering::StackGrowsDown,
+            Align(64),
+            0,
+            Align(64)) {}
 
   void emitPrologue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const override;

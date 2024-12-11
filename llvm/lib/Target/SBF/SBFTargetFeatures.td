@@ -40,9 +40,6 @@ def FeatureCallxRegSrc : SubtargetFeature<"callx-reg-src", "CallxRegSrc", "true"
 def FeaturePqrInstr : SubtargetFeature<"pqr-instr", "HasPqrClass", "true",
                                     "Enable the PQR instruction class">;
 
-def FeatureCallConv : SubtargetFeature<"new-call-conv", "NewCallConvention", "true",
-                                    "Enable new call convetion for SBFv2">;
-
 def FeatureStoreImm : SubtargetFeature<"store-imm", "HasStoreImm", "true",
                                            "Enable store imm instructions">;
 
@@ -58,4 +55,4 @@ def : Proc<"v2", []>;
 def : Proc<"v3", [ALU32]>;
 def : Proc<"sbfv2", [FeatureDynamicFrames, FeatureRelocAbs64, FeatureStaticSyscalls,
                         FeatureDisableNeg, FeatureReverseSubImm, FeatureDisableLddw, FeatureCallxRegSrc,
-                          FeaturePqrInstr, FeatureCallConv, FeatureExplicitSext]>;
+                          FeaturePqrInstr, FeatureExplicitSext]>;

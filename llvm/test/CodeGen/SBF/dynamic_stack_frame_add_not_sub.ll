@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=sbf --mattr=+dynamic-frames | FileCheck %s
+; RUN: llc < %s -march=sbf -mattr=+dynamic-frames | FileCheck %s
 ;
 ; Source:
 ; int test_func(int * vec, int idx) {
@@ -12,11 +12,11 @@
 ; Function Attrs: noinline nounwind optnone ssp uwtable(sync)
 define i32 @test_func(ptr noundef %vec, i32 noundef %idx) #0 {
 ; CHECK-LABEL: test_func:
-; CHECK: add64 r11, -16
-; CHECK: add64 r11, 16
+; CHECK: add64 r10, -128
+; CHECK: add64 r10, 128
 entry:
   %vec.addr = alloca ptr, align 8
-  %idx.addr = alloca i32, align 4
+  %idx.addr = alloca i512, align 4
   store ptr %vec, ptr %vec.addr, align 8
   store i32 %idx, ptr %idx.addr, align 4
   %0 = load i32, ptr %idx.addr, align 4
