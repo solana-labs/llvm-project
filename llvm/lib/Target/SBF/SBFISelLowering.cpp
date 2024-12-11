@@ -63,8 +63,7 @@ SBFTargetLowering::SBFTargetLowering(const TargetMachine &TM,
   // Compute derived properties from the register classes
   computeRegisterProperties(STI.getRegisterInfo());
 
-  if (Subtarget->getHasDynamicFrames())
-    setStackPointerRegisterToSaveRestore(SBF::R10);
+  setStackPointerRegisterToSaveRestore(SBF::R10);
 
   setOperationAction(ISD::BR_CC, MVT::i64, Custom);
   setOperationAction(ISD::BR_JT, MVT::Other, Expand);
