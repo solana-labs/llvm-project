@@ -25,6 +25,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include <optional>
+#include "SBFSubtarget.h"
 
 using namespace llvm;
 using namespace BTFX;
@@ -1309,6 +1310,15 @@ void BTFDebug::processGlobalValue(const MachineOperand &MO) {
   }
 }
 
+static bool isCoreLoadOrStore(unsigned OpCode, bool NewMemEncoding) {
+  if (NewMemEncoding)
+    return OpCode == SBF::CORE_LD64_V2 || OpCode == SBF::CORE_LD32_V2 ||
+           OpCode == SBF::CORE_ST_V2;
+
+  return OpCode == SBF::CORE_LD64_V1 || OpCode == SBF::CORE_LD32_V1 ||
+         OpCode == SBF::CORE_ST_V1;
+}
+
 void BTFDebug::beginInstruction(const MachineInstr *MI) {
   DebugHandlerBase::beginInstruction(MI);
 
@@ -1329,6 +1339,10 @@ void BTFDebug::beginInstruction(const MachineInstr *MI) {
       return;
   }
 
+  bool NewMemEncoding = MI->getParent()
+                            ->getParent()
+                            ->getSubtarget<SBFSubtarget>()
+                            .getNewMemEncoding();
   if (MI->getOpcode() == SBF::LD_imm64) {
     // If the insn is "r2 = LD_imm64 @<an AmaAttr global>",
     // add this insn into the .BTF.ext FieldReloc subsection.
@@ -1345,9 +1359,7 @@ void BTFDebug::beginInstruction(const MachineInstr *MI) {
     // If the insn is "r2 = LD_imm64 @<an TypeIdAttr global>",
     // The LD_imm64 result will be replaced with a btf type id.
     processGlobalValue(MI->getOperand(1));
-  } else if (MI->getOpcode() == SBF::CORE_LD64 ||
-             MI->getOpcode() == SBF::CORE_LD32 ||
-             MI->getOpcode() == SBF::CORE_ST ||
+  } else if (isCoreLoadOrStore(MI->getOpcode(), NewMemEncoding) ||
              MI->getOpcode() == SBF::CORE_SHIFT) {
     // relocation insn is a load, store or shift insn.
     processGlobalValue(MI->getOperand(3));
@@ -1496,6 +1508,10 @@ void BTFDebug::processGlobals(bool ProcessingMapDef) {
 
 /// Emit proper patchable instructions.
 bool BTFDebug::InstLower(const MachineInstr *MI, MCInst &OutMI) {
+  bool NewMemEncoding = MI->getParent()
+                            ->getParent()
+                            ->getSubtarget<SBFSubtarget>()
+                                .getNewMemEncoding();
   if (MI->getOpcode() == SBF::LD_imm64) {
     const MachineOperand &MO = MI->getOperand(1);
     if (MO.isGlobal()) {
@@ -1525,9 +1541,7 @@ bool BTFDebug::InstLower(const MachineInstr *MI, MCInst &OutMI) {
         return true;
       }
     }
-  } else if (MI->getOpcode() == SBF::CORE_LD64 ||
-             MI->getOpcode() == SBF::CORE_LD32 ||
-             MI->getOpcode() == SBF::CORE_ST ||
+  } else if (isCoreLoadOrStore(MI->getOpcode(), NewMemEncoding) ||
              MI->getOpcode() == SBF::CORE_SHIFT) {
     const MachineOperand &MO = MI->getOperand(3);
     if (MO.isGlobal()) {

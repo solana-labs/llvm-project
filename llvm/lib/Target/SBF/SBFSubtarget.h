@@ -80,6 +80,9 @@ protected:
   // Whether we have the explicit sign extension instruction (mov32)
   bool HasExplicitSignExt;
 
+  // Whether we enable the new encoding for memory instructions
+  bool NewMemEncoding;
+
 public:
   // This constructor initializes the data members to match that
   // of the specified triple.
@@ -103,6 +106,7 @@ public:
   bool getHasPqrClass() const { return HasPqrClass; }
   bool getHasStoreImm() const { return HasStoreImm; }
   bool getHasExplicitSignExt() const { return HasExplicitSignExt; }
+  bool getNewMemEncoding() const { return NewMemEncoding; }
   const SBFInstrInfo *getInstrInfo() const override { return &InstrInfo; }
   const SBFFrameLowering *getFrameLowering() const override {
     return &FrameLowering;

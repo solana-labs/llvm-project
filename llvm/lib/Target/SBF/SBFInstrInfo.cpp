@@ -28,8 +28,9 @@ using namespace llvm;
 SBFInstrInfo::SBFInstrInfo()
     : SBFGenInstrInfo(SBF::ADJCALLSTACKDOWN, SBF::ADJCALLSTACKUP) {}
 
-void SBFInstrInfo::setHasExplicitSignExt(bool HasExplicitSext) {
+void SBFInstrInfo::initializeTargetFeatures(bool HasExplicitSext, bool NewMemEncoding) {
   this->HasExplicitSignExt = HasExplicitSext;
+  this->NewMemEncoding = NewMemEncoding;
 }
 
 void SBFInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
@@ -60,24 +61,24 @@ void SBFInstrInfo::expandMEMCPY(MachineBasicBlock::iterator MI) const {
   DebugLoc dl = MI->getDebugLoc();
   unsigned LdOpc, StOpc;
 
+#define MEM_SWITCH(X) \
+LdOpc = NewMemEncoding ? SBF::LD##X##_V2 : SBF::LD##X##_V1; \
+StOpc = NewMemEncoding ? SBF::ST##X##_V2 : SBF::ST##X##_V1;
+
   unsigned BytesPerOp = std::min(static_cast<unsigned>(Alignment), 8u);
   switch (Alignment) {
   case 1:
-    LdOpc = SBF::LDB;
-    StOpc = SBF::STB;
+    MEM_SWITCH(B)
     break;
   case 2:
-    LdOpc = SBF::LDH;
-    StOpc = SBF::STH;
+    MEM_SWITCH(H)
     break;
   case 4:
-    LdOpc = SBF::LDW;
-    StOpc = SBF::STW;
+    MEM_SWITCH(W)
     break;
   case 8:
   case 16:
-    LdOpc = SBF::LDD;
-    StOpc = SBF::STD;
+    MEM_SWITCH(D)
     break;
   default:
     llvm_unreachable("unsupported memcpy alignment");
@@ -104,20 +105,16 @@ void SBFInstrInfo::expandMEMCPY(MachineBasicBlock::iterator MI) const {
 
   if (BytesLeft < 2) {
     Offset = CopyLen - 1;
-    LdOpc = SBF::LDB;
-    StOpc = SBF::STB;
+    MEM_SWITCH(B)
   } else if (BytesLeft <= 2) {
     Offset = CopyLen - 2;
-    LdOpc = SBF::LDH;
-    StOpc = SBF::STH;
+    MEM_SWITCH(H)
   } else if (BytesLeft <= 4) {
     Offset = CopyLen - 4;
-    LdOpc = SBF::LDW;
-    StOpc = SBF::STW;
+    MEM_SWITCH(W)
   } else if (BytesLeft <= 8) {
     Offset = CopyLen - 8;
-    LdOpc = SBF::LDD;
-    StOpc = SBF::STD;
+    MEM_SWITCH(D)
   } else {
     llvm_unreachable("There cannot be more than 8 bytes left");
   }
@@ -154,12 +151,14 @@ void SBFInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     DL = I->getDebugLoc();
 
   if (RC == &SBF::GPRRegClass)
-    BuildMI(MBB, I, DL, get(SBF::STD))
+    BuildMI(MBB, I, DL, get(NewMemEncoding ?
+                                           SBF::STD_V2 : SBF::STD_V1))
         .addReg(SrcReg, getKillRegState(IsKill))
         .addFrameIndex(FI)
         .addImm(0);
   else if (RC == &SBF::GPR32RegClass)
-    BuildMI(MBB, I, DL, get(SBF::STW32))
+    BuildMI(MBB, I, DL, get(NewMemEncoding ?
+                                           SBF::STW32_V2 : SBF::STW32_V1))
         .addReg(SrcReg, getKillRegState(IsKill))
         .addFrameIndex(FI)
         .addImm(0);
@@ -178,9 +177,13 @@ void SBFInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     DL = I->getDebugLoc();
 
   if (RC == &SBF::GPRRegClass)
-    BuildMI(MBB, I, DL, get(SBF::LDD), DestReg).addFrameIndex(FI).addImm(0);
+    BuildMI(MBB, I, DL, get(NewMemEncoding ?
+                                           SBF::LDD_V2 : SBF::LDD_V1),
+            DestReg).addFrameIndex(FI).addImm(0);
   else if (RC == &SBF::GPR32RegClass)
-    BuildMI(MBB, I, DL, get(SBF::LDW32), DestReg).addFrameIndex(FI).addImm(0);
+    BuildMI(MBB, I, DL, get(NewMemEncoding ?
+                                           SBF::LDW32_V2 : SBF::LDW32_V1),
+            DestReg).addFrameIndex(FI).addImm(0);
   else
     llvm_unreachable("Can't load this register from stack slot");
 }

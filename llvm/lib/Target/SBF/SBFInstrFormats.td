@@ -19,6 +19,9 @@ def SBF_JMP   : SBFOpClass<0x5>;
 def SBF_PQR   : SBFOpClass<0x6>;
 def SBF_ALU64 : SBFOpClass<0x7>;
 
+def SBF_LD_V2 : SBFOpClass<0x4>;
+def SBF_ST_V2 : SBFOpClass<0x7>;
+
 class SBFSrcType<bits<1> val> {
   bits<1> Value = val;
 }
@@ -91,6 +94,15 @@ def SBF_W  : SBFWidthModifer<0x0>;
 def SBF_H  : SBFWidthModifer<0x1>;
 def SBF_B  : SBFWidthModifer<0x2>;
 def SBF_DW : SBFWidthModifer<0x3>;
+
+class SBFSizeModifier<bits<4> val> {
+  bits<4> Value = val;
+}
+
+def SBF_B_V2  : SBFSizeModifier<0x2>;
+def SBF_H_V2  : SBFSizeModifier<0x3>;
+def SBF_W_V2  : SBFSizeModifier<0x8>;
+def SBF_DW_V2 : SBFSizeModifier<0x9>;
 
 class SBFModeModifer<bits<3> val> {
   bits<3> Value = val;

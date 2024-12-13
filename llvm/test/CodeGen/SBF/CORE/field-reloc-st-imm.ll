@@ -1,4 +1,5 @@
 ; RUN: llc -march=sbf -mattr=+store-imm -sbf-enable-btf-emission < %s | FileCheck %s
+; RUN: llc -march=sbf -mattr=+store-imm,+mem-encoding -sbf-enable-btf-emission < %s | FileCheck %s
 
 ; Make sure that CO-RE relocations had been generated correctly for
 ; BPF_ST (store immediate) instructions and that

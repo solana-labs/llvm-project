@@ -67,6 +67,8 @@ def SBFNoPqrInstr : Predicate<"!Subtarget->getHasPqrClass()">;
 def SBFHasStoreImm : Predicate<"Subtarget->getHasStoreImm()">;
 def SBFExplicitSignExt : Predicate<"Subtarget->getHasExplicitSignExt()">;
 def SBFNoExplicitSignExt : Predicate<"!Subtarget->getHasExplicitSignExt()">;
+def SBFNewMemEncoding : Predicate<"Subtarget->getNewMemEncoding()">, AssemblerPredicate<(all_of FeatureNewMemEncoding)>;
+def SBFOldMemEncoding : Predicate<"!Subtarget->getNewMemEncoding()">;
 
 def brtarget : Operand<OtherVT> {
   let PrintMethod = "printBrTargetOperand";
@@ -172,6 +174,22 @@ class TYPE_LD_ST<bits<3> mode, bits<2> size,
   let Inst{63-61} = mode;
   let Inst{60-59} = size;
 }
+
+//For load and store instructions in SBFv2 the 8-bit 'code' field is divided as:
+//
+//  +--------+---------------+-------------------+
+//  | 4 bits | 1 bit         |   3 bits          |
+//  |  size  |  source type  | instruction class |
+//  +--------+---------------+-------------------+
+//  (MSB)                             (LSB)
+class TYPE_LD_ST_V2<bits<4> size, bits<1> srctype,
+                 dag outs, dag ins, string asmstr, list<dag> pattern>
+  : InstSBF<outs, ins, asmstr, pattern> {
+
+  let Inst{63-60} = size;
+  let Inst{59} = srctype;
+}
+
 
 // jump instructions
 class JMP_RR<SBFJumpOp Opc, string Mnemonic, PatLeaf Cond>
@@ -474,12 +492,12 @@ def LD_pseudo
 }
 
 // STORE instructions
-class STORE<SBFWidthModifer SizeOp, string Mnemonic, list<dag> Pattern>
+class STORE_V1<SBFWidthModifer SizeOp, string Mnemonic>
     : TYPE_LD_ST<SBF_MEM.Value, SizeOp.Value,
                  (outs),
                  (ins GPR:$src, MEMri:$addr),
                  Mnemonic # " [$addr], $src",
-                 Pattern> {
+                 []> {
   bits<4> src;
   bits<20> addr;
 
@@ -489,29 +507,98 @@ class STORE<SBFWidthModifer SizeOp, string Mnemonic, list<dag> Pattern>
   let SBFClass = SBF_STX;
 }
 
-class STOREi64<SBFWidthModifer Opc, string Mnemonic, PatFrag OpNode>
-    : STORE<Opc, Mnemonic, [(OpNode GPR:$src, ADDRri:$addr)]>;
+class STORE_V2<SBFSizeModifier SizeOp, string Mnemonic>
+    : TYPE_LD_ST_V2<SizeOp.Value, SBF_X.Value,
+                 (outs),
+                 (ins GPR:$src, MEMri:$addr),
+                 Mnemonic # " [$addr], $src",
+                 []> {
+  bits<4> src;
+  bits<20> addr;
 
-let Predicates = [SBFNoALU32] in {
-  def STW : STOREi64<SBF_W, "stxw", truncstorei32>;
-  def STH : STOREi64<SBF_H, "stxh", truncstorei16>;
-  def STB : STOREi64<SBF_B, "stxb", truncstorei8>;
+  let Inst{51-48} = addr{19-16}; // base reg
+  let Inst{55-52} = src;
+  let Inst{47-32} = addr{15-0}; // offset
+  let SBFClass = SBF_ST_V2;
 }
-def STD : STOREi64<SBF_DW, "stxdw", store>;
 
-class STORE_imm<SBFWidthModifer SizeOp,
-                string Mnemonic, dag Pattern>
+multiclass STOREi64<SBFWidthModifer SizeV1, SBFSizeModifier SizeV2,
+                                    string Mnemonic> {
+    def _V1 : STORE_V1<SizeV1, Mnemonic>, Requires<[SBFOldMemEncoding]>;
+
+    let DecoderNamespace = "SBFv2" in {
+        def _V2 : STORE_V2<SizeV2, Mnemonic>, Requires<[SBFNewMemEncoding]>;
+    }
+}
+
+
+defm STW : STOREi64<SBF_W, SBF_W_V2, "stxw">;
+defm STH : STOREi64<SBF_H, SBF_H_V2, "stxh">;
+defm STB : STOREi64<SBF_B, SBF_B_V2, "stxb">;
+defm STD : STOREi64<SBF_DW, SBF_DW_V2, "stxdw">;
+
+def : Pat<(store GPR:$src, ADDRri:$addr),
+                 (STD_V1 GPR:$src, ADDRri:$addr)>, Requires<[SBFOldMemEncoding]>;
+
+def : Pat<(store GPR:$src, ADDRri:$addr),
+                 (STD_V2 GPR:$src, ADDRri:$addr)>, Requires<[SBFNewMemEncoding]>;
+
+let Predicates = [SBFNoALU32, SBFOldMemEncoding] in {
+    def : Pat<(truncstorei32 GPR:$src, ADDRri:$addr),
+                (STW_V1 GPR:$src, ADDRri:$addr)>;
+    def : Pat<(truncstorei16 GPR:$src, ADDRri:$addr),
+                (STH_V1 GPR:$src, ADDRri:$addr)>;
+    def : Pat<(truncstorei8 GPR:$src, ADDRri:$addr),
+                (STB_V1 GPR:$src, ADDRri:$addr)>;
+}
+
+let Predicates = [SBFNoALU32, SBFNewMemEncoding] in {
+    def : Pat<(truncstorei32 GPR:$src, ADDRri:$addr),
+                (STW_V2 GPR:$src, ADDRri:$addr)>;
+    def : Pat<(truncstorei16 GPR:$src, ADDRri:$addr),
+                (STH_V2 GPR:$src, ADDRri:$addr)>;
+    def : Pat<(truncstorei8 GPR:$src, ADDRri:$addr),
+                (STB_V2 GPR:$src, ADDRri:$addr)>;
+}
+
+
+class STORE_imm_V1<SBFWidthModifer SizeOp,
+                string Mnemonic>
     : TYPE_LD_ST<SBF_MEM.Value, SizeOp.Value,
                  (outs),
                  (ins i64imm:$imm, MEMri:$addr),
                  Mnemonic # " [$addr], $imm",
-                 [Pattern]> {
+                 []> {
   bits<20> addr;
   bits<32> imm;
   let Inst{51-48} = addr{19-16}; // base reg
   let Inst{47-32} = addr{15-0};  // offset
   let Inst{31-0} = imm;
   let SBFClass = SBF_ST;
+}
+
+class STORE_imm_V2<SBFSizeModifier SizeOp,
+                string Mnemonic>
+    : TYPE_LD_ST_V2<SizeOp.Value, SBF_K.Value,
+                 (outs),
+                 (ins i64imm:$imm, MEMri:$addr),
+                 Mnemonic # " [$addr], $imm",
+                 []> {
+  bits<20> addr;
+  bits<32> imm;
+  let Inst{51-48} = addr{19-16}; // base reg
+  let Inst{47-32} = addr{15-0};  // offset
+  let Inst{31-0} = imm;
+  let SBFClass = SBF_ST_V2;
+}
+
+multiclass STORE_imm<SBFWidthModifer SizeV1, SBFSizeModifier SizeV2,
+                    string Mnemonic> {
+    def _V1 : STORE_imm_V1<SizeV1, Mnemonic>, Requires<[SBFOldMemEncoding]>;
+
+    let DecoderNamespace = "SBFv2" in {
+      def _V2 : STORE_imm_V2<SizeV2, Mnemonic>, Requires<[SBFNewMemEncoding]>;
+    }
 }
 
 // Opcode (SBF_ST | SBF_MEM | SBF_DW) implies sign extension for
@@ -526,29 +613,68 @@ class STORE_imm<SBFWidthModifer SizeOp,
 //   stx [rb], rA
 //
 // For SBF_{B,H,W} the size of value stored matches size of the immediate.
-let Predicates = [SBFHasStoreImm] in {
-    def STD_imm : STORE_imm<SBF_DW, "stdw", (store         (i64 i64immSExt32:$imm), ADDRri:$addr)>;
-    def STW_imm : STORE_imm<SBF_W,  "stw",  (truncstorei32 (i64 i64immZExt32:$imm), ADDRri:$addr)>;
-    def STH_imm : STORE_imm<SBF_H,  "sth",  (truncstorei16 (i64 i64immZExt32:$imm), ADDRri:$addr)>;
-    def STB_imm : STORE_imm<SBF_B,  "stb",  (truncstorei8  (i64 i64immZExt32:$imm), ADDRri:$addr)>;
+defm STD_imm : STORE_imm<SBF_DW, SBF_DW_V2, "stdw">;
+defm STW_imm : STORE_imm<SBF_W, SBF_W_V2,  "stw">;
+defm STH_imm : STORE_imm<SBF_H, SBF_H_V2, "sth">;
+defm STB_imm : STORE_imm<SBF_B, SBF_B_V2,  "stb">;
+
+let Predicates = [SBFHasStoreImm, SBFOldMemEncoding] in {
+  def : Pat<(store (i64 i64immSExt32:$imm), ADDRri:$addr),
+            (STD_imm_V1 (i64 imm:$imm), ADDRri:$addr)>;
+  def : Pat<(truncstorei32 (i64 i64immZExt32:$imm), ADDRri:$addr),
+            (STW_imm_V1 (i64 imm:$imm), ADDRri:$addr)>;
+  def : Pat<(truncstorei16 (i64 i64immZExt32:$imm), ADDRri:$addr),
+            (STH_imm_V1 (i64 imm:$imm), ADDRri:$addr)>;
+  def : Pat<(truncstorei8  (i64 i64immZExt32:$imm), ADDRri:$addr),
+              (STB_imm_V1 (i64 imm:$imm), ADDRri:$addr)>;
 }
 
-let Predicates = [SBFHasALU32, SBFHasStoreImm] in {
+let Predicates = [SBFHasStoreImm, SBFNewMemEncoding] in {
+  def : Pat<(store (i64 i64immSExt32:$imm), ADDRri:$addr),
+            (STD_imm_V2 (i64 imm:$imm), ADDRri:$addr)>;
+  def : Pat<(truncstorei32 (i64 i64immZExt32:$imm), ADDRri:$addr),
+            (STW_imm_V2 (i64 imm:$imm), ADDRri:$addr)>;
+  def : Pat<(truncstorei16 (i64 i64immZExt32:$imm), ADDRri:$addr),
+            (STH_imm_V2 (i64 imm:$imm), ADDRri:$addr)>;
+  def : Pat<(truncstorei8  (i64 i64immZExt32:$imm), ADDRri:$addr),
+              (STB_imm_V2 (i64 imm:$imm), ADDRri:$addr)>;
+}
+
+let Predicates = [SBFHasStoreImm, SBFNewMemEncoding] in {
   def : Pat<(store (i32 imm:$src), ADDRri:$dst),
-            (STW_imm (imm_to_i64 $src), ADDRri:$dst)>;
+            (STW_imm_V2 (imm_to_i64 $src), ADDRri:$dst)>;
   def : Pat<(truncstorei16 (i32 imm:$src), ADDRri:$dst),
-            (STH_imm (imm_to_i64 imm:$src), ADDRri:$dst)>;
+            (STH_imm_V2 (imm_to_i64 imm:$src), ADDRri:$dst)>;
   def : Pat<(truncstorei8 (i32 imm:$src), ADDRri:$dst),
-            (STB_imm (imm_to_i64 imm:$src), ADDRri:$dst)>;
+            (STB_imm_V2 (imm_to_i64 imm:$src), ADDRri:$dst)>;
+}
+
+
+let Predicates = [SBFHasALU32, SBFHasStoreImm, SBFOldMemEncoding] in {
+  def : Pat<(store (i32 imm:$src), ADDRri:$dst),
+            (STW_imm_V1 (imm_to_i64 $src), ADDRri:$dst)>;
+  def : Pat<(truncstorei16 (i32 imm:$src), ADDRri:$dst),
+            (STH_imm_V1 (imm_to_i64 imm:$src), ADDRri:$dst)>;
+  def : Pat<(truncstorei8 (i32 imm:$src), ADDRri:$dst),
+            (STB_imm_V1 (imm_to_i64 imm:$src), ADDRri:$dst)>;
+}
+
+let Predicates = [SBFHasALU32, SBFHasStoreImm, SBFNewMemEncoding] in {
+  def : Pat<(store (i32 imm:$src), ADDRri:$dst),
+            (STW_imm_V2 (imm_to_i64 $src), ADDRri:$dst)>;
+  def : Pat<(truncstorei16 (i32 imm:$src), ADDRri:$dst),
+            (STH_imm_V2 (imm_to_i64 imm:$src), ADDRri:$dst)>;
+  def : Pat<(truncstorei8 (i32 imm:$src), ADDRri:$dst),
+            (STB_imm_V2 (imm_to_i64 imm:$src), ADDRri:$dst)>;
 }
 
 // LOAD instructions
-class LOAD<SBFWidthModifer SizeOp, string Mnemonic, list<dag> Pattern>
+class LOAD_V1<SBFWidthModifer SizeOp, string Mnemonic>
     : TYPE_LD_ST<SBF_MEM.Value, SizeOp.Value,
                  (outs GPR:$dst),
                  (ins MEMri:$addr),
                  Mnemonic # " $dst, [$addr]",
-                 Pattern> {
+                 []> {
   bits<4> dst;
   bits<20> addr;
 
@@ -558,25 +684,59 @@ class LOAD<SBFWidthModifer SizeOp, string Mnemonic, list<dag> Pattern>
   let SBFClass = SBF_LDX;
 }
 
-class LOADi64<SBFWidthModifer SizeOp, string Mnemonic, PatFrag OpNode>
-    : LOAD<SizeOp, Mnemonic, [(set i64:$dst, (OpNode ADDRri:$addr))]>;
+class LOAD_V2<SBFSizeModifier SizeOp, string Mnemonic>
+    : TYPE_LD_ST_V2<SizeOp.Value, SBF_X.Value,
+                 (outs GPR:$dst),
+                 (ins MEMri:$addr),
+                 Mnemonic # " $dst, [$addr]",
+                 []> {
+  bits<4> dst;
+  bits<20> addr;
+
+  let Inst{51-48} = dst;
+  let Inst{55-52} = addr{19-16};
+  let Inst{47-32} = addr{15-0};
+  let SBFClass = SBF_LD_V2;
+}
+
+multiclass LOADi64<SBFWidthModifer SizeV1, SBFSizeModifier SizeV2, string Mnemonic> {
+  def _V1 : LOAD_V1<SizeV1, Mnemonic>, Requires<[SBFOldMemEncoding]>;
+
+  let DecoderNamespace = "SBFv2" in {
+     def _V2 : LOAD_V2<SizeV2, Mnemonic>, Requires<[SBFNewMemEncoding]>;
+  }
+}
 
 let isCodeGenOnly = 1 in {
-  class CORE_LD<RegisterClass RegClass, string Sz>
-                : TYPE_LD_ST<SBF_MEM.Value, SBF_W.Value,
-                            (outs RegClass:$dst),
-                            (ins u64imm:$opcode, GPR:$src, u64imm:$offset),
-                            "$dst = core_ld"#Sz#"($opcode, $src, $offset)",
-                            []>;
+  multiclass CORE_LD<RegisterClass RegClass, string Sz> {
+     def _V1 : TYPE_LD_ST<SBF_MEM.Value, SBF_W.Value,
+                                       (outs RegClass:$dst),
+                                       (ins u64imm:$opcode, GPR:$src, u64imm:$offset),
+                                       "$dst = core_ld"#Sz#"($opcode, $src, $offset)",
+                                       []>;
 
-  def CORE_LD64 : CORE_LD<GPR, "64">;
-  def CORE_LD32 : CORE_LD<GPR32, "32">;
+     def _V2 : TYPE_LD_ST_V2<SBF_W_V2.Value, SBF_X.Value,
+                                    (outs RegClass:$dst),
+                                    (ins u64imm:$opcode, GPR:$src, u64imm:$offset),
+                                    "$dst = core_ld"#Sz#"($opcode, $src, $offset)",
+                                       []>;
+  }
 
-  def CORE_ST   : TYPE_LD_ST<SBF_MEM.Value, SBF_W.Value,
+  defm CORE_LD64 : CORE_LD<GPR, "64">;
+  defm CORE_LD32 : CORE_LD<GPR32, "32">;
+
+  def CORE_ST_V1   : TYPE_LD_ST<SBF_MEM.Value, SBF_W.Value,
                              (outs),
                              (ins gpr_or_imm:$src, u64imm:$opcode, GPR:$ptr, u64imm:$offset),
                              "core_st($src, $opcode, $ptr, $offset)",
                              []>;
+
+  def CORE_ST_V2   : TYPE_LD_ST_V2<SBF_W_V2.Value, SBF_X.Value,
+                             (outs),
+                             (ins gpr_or_imm:$src, u64imm:$opcode, GPR:$ptr, u64imm:$offset),
+                             "core_st($src, $opcode, $ptr, $offset)",
+                             []>;
+
   let Constraints = "$dst = $src" in {
     def CORE_SHIFT : MATH_RR<SBF_ALU64, SBF_LSH,
                              (outs GPR:$dst),
@@ -586,13 +746,34 @@ let isCodeGenOnly = 1 in {
   }
 }
 
-let Predicates = [SBFNoALU32] in {
-  def LDW : LOADi64<SBF_W, "ldxw", zextloadi32>;
-  def LDH : LOADi64<SBF_H, "ldxh", zextloadi16>;
-  def LDB : LOADi64<SBF_B, "ldxb", zextloadi8>;
+defm LDW : LOADi64<SBF_W, SBF_W_V2, "ldxw">;
+defm LDH : LOADi64<SBF_H, SBF_H_V2, "ldxh">;
+defm LDB : LOADi64<SBF_B, SBF_B_V2, "ldxb">;
+defm LDD : LOADi64<SBF_DW, SBF_DW_V2, "ldxdw">;
+
+def : Pat<(load ADDRri:$addr),
+                 (LDD_V1 ADDRri:$addr)>, Requires<[SBFOldMemEncoding]>;
+
+def : Pat<(load ADDRri:$addr),
+                 (LDD_V2 ADDRri:$addr)>, Requires<[SBFNewMemEncoding]>;
+
+let Predicates = [SBFNoALU32, SBFOldMemEncoding] in {
+    def : Pat<(zextloadi32 ADDRri:$addr),
+                (LDW_V1 ADDRri:$addr)>;
+    def : Pat<(zextloadi16 ADDRri:$addr),
+                (LDH_V1 ADDRri:$addr)>;
+    def : Pat<(zextloadi8 ADDRri:$addr),
+                (LDB_V1 ADDRri:$addr)>;
 }
 
-def LDD : LOADi64<SBF_DW, "ldxdw", load>;
+let Predicates = [SBFNoALU32, SBFNewMemEncoding] in {
+    def : Pat<(zextloadi32 ADDRri:$addr),
+                (LDW_V2 ADDRri:$addr)>;
+    def : Pat<(zextloadi16 ADDRri:$addr),
+                (LDH_V2 ADDRri:$addr)>;
+    def : Pat<(zextloadi8 ADDRri:$addr),
+                (LDB_V2 ADDRri:$addr)>;
+}
 
 class BRANCH<SBFJumpOp Opc, string Mnemonic, list<dag> Pattern>
     : TYPE_ALU_JMP<Opc.Value, SBF_K.Value,
@@ -753,10 +934,16 @@ def : Pat<(SBFcall GPR:$dst), (JALX GPR:$dst)>, Requires<[SBFNoCallxSrc]>;
 def : Pat<(SBFcall GPR:$dst), (JALX_v2 GPR:$dst)>, Requires<[SBFCallxSrc]>;
 
 // Loads
-let Predicates = [SBFNoALU32] in {
-  def : Pat<(i64 (extloadi8  ADDRri:$src)), (i64 (LDB ADDRri:$src))>;
-  def : Pat<(i64 (extloadi16 ADDRri:$src)), (i64 (LDH ADDRri:$src))>;
-  def : Pat<(i64 (extloadi32 ADDRri:$src)), (i64 (LDW ADDRri:$src))>;
+let Predicates = [SBFNoALU32, SBFOldMemEncoding] in {
+  def : Pat<(i64 (extloadi8  ADDRri:$src)), (i64 (LDB_V1 ADDRri:$src))>;
+  def : Pat<(i64 (extloadi16 ADDRri:$src)), (i64 (LDH_V1 ADDRri:$src))>;
+  def : Pat<(i64 (extloadi32 ADDRri:$src)), (i64 (LDW_V1 ADDRri:$src))>;
+}
+
+let Predicates = [SBFNoALU32, SBFNewMemEncoding] in {
+  def : Pat<(i64 (extloadi8  ADDRri:$src)), (i64 (LDB_V2 ADDRri:$src))>;
+  def : Pat<(i64 (extloadi16 ADDRri:$src)), (i64 (LDH_V2 ADDRri:$src))>;
+  def : Pat<(i64 (extloadi32 ADDRri:$src)), (i64 (LDW_V2 ADDRri:$src))>;
 }
 
 // Atomic XADD for SBFNoALU32
@@ -1078,12 +1265,12 @@ def : Pat<(i64 (anyext GPR32:$src)),
 def : Pat<(i64 (anyext GPR32:$src)),
           (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GPR32:$src, sub_32)>, Requires<[SBFNoExplicitSignExt]>;
 
-class STORE32<SBFWidthModifer SizeOp, string Mnemonic, list<dag> Pattern>
+class STORE32_V1<SBFWidthModifer SizeOp, string Mnemonic>
     : TYPE_LD_ST<SBF_MEM.Value, SizeOp.Value,
                  (outs),
                  (ins GPR32:$src, MEMri:$addr),
                  Mnemonic # " [$addr], $src",
-                 Pattern> {
+                 []> {
   bits<4> src;
   bits<20> addr;
 
@@ -1093,21 +1280,61 @@ class STORE32<SBFWidthModifer SizeOp, string Mnemonic, list<dag> Pattern>
   let SBFClass = SBF_STX;
 }
 
-class STOREi32<SBFWidthModifer Opc, string Mnemonic, PatFrag OpNode>
-    : STORE32<Opc, Mnemonic, [(OpNode GPR32:$src, ADDRri:$addr)]>;
+class STORE32_V2<SBFSizeModifier SizeOp, string Mnemonic>
+    : TYPE_LD_ST_V2<SizeOp.Value,
+                 SBF_X.Value,
+                 (outs),
+                 (ins GPR32:$src, MEMri:$addr),
+                 Mnemonic # " [$addr], $src",
+                 []> {
+  bits<4> src;
+  bits<20> addr;
 
-let Predicates = [SBFHasALU32], DecoderNamespace = "SBFALU32" in {
-  def STW32 : STOREi32<SBF_W, "stxw", store>;
-  def STH32 : STOREi32<SBF_H, "stxh", truncstorei16>;
-  def STB32 : STOREi32<SBF_B, "stxb", truncstorei8>;
+  let Inst{51-48} = addr{19-16}; // base reg
+  let Inst{55-52} = src;
+  let Inst{47-32} = addr{15-0}; // offset
+  let SBFClass = SBF_ST_V2;
 }
 
-class LOAD32<SBFWidthModifer SizeOp, string Mnemonic, list<dag> Pattern>
+multiclass STOREi32<SBFWidthModifer SizeV1, SBFSizeModifier SizeV2,
+                                    string Mnemonic> {
+    let DecoderNamespace = "SBFALU32" in {
+      def _V1 : STORE32_V1<SizeV1, Mnemonic>, Requires<[SBFOldMemEncoding]>;
+    }
+
+    let DecoderNamespace = "SBFALU32MEMv2" in {
+      def _V2 : STORE32_V2<SizeV2, Mnemonic>, Requires<[SBFNewMemEncoding]>;
+    }
+}
+
+defm STW32 : STOREi32<SBF_W, SBF_W_V2, "stxw">;
+defm STH32 : STOREi32<SBF_H, SBF_H_V2, "stxh">;
+defm STB32 : STOREi32<SBF_B, SBF_B_V2, "stxb">;
+
+let Predicates = [SBFHasALU32, SBFOldMemEncoding] in {
+    def : Pat<(store GPR32:$src, ADDRri:$addr),
+                (STW32_V1 GPR32:$src, ADDRri:$addr)>;
+    def : Pat<(truncstorei16 GPR32:$src, ADDRri:$addr),
+                (STH32_V1 GPR32:$src, ADDRri:$addr)>;
+    def : Pat<(truncstorei8 GPR32:$src, ADDRri:$addr),
+                (STB32_V1 GPR32:$src, ADDRri:$addr)>;
+}
+
+let Predicates = [SBFHasALU32, SBFNewMemEncoding] in {
+    def : Pat<(store GPR32:$src, ADDRri:$addr),
+                (STW32_V2 GPR32:$src, ADDRri:$addr)>;
+    def : Pat<(truncstorei16 GPR32:$src, ADDRri:$addr),
+                (STH32_V2 GPR32:$src, ADDRri:$addr)>;
+    def : Pat<(truncstorei8 GPR32:$src, ADDRri:$addr),
+                (STB32_V2 GPR32:$src, ADDRri:$addr)>;
+}
+
+class LOAD32_V1<SBFWidthModifer SizeOp, string Mnemonic>
     : TYPE_LD_ST<SBF_MEM.Value, SizeOp.Value,
                 (outs GPR32:$dst),
                 (ins MEMri:$addr),
                 Mnemonic # " $dst, [$addr]",
-                Pattern> {
+                []> {
   bits<4> dst;
   bits<20> addr;
 
@@ -1117,36 +1344,99 @@ class LOAD32<SBFWidthModifer SizeOp, string Mnemonic, list<dag> Pattern>
   let SBFClass = SBF_LDX;
 }
 
-class LOADi32<SBFWidthModifer SizeOp, string Mnemonic, PatFrag OpNode>
-    : LOAD32<SizeOp, Mnemonic, [(set i32:$dst, (OpNode ADDRri:$addr))]>;
+class LOAD32_V2<SBFSizeModifier SizeOp, string Mnemonic>
+    : TYPE_LD_ST_V2<SizeOp.Value, SBF_X.Value,
+                (outs GPR32:$dst),
+                (ins MEMri:$addr),
+                Mnemonic # " $dst, [$addr]",
+                []> {
+  bits<4> dst;
+  bits<20> addr;
 
-let Predicates = [SBFHasALU32], DecoderNamespace = "SBFALU32" in {
-  def LDW32 : LOADi32<SBF_W, "ldxw", load>;
-  def LDH32 : LOADi32<SBF_H, "ldxh", zextloadi16>;
-  def LDB32 : LOADi32<SBF_B, "ldxb", zextloadi8>;
+  let Inst{51-48} = dst;
+  let Inst{55-52} = addr{19-16};
+  let Inst{47-32} = addr{15-0};
+  let SBFClass = SBF_LD_V2;
 }
 
-let Predicates = [SBFHasALU32] in {
+
+multiclass LOADi32<SBFWidthModifer SizeV1, SBFSizeModifier SizeV2,
+                                    string Mnemonic> {
+ let DecoderNamespace = "SBFALU32" in {
+    def _V1 : LOAD32_V1<SizeV1, Mnemonic>, Requires<[SBFOldMemEncoding]>;
+ }
+ let DecoderNamespace = "SBFALU32MEMv2" in {
+   def _V2 : LOAD32_V2<SizeV2, Mnemonic>, Requires<[SBFNewMemEncoding]>;
+ }
+}
+
+
+defm LDW32 : LOADi32<SBF_W, SBF_W_V2, "ldxw">;
+defm LDH32 : LOADi32<SBF_H, SBF_H_V2, "ldxh">;
+defm LDB32 : LOADi32<SBF_B, SBF_B_V2, "ldxb">;
+
+let Predicates = [SBFHasALU32, SBFOldMemEncoding] in {
+    def : Pat<(load ADDRri:$addr),
+                (LDW32_V1 ADDRri:$addr)>;
+    def : Pat<(zextloadi16 ADDRri:$addr),
+                (LDH32_V1 ADDRri:$addr)>;
+    def : Pat<(zextloadi8 ADDRri:$addr),
+                (LDB32_V1 ADDRri:$addr)>;
+}
+
+let Predicates = [SBFHasALU32, SBFNewMemEncoding] in {
+    def : Pat<(load ADDRri:$addr),
+                (LDW32_V2 ADDRri:$addr)>;
+    def : Pat<(zextloadi16 ADDRri:$addr),
+                (LDH32_V2 ADDRri:$addr)>;
+    def : Pat<(zextloadi8 ADDRri:$addr),
+                (LDB32_V2 ADDRri:$addr)>;
+}
+
+let Predicates = [SBFHasALU32, SBFOldMemEncoding] in {
   def : Pat<(truncstorei8 GPR:$src, ADDRri:$dst),
-            (STB32 (EXTRACT_SUBREG GPR:$src, sub_32), ADDRri:$dst)>;
+            (STB32_V1 (EXTRACT_SUBREG GPR:$src, sub_32), ADDRri:$dst)>;
   def : Pat<(truncstorei16 GPR:$src, ADDRri:$dst),
-            (STH32 (EXTRACT_SUBREG GPR:$src, sub_32), ADDRri:$dst)>;
+            (STH32_V1 (EXTRACT_SUBREG GPR:$src, sub_32), ADDRri:$dst)>;
   def : Pat<(truncstorei32 GPR:$src, ADDRri:$dst),
-            (STW32 (EXTRACT_SUBREG GPR:$src, sub_32), ADDRri:$dst)>;
-  def : Pat<(i32 (extloadi8 ADDRri:$src)), (i32 (LDB32 ADDRri:$src))>;
-  def : Pat<(i32 (extloadi16 ADDRri:$src)), (i32 (LDH32 ADDRri:$src))>;
+            (STW32_V1 (EXTRACT_SUBREG GPR:$src, sub_32), ADDRri:$dst)>;
+  def : Pat<(i32 (extloadi8 ADDRri:$src)), (i32 (LDB32_V1 ADDRri:$src))>;
+  def : Pat<(i32 (extloadi16 ADDRri:$src)), (i32 (LDH32_V1 ADDRri:$src))>;
   def : Pat<(i64 (zextloadi8  ADDRri:$src)),
-            (SUBREG_TO_REG (i64 0), (LDB32 ADDRri:$src), sub_32)>;
+            (SUBREG_TO_REG (i64 0), (LDB32_V1 ADDRri:$src), sub_32)>;
   def : Pat<(i64 (zextloadi16 ADDRri:$src)),
-            (SUBREG_TO_REG (i64 0), (LDH32 ADDRri:$src), sub_32)>;
+            (SUBREG_TO_REG (i64 0), (LDH32_V1 ADDRri:$src), sub_32)>;
   def : Pat<(i64 (zextloadi32 ADDRri:$src)),
-            (SUBREG_TO_REG (i64 0), (LDW32 ADDRri:$src), sub_32)>;
+            (SUBREG_TO_REG (i64 0), (LDW32_V1 ADDRri:$src), sub_32)>;
   def : Pat<(i64 (extloadi8  ADDRri:$src)),
-            (SUBREG_TO_REG (i64 0), (LDB32 ADDRri:$src), sub_32)>;
+            (SUBREG_TO_REG (i64 0), (LDB32_V1 ADDRri:$src), sub_32)>;
   def : Pat<(i64 (extloadi16 ADDRri:$src)),
-            (SUBREG_TO_REG (i64 0), (LDH32 ADDRri:$src), sub_32)>;
+            (SUBREG_TO_REG (i64 0), (LDH32_V1 ADDRri:$src), sub_32)>;
   def : Pat<(i64 (extloadi32 ADDRri:$src)),
-            (SUBREG_TO_REG (i64 0), (LDW32 ADDRri:$src), sub_32)>;
+            (SUBREG_TO_REG (i64 0), (LDW32_V1 ADDRri:$src), sub_32)>;
+}
+
+let Predicates = [SBFHasALU32, SBFNewMemEncoding] in {
+  def : Pat<(truncstorei8 GPR:$src, ADDRri:$dst),
+            (STB32_V2 (EXTRACT_SUBREG GPR:$src, sub_32), ADDRri:$dst)>;
+  def : Pat<(truncstorei16 GPR:$src, ADDRri:$dst),
+            (STH32_V2 (EXTRACT_SUBREG GPR:$src, sub_32), ADDRri:$dst)>;
+  def : Pat<(truncstorei32 GPR:$src, ADDRri:$dst),
+            (STW32_V2 (EXTRACT_SUBREG GPR:$src, sub_32), ADDRri:$dst)>;
+  def : Pat<(i32 (extloadi8 ADDRri:$src)), (i32 (LDB32_V2 ADDRri:$src))>;
+  def : Pat<(i32 (extloadi16 ADDRri:$src)), (i32 (LDH32_V2 ADDRri:$src))>;
+  def : Pat<(i64 (zextloadi8  ADDRri:$src)),
+            (SUBREG_TO_REG (i64 0), (LDB32_V2 ADDRri:$src), sub_32)>;
+  def : Pat<(i64 (zextloadi16 ADDRri:$src)),
+            (SUBREG_TO_REG (i64 0), (LDH32_V2 ADDRri:$src), sub_32)>;
+  def : Pat<(i64 (zextloadi32 ADDRri:$src)),
+            (SUBREG_TO_REG (i64 0), (LDW32_V2 ADDRri:$src), sub_32)>;
+  def : Pat<(i64 (extloadi8  ADDRri:$src)),
+            (SUBREG_TO_REG (i64 0), (LDB32_V2 ADDRri:$src), sub_32)>;
+  def : Pat<(i64 (extloadi16 ADDRri:$src)),
+            (SUBREG_TO_REG (i64 0), (LDH32_V2 ADDRri:$src), sub_32)>;
+  def : Pat<(i64 (extloadi32 ADDRri:$src)),
+            (SUBREG_TO_REG (i64 0), (LDW32_V2 ADDRri:$src), sub_32)>;
 }
 
 let usesCustomInserter = 1, isCodeGenOnly = 1 in {

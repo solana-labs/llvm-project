@@ -1,4 +1,5 @@
 ; RUN: llc < %s -march=sbf | FileCheck -check-prefixes=CHECK %s
+; RUN: llc < %s -march=sbf -mattr=+mem-encoding | FileCheck -check-prefixes=CHECK %s
 
 %struct.bpf_map_def = type { i32, i32, i32, i32 }
 %struct.__sk_buff = type opaque

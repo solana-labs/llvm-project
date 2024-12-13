@@ -245,16 +245,28 @@ public:
   }
 };
 
-static bool TruncSizeCompatible(int TruncSize, unsigned opcode)
+static bool TruncSizeCompatible(int TruncSize, unsigned opcode, bool NewEncoding)
 {
-  if (TruncSize == 1)
-    return opcode == SBF::LDB || opcode == SBF::LDB32;
+  if (TruncSize == 1) {
+    if (NewEncoding)
+      return opcode == SBF::LDB_V2 || opcode == SBF::LDB32_V2;
 
-  if (TruncSize == 2)
-    return opcode == SBF::LDH || opcode == SBF::LDH32;
+    return opcode == SBF::LDB_V1 || opcode == SBF::LDB32_V1;
+  }
 
-  if (TruncSize == 4)
-    return opcode == SBF::LDW || opcode == SBF::LDW32;
+  if (TruncSize == 2) {
+    if (NewEncoding)
+      return opcode == SBF::LDH_V2 || opcode == SBF::LDH32_V2;
+
+    return opcode == SBF::LDH_V1 || opcode == SBF::LDH32_V1;
+  }
+
+  if (TruncSize == 4) {
+    if (NewEncoding)
+      return opcode == SBF::LDW_V2 || opcode == SBF::LDW32_V2;
+
+    return opcode == SBF::LDW_V1 || opcode == SBF::LDW32_V1;
+  }
 
   return false;
 }
@@ -281,6 +293,7 @@ bool SBFMIPeepholeTruncElim::eliminateTruncSeq() {
   MachineInstr* ToErase = nullptr;
   bool Eliminated = false;
 
+  bool NewEncoding = MF->getSubtarget<SBFSubtarget>().getNewMemEncoding();
   for (MachineBasicBlock &MBB : *MF) {
     for (MachineInstr &MI : MBB) {
       // The second insn to remove if the eliminate candidate is a pair.
@@ -348,7 +361,8 @@ bool SBFMIPeepholeTruncElim::eliminateTruncSeq() {
 
           MachineInstr *PhiDef = MRI->getVRegDef(opnd.getReg());
           if (!PhiDef || PhiDef->isPHI() ||
-              !TruncSizeCompatible(TruncSize, PhiDef->getOpcode())) {
+              !TruncSizeCompatible(TruncSize,
+                                   PhiDef->getOpcode(), NewEncoding)) {
             CheckFail = true;
             break;
           }
@@ -356,7 +370,8 @@ bool SBFMIPeepholeTruncElim::eliminateTruncSeq() {
 
         if (CheckFail)
           continue;
-      } else if (!TruncSizeCompatible(TruncSize, DefMI->getOpcode())) {
+      } else if (!TruncSizeCompatible(TruncSize,
+                                      DefMI->getOpcode(), NewEncoding)) {
         continue;
       }
 
