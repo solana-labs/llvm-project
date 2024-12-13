@@ -51,12 +51,6 @@ struct SBFMIPeephole : public MachineFunctionPass {
 private:
   // Initialize class variables.
   void initialize(MachineFunction &MFParm);
-
-  bool isCopyFrom32Def(MachineInstr *CopyMI);
-  bool isInsnFrom32Def(MachineInstr *DefInsn);
-  bool isPhiFrom32Def(MachineInstr *MovMI);
-  bool isMovFrom32Def(MachineInstr *MovMI);
-  bool eliminateZExtSeq();
   bool eliminateZExt();
 
   std::set<MachineInstr *> PhiInsns;
@@ -70,12 +64,7 @@ public:
 
     initialize(MF);
 
-    // First try to eliminate (zext, lshift, rshift) and then
-    // try to eliminate zext.
-    bool ZExtSeqExist, ZExtExist;
-    ZExtSeqExist = eliminateZExtSeq();
-    ZExtExist = eliminateZExt();
-    return ZExtSeqExist || ZExtExist;
+    return eliminateZExt();
   }
 };
 
@@ -85,159 +74,6 @@ void SBFMIPeephole::initialize(MachineFunction &MFParm) {
   MRI = &MF->getRegInfo();
   TII = MF->getSubtarget<SBFSubtarget>().getInstrInfo();
   LLVM_DEBUG(dbgs() << "*** SBF MachineSSA ZEXT Elim peephole pass ***\n\n");
-}
-
-bool SBFMIPeephole::isCopyFrom32Def(MachineInstr *CopyMI)
-{
-  MachineOperand &opnd = CopyMI->getOperand(1);
-
-  if (!opnd.isReg())
-    return false;
-
-  // Return false if getting value from a 32bit physical register.
-  // Most likely, this physical register is aliased to
-  // function call return value or current function parameters.
-  Register Reg = opnd.getReg();
-  if (!Reg.isVirtual())
-    return false;
-
-  if (MRI->getRegClass(Reg) == &SBF::GPRRegClass)
-    return false;
-
-  MachineInstr *DefInsn = MRI->getVRegDef(Reg);
-  if (!isInsnFrom32Def(DefInsn))
-    return false;
-
-  return true;
-}
-
-bool SBFMIPeephole::isPhiFrom32Def(MachineInstr *PhiMI)
-{
-  for (unsigned i = 1, e = PhiMI->getNumOperands(); i < e; i += 2) {
-    MachineOperand &opnd = PhiMI->getOperand(i);
-
-    if (!opnd.isReg())
-      return false;
-
-    MachineInstr *PhiDef = MRI->getVRegDef(opnd.getReg());
-    if (!PhiDef)
-      return false;
-    if (PhiDef->isPHI()) {
-      if (PhiInsns.find(PhiDef) != PhiInsns.end())
-        return false;
-      PhiInsns.insert(PhiDef);
-      if (!isPhiFrom32Def(PhiDef))
-        return false;
-    }
-    if (PhiDef->getOpcode() == SBF::COPY && !isCopyFrom32Def(PhiDef))
-      return false;
-  }
-
-  return true;
-}
-
-// The \p DefInsn instruction defines a virtual register.
-bool SBFMIPeephole::isInsnFrom32Def(MachineInstr *DefInsn)
-{
-  if (!DefInsn)
-    return false;
-
-  if (DefInsn->isPHI()) {
-    if (PhiInsns.find(DefInsn) != PhiInsns.end())
-      return false;
-    PhiInsns.insert(DefInsn);
-    if (!isPhiFrom32Def(DefInsn))
-      return false;
-  } else if (DefInsn->getOpcode() == SBF::COPY) {
-    if (!isCopyFrom32Def(DefInsn))
-      return false;
-  }
-
-  return true;
-}
-
-bool SBFMIPeephole::isMovFrom32Def(MachineInstr *MovMI)
-{
-  MachineInstr *DefInsn = MRI->getVRegDef(MovMI->getOperand(1).getReg());
-
-  LLVM_DEBUG(dbgs() << "  Def of Mov Src:");
-  LLVM_DEBUG(DefInsn->dump());
-
-  PhiInsns.clear();
-  if (!isInsnFrom32Def(DefInsn))
-    return false;
-
-  LLVM_DEBUG(dbgs() << "  One ZExt elim sequence identified.\n");
-
-  return true;
-}
-
-bool SBFMIPeephole::eliminateZExtSeq() {
-  MachineInstr* ToErase = nullptr;
-  bool Eliminated = false;
-
-  for (MachineBasicBlock &MBB : *MF) {
-    for (MachineInstr &MI : MBB) {
-      // If the previous instruction was marked for elimination, remove it now.
-      if (ToErase) {
-        ToErase->eraseFromParent();
-        ToErase = nullptr;
-      }
-
-      // Eliminate the 32-bit to 64-bit zero extension sequence when possible.
-      //
-      //   MOV_32_64 rB, wA
-      //   SLL_ri    rB, rB, 32
-      //   SRL_ri    rB, rB, 32
-      if (MI.getOpcode() == SBF::SRL_ri &&
-          MI.getOperand(2).getImm() == 32) {
-        Register DstReg = MI.getOperand(0).getReg();
-        Register ShfReg = MI.getOperand(1).getReg();
-        MachineInstr *SllMI = MRI->getVRegDef(ShfReg);
-
-        LLVM_DEBUG(dbgs() << "Starting SRL found:");
-        LLVM_DEBUG(MI.dump());
-
-        if (!SllMI ||
-            SllMI->isPHI() ||
-            SllMI->getOpcode() != SBF::SLL_ri ||
-            SllMI->getOperand(2).getImm() != 32)
-          continue;
-
-        LLVM_DEBUG(dbgs() << "  SLL found:");
-        LLVM_DEBUG(SllMI->dump());
-
-        MachineInstr *MovMI = MRI->getVRegDef(SllMI->getOperand(1).getReg());
-        if (!MovMI ||
-            MovMI->isPHI() ||
-            MovMI->getOpcode() != SBF::MOV_32_64)
-          continue;
-
-        LLVM_DEBUG(dbgs() << "  Type cast Mov found:");
-        LLVM_DEBUG(MovMI->dump());
-
-        Register SubReg = MovMI->getOperand(1).getReg();
-        if (!isMovFrom32Def(MovMI)) {
-          LLVM_DEBUG(dbgs()
-                     << "  One ZExt elim sequence failed qualifying elim.\n");
-          continue;
-        }
-
-        BuildMI(MBB, MI, MI.getDebugLoc(), TII->get(SBF::SUBREG_TO_REG), DstReg)
-          .addImm(0).addReg(SubReg).addImm(SBF::sub_32);
-
-        SllMI->eraseFromParent();
-        MovMI->eraseFromParent();
-        // MI is the right shift, we can't erase it in it's own iteration.
-        // Mark it to ToErase, and erase in the next iteration.
-        ToErase = &MI;
-        ZExtElemNum++;
-        Eliminated = true;
-      }
-    }
-  }
-
-  return Eliminated;
 }
 
 bool SBFMIPeephole::eliminateZExt() {
@@ -252,23 +88,15 @@ bool SBFMIPeephole::eliminateZExt() {
         ToErase = nullptr;
       }
 
-      if (MI.getOpcode() != SBF::MOV_32_64)
+      if (MI.getOpcode() != SBF::MOV_32_64_no_sext)
         continue;
 
       // Eliminate MOV_32_64 if possible.
       //   MOV_32_64 rA, wB
-      //
-      // If wB has been zero extended, replace it with a SUBREG_TO_REG.
-      // This is to workaround SBF programs where pkt->{data, data_end}
-      // is encoded as u32, but actually the verifier populates them
-      // as 64bit pointer. The MOV_32_64 will zero out the top 32 bits.
-      LLVM_DEBUG(dbgs() << "Candidate MOV_32_64 instruction:");
+      LLVM_DEBUG(dbgs() << "Candidate MOV_32_64_no_sext instruction:");
       LLVM_DEBUG(MI.dump());
 
-      if (!isMovFrom32Def(&MI))
-        continue;
-
-      LLVM_DEBUG(dbgs() << "Removing the MOV_32_64 instruction\n");
+      LLVM_DEBUG(dbgs() << "Removing the MOV_32_64_no_sext instruction\n");
 
       Register dst = MI.getOperand(0).getReg();
       Register src = MI.getOperand(1).getReg();
@@ -351,14 +179,11 @@ bool SBFMIPreEmitPeephole::eliminateRedundantMov() {
       // Eliminate identical move:
       //
       //   MOV rA, rA
-      //
-      // Note that we cannot remove
-      //   MOV_32_64  rA, wA
-      //   MOV_rr_32  wA, wA
-      // as these two instructions having side effects, zeroing out
-      // top 32 bits of rA.
+      //   MOV wA, wA
       unsigned Opcode = MI.getOpcode();
-      if (Opcode == SBF::MOV_rr) {
+      if (Opcode == SBF::MOV_rr ||
+          Opcode == SBF::MOV_rr_32_no_sext_v2 ||
+          Opcode == SBF::MOV_32_64_no_sext) {
         Register dst = MI.getOperand(0).getReg();
         Register src = MI.getOperand(1).getReg();
 
