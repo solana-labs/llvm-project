@@ -56,8 +56,8 @@ entry:
   ret i32 %c.d
 }
 ; CHECK-LABEL: select_cc_32
-; CHECK: mov64 r{{[0-9]+}}, w{{[0-9]+}}
-; CHECK: mov64 r{{[0-9]+}}, w{{[0-9]+}}
+; CHECK-NOT: mov64 r{{[0-9]+}}, w{{[0-9]+}}
+; CHECK-NOT: mov64 r{{[0-9]+}}, w{{[0-9]+}}
 ; CHECK: jgt r{{[0-9]+}}, r{{[0-9]+}}
 ; CHECK-NOT: lsh64 r{{[0-9]+}}, 32
 ; CHECK-NOT: rsh64 r{{[0-9]+}}, 32

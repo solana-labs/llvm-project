@@ -158,12 +158,10 @@ void SBFPassConfig::addMachineSSAOptimization() {
   // Peephole ran at last.
   TargetPassConfig::addMachineSSAOptimization();
 
-//  const SBFSubtarget *Subtarget = getSBFTargetMachine().getSubtargetImpl();
+  const SBFSubtarget *Subtarget = getSBFTargetMachine().getSubtargetImpl();
   if (!DisableMIPeephole) {
-// TODO: The peephole doesn't work with explicit sign extension. A future PR
-// will revamp the implementation.
-//    if (Subtarget->getHasAlu32())
-//      addPass(createSBFMIPeepholePass());
+    if (Subtarget->getHasAlu32() && Subtarget->getHasExplicitSignExt())
+      addPass(createSBFMIPeepholePass());
     addPass(createSBFMIPeepholeTruncElimPass());
   }
 }
