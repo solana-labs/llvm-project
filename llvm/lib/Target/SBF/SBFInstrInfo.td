@@ -69,6 +69,8 @@ def SBFExplicitSignExt : Predicate<"Subtarget->getHasExplicitSignExt()">;
 def SBFNoExplicitSignExt : Predicate<"!Subtarget->getHasExplicitSignExt()">;
 def SBFNewMemEncoding : Predicate<"Subtarget->getNewMemEncoding()">, AssemblerPredicate<(all_of FeatureNewMemEncoding)>;
 def SBFOldMemEncoding : Predicate<"!Subtarget->getNewMemEncoding()">;
+def SBFHasStaticSyscalls : Predicate<"Subtarget->getHasStaticSyscalls()">;
+def SBFNoStaticSyscalls : Predicate<"!Subtarget->getHasStaticSyscalls()">;
 
 def brtarget : Operand<OtherVT> {
   let PrintMethod = "printBrTargetOperand";
@@ -854,7 +856,7 @@ class NOP_I<string OpcodeStr>
 let hasSideEffects = 0, isCodeGenOnly = 1 in
   def NOP : NOP_I<"nop">;
 
-class RET<string OpcodeStr>
+class EXIT<string OpcodeStr>
     : TYPE_ALU_JMP<SBF_EXIT.Value, SBF_K.Value,
                    (outs),
                    (ins),
@@ -865,8 +867,23 @@ class RET<string OpcodeStr>
 }
 
 let isReturn = 1, isTerminator = 1, hasDelaySlot=0, isBarrier = 1,
-    isNotDuplicable = 1 in {
-  def RET : RET<"exit">;
+    isNotDuplicable = 1, Predicates = [SBFNoStaticSyscalls] in {
+  def EXIT : EXIT<"exit">;
+}
+
+class RETURN<string OpcodeStr>
+    : TYPE_ALU_JMP<SBF_EXIT.Value, SBF_X.Value,
+                   (outs),
+                   (ins),
+                   !strconcat(OpcodeStr, ""),
+                   [(SBFretglue)]> {
+  let Inst{31-0} = 0;
+  let SBFClass = SBF_JMP;
+}
+
+let isReturn = 1, isTerminator = 1, hasDelaySlot=0, isBarrier = 1,
+    isNotDuplicable = 1, Predicates = [SBFHasStaticSyscalls] in {
+  def RETURN : RETURN<"return">;
 }
 
 // ADJCALLSTACKDOWN/UP pseudo insns

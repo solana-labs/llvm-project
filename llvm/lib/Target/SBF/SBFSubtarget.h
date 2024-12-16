@@ -107,6 +107,7 @@ public:
   bool getHasStoreImm() const { return HasStoreImm; }
   bool getHasExplicitSignExt() const { return HasExplicitSignExt; }
   bool getNewMemEncoding() const { return NewMemEncoding; }
+  bool getHasStaticSyscalls() const { return HasStaticSyscalls; }
   const SBFInstrInfo *getInstrInfo() const override { return &InstrInfo; }
   const SBFFrameLowering *getFrameLowering() const override {
     return &FrameLowering;
