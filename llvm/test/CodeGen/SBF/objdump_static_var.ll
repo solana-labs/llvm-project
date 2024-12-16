@@ -23,7 +23,7 @@ define dso_local i32 @test() local_unnamed_addr #0 {
   %4 = add i32 %2, %3
 ; CHECK: add64 r0, r1
   ret i32 %4
-; CHECK: exit
+; CHECK: return
 }
 
 attributes #0 = { norecurse nounwind }

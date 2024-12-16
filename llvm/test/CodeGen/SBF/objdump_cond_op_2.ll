@@ -33,6 +33,6 @@ define i32 @test(i32, i32) local_unnamed_addr #0 {
   %14 = phi i32 [ 0, %2 ], [ %9, %5 ]
   ret i32 %14
 ; CHECK-LABEL: <LBB0_2>:
-; CHECK: exit
+; CHECK: return
 }
 attributes #0 = { norecurse nounwind readnone }
