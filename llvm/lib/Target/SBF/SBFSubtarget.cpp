@@ -30,7 +30,7 @@ SBFSubtarget &SBFSubtarget::initializeSubtargetDependencies(const Triple &TT,
                                                             StringRef FS) {
   initializeEnvironment(TT);
   initSubtargetFeatures(CPU, FS);
-  InstrInfo.setHasExplicitSignExt(HasExplicitSignExt);
+  InstrInfo.initializeTargetFeatures(HasExplicitSignExt, NewMemEncoding);
   return *this;
 }
 
@@ -49,6 +49,7 @@ void SBFSubtarget::initializeEnvironment(const Triple &TT) {
   HasStoreImm = false;
   HasAlu32 = false;
   HasExplicitSignExt = false;
+  NewMemEncoding = false;
 }
 
 void SBFSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {

@@ -1,4 +1,5 @@
 ; RUN: llc < %s -march=sbf -sbf-expand-memcpy-in-order | FileCheck %s
+; RUN: llc < %s -march=sbf -sbf-expand-memcpy-in-order -mattr=+mem-encoding | FileCheck %s
 
 ; Function Attrs: mustprogress nocallback nofree nounwind willreturn memory(argmem: readwrite)
 declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #1

@@ -46,6 +46,9 @@ def FeatureStoreImm : SubtargetFeature<"store-imm", "HasStoreImm", "true",
 def FeatureExplicitSext : SubtargetFeature<"explicit-sext", "HasExplicitSignExt",
                     "true", "Enable the explicit sign extension instruction mov32">;
 
+def FeatureNewMemEncoding : SubtargetFeature<"mem-encoding", "NewMemEncoding",
+                                       "true", "Enable the new encoding for memory instructions">;
+
 class Proc<string Name, list<SubtargetFeature> Features>
  : Processor<Name, NoItineraries, Features>;
 

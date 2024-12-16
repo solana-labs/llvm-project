@@ -1,4 +1,5 @@
 ; RUN: llc < %s -march=sbf -verify-machineinstrs | FileCheck %s
+; RUN: llc < %s -march=sbf -mattr=+mem-encoding -verify-machineinstrs | FileCheck %s
 
 ; Source code:
 ; struct xdp_md {

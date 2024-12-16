@@ -1,4 +1,5 @@
 ; RUN: llc < %s -march=sbf | FileCheck %s
+; RUN: llc < %s -march=sbf -mattr=+mem-encoding | FileCheck %s
 
 define i16 @am1(i16* %a) nounwind {
   %1 = load i16, i16* %a

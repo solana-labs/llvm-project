@@ -92,31 +92,57 @@ void SBFMISimplifyPatchable::initialize(MachineFunction &MFParm) {
   LLVM_DEBUG(dbgs() << "*** SBF simplify patchable insts pass ***\n\n");
 }
 
-static bool isST(unsigned Opcode) {
-  return Opcode == SBF::STB_imm || Opcode == SBF::STH_imm ||
-         Opcode == SBF::STW_imm || Opcode == SBF::STD_imm;
+static bool isST(unsigned Opcode, bool NewEncoding) {
+  if (NewEncoding) {
+    return Opcode == SBF::STB_imm_V2 || Opcode == SBF::STH_imm_V2 ||
+           Opcode == SBF::STW_imm_V2 || Opcode == SBF::STD_imm_V2;
+  }
+
+  return Opcode == SBF::STB_imm_V1 || Opcode == SBF::STH_imm_V1 ||
+         Opcode == SBF::STW_imm_V1 || Opcode == SBF::STD_imm_V1;
 }
 
-static bool isSTX32(unsigned Opcode) {
-  return Opcode == SBF::STB32 || Opcode == SBF::STH32 || Opcode == SBF::STW32;
+static bool isSTX32(unsigned Opcode, bool NewEncoding) {
+  if (NewEncoding) {
+    return Opcode == SBF::STB32_V2 || Opcode == SBF::STH32_V2
+           || Opcode == SBF::STW32_V2;
+  }
+  return Opcode == SBF::STB32_V1 || Opcode == SBF::STH32_V1
+         || Opcode == SBF::STW32_V1;
 }
 
-static bool isSTX64(unsigned Opcode) {
-  return Opcode == SBF::STB || Opcode == SBF::STH || Opcode == SBF::STW ||
-         Opcode == SBF::STD;
+static bool isSTX64(unsigned Opcode, bool NewEncoding) {
+  if (NewEncoding) {
+    return Opcode == SBF::STB_V2 || Opcode == SBF::STH_V2 ||
+           Opcode == SBF::STW_V2 ||Opcode == SBF::STD_V2;
+  }
+
+  return Opcode == SBF::STB_V1 || Opcode == SBF::STH_V1 ||
+         Opcode == SBF::STW_V1 ||Opcode == SBF::STD_V1;
 }
 
-static bool isLDX32(unsigned Opcode) {
-  return Opcode == SBF::LDB32 || Opcode == SBF::LDH32 || Opcode == SBF::LDW32;
+static bool isLDX32(unsigned Opcode, bool NewEncoding) {
+  if (NewEncoding)
+    return Opcode == SBF::LDB32_V2 || Opcode == SBF::LDH32_V2 ||
+           Opcode == SBF::LDW32_V2;
+
+  return Opcode == SBF::LDB32_V1 || Opcode == SBF::LDH32_V1 ||
+         Opcode == SBF::LDW32_V1;
 }
 
-static bool isLDX64(unsigned Opcode) {
-  return Opcode == SBF::LDB || Opcode == SBF::LDH || Opcode == SBF::LDW ||
-         Opcode == SBF::LDD;
+static bool isLDX64(unsigned Opcode, bool NewEncoding) {
+  if (NewEncoding)
+    return Opcode == SBF::LDB_V2 || Opcode == SBF::LDH_V2 ||
+           Opcode == SBF::LDW_V2 || Opcode == SBF::LDD_V2;
+
+  return Opcode == SBF::LDB_V1 || Opcode == SBF::LDH_V1 ||
+         Opcode == SBF::LDW_V1 || Opcode == SBF::LDD_V1;
 }
 
 bool SBFMISimplifyPatchable::isLoadInst(unsigned Opcode) {
-  return isLDX32(Opcode) || isLDX64(Opcode);
+  bool NewMemEncoding = MF->getSubtarget<SBFSubtarget>().getNewMemEncoding();
+  return isLDX32(Opcode, NewMemEncoding) ||
+         isLDX64(Opcode, NewMemEncoding);
 }
 
 void SBFMISimplifyPatchable::checkADDrr(MachineRegisterInfo *MRI,
@@ -127,6 +153,8 @@ void SBFMISimplifyPatchable::checkADDrr(MachineRegisterInfo *MRI,
   const MachineOperand *BaseOp = (RelocOp == Op1) ? Op2 : Op1;
 
   // Go through all uses of %1 as in %1 = ADD_rr %2, %3
+  const SBFSubtarget& SubTarget = MF->getSubtarget<SBFSubtarget>();
+  bool NewMemEncoding = SubTarget.getNewMemEncoding();
   const MachineOperand Op0 = Inst->getOperand(0);
   for (MachineOperand &MO :
        llvm::make_early_inc_range(MRI->use_operands(Op0.getReg()))) {
@@ -137,12 +165,14 @@ void SBFMISimplifyPatchable::checkADDrr(MachineRegisterInfo *MRI,
     MachineInstr *DefInst = MO.getParent();
     unsigned Opcode = DefInst->getOpcode();
     unsigned COREOp;
-    if (isLDX64(Opcode))
-      COREOp = SBF::CORE_LD64;
-    else if (isLDX32(Opcode))
-      COREOp = SBF::CORE_LD32;
-    else if (isSTX64(Opcode) || isSTX32(Opcode) || isST(Opcode))
-      COREOp = SBF::CORE_ST;
+    if (isLDX64(Opcode, NewMemEncoding))
+      COREOp = NewMemEncoding ? SBF::CORE_LD64_V2 : SBF::CORE_LD64_V1;
+    else if (isLDX32(Opcode, NewMemEncoding))
+      COREOp = NewMemEncoding ? SBF::CORE_LD32_V2 : SBF::CORE_LD32_V1;
+    else if (isSTX64(Opcode, NewMemEncoding) ||
+             isSTX32(Opcode, NewMemEncoding) ||
+             isST(Opcode, NewMemEncoding))
+      COREOp = NewMemEncoding ? SBF::CORE_ST_V2 : SBF::CORE_ST_V1;
     else
       continue;
 
@@ -154,7 +184,8 @@ void SBFMISimplifyPatchable::checkADDrr(MachineRegisterInfo *MRI,
     // Reject the form:
     //   %1 = ADD_rr %2, %3
     //   *(type *)(%2 + 0) = %1
-    if (isSTX64(Opcode) || isSTX32(Opcode)) {
+    if (isSTX64(Opcode, NewMemEncoding) ||
+        isSTX32(Opcode, NewMemEncoding)) {
       const MachineOperand &Opnd = DefInst->getOperand(0);
       if (Opnd.isReg() && Opnd.getReg() == MO.getReg())
         continue;

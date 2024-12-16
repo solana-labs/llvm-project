@@ -1,4 +1,6 @@
 ; RUN: llc -O2 -march=sbf -mattr=+alu32 < %s | FileCheck %s
+; RUN: llc -O2 -march=sbf -mattr=+alu32,+mem-encoding < %s | FileCheck %s
+
 ;
 ; unsigned char loadu8(unsigned char *p)
 ; {

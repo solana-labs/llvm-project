@@ -1,4 +1,5 @@
 ; RUN: llc -O2 -march=sbf -filetype=asm < %s | FileCheck --check-prefix=CHECK %s
+; RUN: llc -O2 -march=sbf -filetype=asm -mattr=+mem-encoding < %s | FileCheck --check-prefix=CHECK %s
 
 %Pool = type <{ [0 x i8], [32 x i8], [0 x i8], i8, [0 x i8], [10 x %Decimal], [0 x i8] }>
 %Decimal = type { [0 x i32], i32, [0 x i32], i32, [0 x i32], i32, [0 x i32], i32, [0 x i32] }
