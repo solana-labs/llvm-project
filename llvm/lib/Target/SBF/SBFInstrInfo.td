@@ -32,10 +32,13 @@ def SDT_SBFMEMCPY       : SDTypeProfile<0, 4, [SDTCisVT<0, i64>,
                                                SDTCisVT<1, i64>,
                                                SDTCisVT<2, i64>,
                                                SDTCisVT<3, i64>]>;
+def SDT_SBFSyscall      : SDTypeProfile<0, 1, [SDTCisVT<0, i64>]>;
 
 def SBFcall         : SDNode<"SBFISD::CALL", SDT_SBFCall,
                              [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
                               SDNPVariadic]>;
+def SBFSyscall     : SDNode<"SBFISD::SYSCALL", SDT_SBFSyscall,
+                            [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 def SBFretglue     : SDNode<"SBFISD::RET_GLUE", SDTNone,
                              [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 def SBFcallseq_start: SDNode<"ISD::CALLSEQ_START", SDT_SBFCallSeqStart,
@@ -801,6 +804,19 @@ class CALL<string OpcodeStr>
   let SBFClass = SBF_JMP;
 }
 
+class SYSCALL<string OpcodeStr>
+    : TYPE_ALU_JMP<SBF_SYSCALL.Value, SBF_K.Value,
+                   (outs),
+                   (ins i64imm:$imm),
+                   !strconcat(OpcodeStr, " $imm"),
+                   []> {
+  bits<32> imm;
+
+  let Inst{31-0} = imm;
+  let SBFClass = SBF_JMP;
+}
+
+
 class CALLX<string OpcodeStr>
     : TYPE_ALU_JMP<SBF_CALL.Value, SBF_X.Value,
                    (outs),
@@ -838,6 +854,7 @@ let isCall=1, hasDelaySlot=0, Uses = [R10],
   def JALX    : CALLX<"callx">, Requires<[SBFNoCallxSrc]>;
   let DecoderNamespace = "SBFv2" in {
     def JALX_v2 : CALLX_SRC_REG<"callx">, Requires<[SBFCallxSrc]>;
+    def SYSCALL_v2 : SYSCALL<"syscall">, Requires<[SBFHasStaticSyscalls]>;
   }
 }
 
@@ -949,6 +966,7 @@ def : Pat<(SBFcall texternalsym:$dst), (JAL texternalsym:$dst)>;
 def : Pat<(SBFcall imm:$dst), (JAL imm:$dst)>;
 def : Pat<(SBFcall GPR:$dst), (JALX GPR:$dst)>, Requires<[SBFNoCallxSrc]>;
 def : Pat<(SBFcall GPR:$dst), (JALX_v2 GPR:$dst)>, Requires<[SBFCallxSrc]>;
+def : Pat<(SBFSyscall imm:$imm), (SYSCALL_v2 imm:$imm)>, Requires<[SBFHasStaticSyscalls]>;
 
 // Loads
 let Predicates = [SBFNoALU32, SBFOldMemEncoding] in {

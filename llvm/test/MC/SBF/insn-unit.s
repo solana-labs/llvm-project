@@ -45,10 +45,8 @@
 // ======== BPF_JMP Class ========
   ja Llabel0               // BPF_JA
   call 1                     // BPF_CALL
-  exit                       // BPF_EXIT
-// CHECK: 05 00 1a 00 00 00 00 00 	ja +0x1a
+// CHECK: 05 00 19 00 00 00 00 00 	ja +0x19
 // CHECK: 85 00 00 00 01 00 00 00 	call 0x1
-// CHECK: 95 00 00 00 00 00 00 00 	exit
 
   jeq r0, r1, Llabel0   // BPF_JEQ  | BPF_X
   jne r3, r4, Llabel0   // BPF_JNE  | BPF_X
