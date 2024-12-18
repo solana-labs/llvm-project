@@ -446,7 +446,6 @@ SDValue SBFTargetLowering::LowerFormalArguments(
 }
 
 const unsigned SBFTargetLowering::MaxArgs = 5;
-const uint64_t SBFTargetLowering::MaxSyscall = 100;
 
 SDValue SBFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                      SmallVectorImpl<SDValue> &InVals) const {
@@ -599,15 +598,10 @@ SDValue SBFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                         G->getOffset(), 0);
   } else if (ExternalSymbolSDNode *E = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     Callee = DAG.getTargetExternalSymbol(E->getSymbol(), PtrVT, 0);
-  } else if (ConstantSDNode * CNode = dyn_cast<ConstantSDNode>(Callee)) {
-    uint64_t Cte = CNode->getZExtValue();
-    uint64_t U32Max = static_cast<uint64_t>
-        (std::numeric_limits<uint32_t>::max());
-    if (Subtarget->getHasStaticSyscalls() && Cte >= U32Max - MaxSyscall) {
-      NodeCode = SBFISD::SYSCALL;
-      uint64_t SyscallCode = U32Max - Cte;
-      Callee = DAG.getConstant(SyscallCode, CLI.DL, MVT::i64);
-    }
+  } else if (isa<ConstantSDNode>(Callee) && Subtarget->getHasStaticSyscalls()) {
+    // When static syscalls are enabled and we have a constant operand for call,
+    // we emit a syscall.
+    NodeCode = SBFISD::SYSCALL;
   }
 
   // Returns a chain & a flag for retval copy to use.

@@ -91,9 +91,6 @@ private:
   // Maximum number of arguments to a call
   static const unsigned MaxArgs;
 
-  // Maximum number of syscalls
-  static const uint64_t MaxSyscall;
-
   // Lower a call into CALLSEQ_START - SBFISD:CALL - CALLSEQ_END chain
   SDValue LowerCall(TargetLowering::CallLoweringInfo &CLI,
                     SmallVectorImpl<SDValue> &InVals) const override;

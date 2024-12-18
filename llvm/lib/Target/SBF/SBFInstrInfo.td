@@ -963,7 +963,7 @@ def : Pat<(i64 (and (i64 GPR:$src), 0xffffFFFF)),
 // Calls
 def : Pat<(SBFcall tglobaladdr:$dst), (JAL tglobaladdr:$dst)>;
 def : Pat<(SBFcall texternalsym:$dst), (JAL texternalsym:$dst)>;
-def : Pat<(SBFcall imm:$dst), (JAL imm:$dst)>;
+def : Pat<(SBFcall imm:$dst), (JAL imm:$dst)>, Requires<[SBFNoStaticSyscalls]>;
 def : Pat<(SBFcall GPR:$dst), (JALX GPR:$dst)>, Requires<[SBFNoCallxSrc]>;
 def : Pat<(SBFcall GPR:$dst), (JALX_v2 GPR:$dst)>, Requires<[SBFCallxSrc]>;
 def : Pat<(SBFSyscall imm:$imm), (SYSCALL_v3 imm:$imm)>, Requires<[SBFHasStaticSyscalls]>;

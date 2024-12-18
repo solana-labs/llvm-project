@@ -1,8 +1,8 @@
-; RUN: llc < %s -march=sbf --show-mc-encoding | FileCheck --check-prefix=CHECK-ASM %s
-; RUN: llc -march=sbf --filetype=obj -o - %s | llvm-objdump -d - | FileCheck --check-prefix=CHECK-OBJ %s
-; RUN: llc < %s -march=sbf -mcpu=sbfv2 --show-mc-encoding | FileCheck --check-prefix=CHECK-ASM %s
+; RUN: llc < %s -march=sbf --show-mc-encoding | FileCheck --check-prefixes=CHECK-ASM,CHECK-ASM-V0 %s
+; RUN: llc -march=sbf --filetype=obj -o - %s | llvm-objdump -d - | FileCheck --check-prefixes=CHECK-OBJ,CHECK-OBJ-V0 %s
+; RUN: llc < %s -march=sbf -mcpu=sbfv2 --show-mc-encoding | FileCheck --check-prefixes=CHECK-ASM,CHECK-ASM-V3 %s
 ; RUN: llc -march=sbf -mcpu=sbfv2 --filetype=obj -o - %s | llvm-objdump -d -
-;                                       | FileCheck --check-prefix=CHECK-OBJ %s
+;                                       | FileCheck --check-prefixes=CHECK-OBJ,CHECK-OBJ-V3 %s
 
 @.str = private unnamed_addr constant [5 x i8] c"foo\0A\00", align 1
 
@@ -16,8 +16,11 @@ entry:
 ; Function Attrs: nounwind
 define dso_local i64 @entrypoint(ptr noundef %input) local_unnamed_addr #1 {
 entry:
-; CHECK-ASM: call 1811268606      # encoding: [0x85,0x00,0x00,0x00,0xfe,0xc3,0xf5,0x6b]
-; CHECK-OBJ: 85 00 00 00 fe c3 f5 6b	call 0x6bf5c3fe
+; CHECK-ASM-V0: call 1811268606         # encoding: [0x85,0x00,0x00,0x00,0xfe,0xc3,0xf5,0x6b]
+; CHECK-ASM-V3: syscall 1811268606      # encoding: [0x95,0x00,0x00,0x00,0xfe,0xc3,0xf5,0x6b]
+
+; CHECK-OBJ-V0: 85 00 00 00 fe c3 f5 6b	call 0x6bf5c3fe
+; CHECK-OBJ-V3: 95 00 00 00 fe c3 f5 6b	syscall 0x6bf5c3fe
 
   tail call void inttoptr (i64 1811268606 to ptr)(ptr noundef nonnull @.str, i64 noundef 4) #3
   %add.ptr = getelementptr inbounds i8, ptr %input, i64 4
