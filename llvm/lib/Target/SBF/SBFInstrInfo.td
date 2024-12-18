@@ -854,7 +854,7 @@ let isCall=1, hasDelaySlot=0, Uses = [R10],
   def JALX    : CALLX<"callx">, Requires<[SBFNoCallxSrc]>;
   let DecoderNamespace = "SBFv2" in {
     def JALX_v2 : CALLX_SRC_REG<"callx">, Requires<[SBFCallxSrc]>;
-    def SYSCALL_v2 : SYSCALL<"syscall">, Requires<[SBFHasStaticSyscalls]>;
+    def SYSCALL_v3 : SYSCALL<"syscall">, Requires<[SBFHasStaticSyscalls]>;
   }
 }
 
@@ -900,7 +900,7 @@ class RETURN<string OpcodeStr>
 
 let isReturn = 1, isTerminator = 1, hasDelaySlot=0, isBarrier = 1,
     isNotDuplicable = 1, Predicates = [SBFHasStaticSyscalls] in {
-  def RETURN : RETURN<"return">;
+  def RETURN_v3 : RETURN<"return">;
 }
 
 // ADJCALLSTACKDOWN/UP pseudo insns
@@ -966,7 +966,7 @@ def : Pat<(SBFcall texternalsym:$dst), (JAL texternalsym:$dst)>;
 def : Pat<(SBFcall imm:$dst), (JAL imm:$dst)>;
 def : Pat<(SBFcall GPR:$dst), (JALX GPR:$dst)>, Requires<[SBFNoCallxSrc]>;
 def : Pat<(SBFcall GPR:$dst), (JALX_v2 GPR:$dst)>, Requires<[SBFCallxSrc]>;
-def : Pat<(SBFSyscall imm:$imm), (SYSCALL_v2 imm:$imm)>, Requires<[SBFHasStaticSyscalls]>;
+def : Pat<(SBFSyscall imm:$imm), (SYSCALL_v3 imm:$imm)>, Requires<[SBFHasStaticSyscalls]>;
 
 // Loads
 let Predicates = [SBFNoALU32, SBFOldMemEncoding] in {
