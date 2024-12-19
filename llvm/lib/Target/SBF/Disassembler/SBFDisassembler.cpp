@@ -69,6 +69,7 @@ public:
   uint8_t getInstMode(uint64_t Inst) const { return (Inst >> 61) & 0x7; };
   bool isMov32(uint64_t Inst) const { return (Inst >> 56) == 0xb4; }
   bool isNewMem(uint64_t Inst) const;
+  bool isSyscallOrExit(uint64_t Inst) const { return (Inst >> 56) == 0x95; }
 };
 
 } // end anonymous namespace
@@ -202,7 +203,8 @@ DecodeStatus SBFDisassembler::getInstruction(MCInst &Instr, uint64_t &Size,
     Result =
         decodeInstruction(DecoderTableSBFALU32MEMv264,
                           Instr, Insn, Address, this, STI);
-  else if (isNewMem(Insn) && STI.hasFeature(SBF::FeatureNewMemEncoding))
+  else if ((isNewMem(Insn) && STI.hasFeature(SBF::FeatureNewMemEncoding)) ||
+           (isSyscallOrExit(Insn) && STI.hasFeature(SBF::FeatureStaticSyscalls)))
     Result =
         decodeInstruction(DecoderTableSBFv264,
                           Instr, Insn, Address, this, STI);

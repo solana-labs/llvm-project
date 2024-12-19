@@ -72,19 +72,20 @@ class SBFJumpOp<bits<4> val> {
   bits<4> Value = val;
 }
 
-def SBF_JA   : SBFJumpOp<0x0>;
-def SBF_JEQ  : SBFJumpOp<0x1>;
-def SBF_JGT  : SBFJumpOp<0x2>;
-def SBF_JGE  : SBFJumpOp<0x3>;
-def SBF_JNE  : SBFJumpOp<0x5>;
-def SBF_JSGT : SBFJumpOp<0x6>;
-def SBF_JSGE : SBFJumpOp<0x7>;
-def SBF_CALL : SBFJumpOp<0x8>;
-def SBF_EXIT : SBFJumpOp<0x9>;
-def SBF_JLT  : SBFJumpOp<0xa>;
-def SBF_JLE  : SBFJumpOp<0xb>;
-def SBF_JSLT : SBFJumpOp<0xc>;
-def SBF_JSLE : SBFJumpOp<0xd>;
+def SBF_JA      : SBFJumpOp<0x0>;
+def SBF_JEQ     : SBFJumpOp<0x1>;
+def SBF_JGT     : SBFJumpOp<0x2>;
+def SBF_JGE     : SBFJumpOp<0x3>;
+def SBF_JNE     : SBFJumpOp<0x5>;
+def SBF_JSGT    : SBFJumpOp<0x6>;
+def SBF_JSGE    : SBFJumpOp<0x7>;
+def SBF_CALL    : SBFJumpOp<0x8>;
+def SBF_EXIT    : SBFJumpOp<0x9>;
+def SBF_JLT     : SBFJumpOp<0xa>;
+def SBF_JLE     : SBFJumpOp<0xb>;
+def SBF_JSLT    : SBFJumpOp<0xc>;
+def SBF_JSLE    : SBFJumpOp<0xd>;
+def SBF_SYSCALL : SBFJumpOp<0x9>;
 
 class SBFWidthModifer<bits<2> val> {
   bits<2> Value = val;

@@ -592,11 +592,16 @@ SDValue SBFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // If the callee is a GlobalAddress node (quite common, every direct call is)
   // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
   // Likewise ExternalSymbol -> TargetExternalSymbol.
+  unsigned NodeCode = SBFISD::CALL;
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
     Callee = DAG.getTargetGlobalAddress(G->getGlobal(), CLI.DL, PtrVT,
                                         G->getOffset(), 0);
   } else if (ExternalSymbolSDNode *E = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     Callee = DAG.getTargetExternalSymbol(E->getSymbol(), PtrVT, 0);
+  } else if (isa<ConstantSDNode>(Callee) && Subtarget->getHasStaticSyscalls()) {
+    // When static syscalls are enabled and we have a constant operand for call,
+    // we emit a syscall.
+    NodeCode = SBFISD::SYSCALL;
   }
 
   // Returns a chain & a flag for retval copy to use.
@@ -610,14 +615,14 @@ SDValue SBFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   for (auto &Reg : RegsToPass)
     Ops.push_back(DAG.getRegister(Reg.first, Reg.second.getValueType()));
 
-  if (HasStackArgs) {
+  if (HasStackArgs && !Subtarget->getHasDynamicFrames()) {
     Ops.push_back(DAG.getRegister(SBF::R5, MVT::i64));
   }
 
   if (InGlue.getNode())
     Ops.push_back(InGlue);
 
-  Chain = DAG.getNode(SBFISD::CALL, CLI.DL, NodeTys, Ops);
+  Chain = DAG.getNode(NodeCode, CLI.DL, NodeTys, Ops);
   InGlue = Chain.getValue(1);
 
   DAG.addNoMergeSiteInfo(Chain.getNode(), CLI.NoMerge);
@@ -919,6 +924,8 @@ const char *SBFTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "SBFISD::Wrapper";
   case SBFISD::MEMCPY:
     return "SBFISD::MEMCPY";
+  case SBFISD::SYSCALL:
+    return "SBFISD::SYSCALL";
   }
   return nullptr;
 }

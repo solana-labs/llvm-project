@@ -28,7 +28,8 @@ enum NodeType : unsigned {
   SELECT_CC,
   BR_CC,
   Wrapper,
-  MEMCPY
+  MEMCPY,
+  SYSCALL,
 };
 }
 
