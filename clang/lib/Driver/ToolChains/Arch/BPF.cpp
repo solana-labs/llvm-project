@@ -47,13 +47,6 @@ void bpf::getBPFTargetFeatures(const Driver &D, const ArgList &Args,
   Arg *A;
   bool success = true;
 
-  if ((A = Args.getLastArg(options::OPT_target))) {
-    StringRef Target = A->getValue();
-    if (Target == "sbf") {
-      Features.push_back("+solana");
-    }
-  }
-
   if ((A = Args.getLastArg(options::OPT_march_EQ)))
     success = getBPFArchFeaturesFromMarch(D, A->getValue(), Args, Features);
   if (!success)
