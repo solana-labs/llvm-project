@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=sbf -mattr=+alu32 | FileCheck  --check-prefix=CHECK-v1 %s
-; RUN: llc < %s -march=sbf -mattr=+alu32 -mcpu=sbfv2 | FileCheck  --check-prefix=CHECK-v2 %s
+; RUN: llc < %s -march=sbf -mcpu=v2 | FileCheck  --check-prefix=CHECK-v2 %s
 
 
 ; Function Attrs: norecurse nounwind readnone

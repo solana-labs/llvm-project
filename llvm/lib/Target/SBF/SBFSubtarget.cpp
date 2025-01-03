@@ -36,10 +36,10 @@ SBFSubtarget &SBFSubtarget::initializeSubtargetDependencies(const Triple &TT,
 
 void SBFSubtarget::initializeEnvironment(const Triple &TT) {
   assert(TT.getArch() == Triple::sbf && "expected Triple::sbf");
-  HasJmpExt = false;
   UseDwarfRIS = false;
 
   // SBFv2 features
+  HasJmpExt = false;
   HasDynamicFrames = false;
   DisableNeg = false;
   ReverseSubImm = false;
@@ -50,24 +50,11 @@ void SBFSubtarget::initializeEnvironment(const Triple &TT) {
   HasAlu32 = false;
   HasExplicitSignExt = false;
   NewMemEncoding = false;
+  HasStaticSyscalls = false;
 }
 
 void SBFSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
   ParseSubtargetFeatures(CPU, /*TuneCPU*/ CPU, FS);
-
-  if (CPU == "v2") {
-    HasJmpExt = true;
-  }
-
-  if (CPU == "v3") {
-    HasJmpExt = true;
-    HasAlu32 = true;
-  }
-
-  if (CPU == "sbfv2") {
-    if (!HasDynamicFrames)
-      report_fatal_error("sbfv2 requires dynamic-frames\n", false);
-  }
 }
 
 SBFSubtarget::SBFSubtarget(const Triple &TT, const std::string &CPU,

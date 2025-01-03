@@ -1,5 +1,5 @@
 ; RUN: llc -march=sbf -filetype=obj < %s | llvm-objdump -r - | tee -i /tmp/foo | FileCheck --check-prefix=CHECK-RELOC-BPF %s
-; RUN: llc -march=sbf -mcpu=sbfv2 -filetype=obj < %s | llvm-objdump -r - | tee -i /tmp/foo | FileCheck --check-prefix=CHECK-RELOC-SBFv2 %s
+; RUN: llc -march=sbf -mcpu=v3 -filetype=obj < %s | llvm-objdump -r - | tee -i /tmp/foo | FileCheck --check-prefix=CHECK-RELOC-SBFv3 %s
 
 @.str = private unnamed_addr constant [25 x i8] c"reloc_64_relative_data.c\00", align 1
 @FILE = dso_local constant i64 ptrtoint ([25 x i8]* @.str to i64), align 8
@@ -14,7 +14,7 @@ entry:
 }
 
 ; CHECK-RELOC-BPF:   RELOCATION RECORDS FOR [.data.rel.ro]:
-; CHECK-RELOC-BPF:   0000000000000000 R_BPF_64_64 .L.str
+; CHECK-RELOC-BPF:   0000000000000000 R_SBF_64_64 .L.str
 
-; CHECK-RELOC-SBFv2: RELOCATION RECORDS FOR [.data.rel.ro]:
-; CHECK-RELOC-SBFv2: 0000000000000000 R_SBF_64_ABS64 .L.str
+; CHECK-RELOC-SBFv3: RELOCATION RECORDS FOR [.data.rel.ro]:
+; CHECK-RELOC-SBFv3: 0000000000000000 R_SBF_64_ABS64 .L.str

@@ -1,4 +1,4 @@
-; RUN: llc -march=sbf -mcpu=sbfv2 -filetype=obj -o - %s | llvm-objdump -d - | FileCheck %s
+; RUN: llc -march=sbf -mcpu=v1 -filetype=obj -o - %s | llvm-objdump -d - | FileCheck %s
 
 ; Source Code:
 ; int test(int a, int b) {
@@ -27,12 +27,12 @@ define i32 @test(i32, i32) local_unnamed_addr #0 {
   %12 = icmp slt i32 %10, %11
   br i1 %12, label %5, label %13
 ; CHECK: mov64 r1, r3
-; CHECK: jsgt r2, r3, -0xa <LBB0_1>
+; CHECK: jslt r3, r2, -0xa <LBB0_1>
 
 ; <label>:13:                                     ; preds = %5, %2
   %14 = phi i32 [ 0, %2 ], [ %9, %5 ]
   ret i32 %14
 ; CHECK-LABEL: <LBB0_2>:
-; CHECK: return
+; CHECK: exit
 }
 attributes #0 = { norecurse nounwind readnone }

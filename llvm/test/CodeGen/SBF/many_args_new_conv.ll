@@ -1,5 +1,5 @@
-; RUN: llc -O2 -march=sbf -mcpu=sbfv2 < %s | FileCheck %s
-; RUN: llc -O2 -march=sbf -mcpu=sbfv2 -mattr=+mem-encoding < %s | FileCheck %s
+; RUN: llc -O2 -march=sbf -mcpu=v1 < %s | FileCheck %s
+; RUN: llc -O2 -march=sbf -mcpu=v1 -mattr=+mem-encoding < %s | FileCheck %s
 
 ; Function Attrs: nounwind uwtable
 define i32 @caller_no_alloca(i32 %a, i32 %b, i32 %c) #0 {
@@ -10,16 +10,11 @@ entry:
 ; CHECK-NOT: add64 r10
 
 ; Saving arguments on the stack
-; CHECK: mov64 r4, 55
-; CHECK: stxdw [r10 - 32], r4
-; CHECK: mov64 r4, 60
-; CHECK: stxdw [r10 - 40], r4
-; CHECK: mov64 r4, 50
-; CHECK: stxdw [r10 - 24], r4
-; CHECK: mov64 r4, 4
-; CHECK: stxdw [r10 - 16], r4
-; CHECK: mov64 r4, 3
-; CHECK: stxdw [r10 - 8], r4
+; CHECK: stdw [r10 - 32], 55
+; CHECK: stdw [r10 - 40], 60
+; CHECK: stdw [r10 - 24], 50
+; CHECK: stdw [r10 - 16], 4
+; CHECK: stdw [r10 - 8], 3
 ; CHECK: mov64 r4, 1
 ; CHECK: mov64 r5, 2
 ; CHECK: call callee_alloca
@@ -35,22 +30,17 @@ define i32 @caller_alloca(i32 %a, i32 %b, i32 %c) #0 {
 ; CHECK: ldxw r1, [r10 + 60]
 
 ; Saving arguments in the callee's frame
-; CHECK: mov64 r4, 55
 
 ; Offset in the callee: frame_size - 32
-; CHECK: stxdw [r10 - 32], r4
-; CHECK: mov64 r4, 60
+; CHECK: stdw [r10 - 32], 55
 ; Offset in the callee: frame_size - 40
-; CHECK: stxdw [r10 - 40], r4
-; CHECK: mov64 r4, 50
+; CHECK: stdw [r10 - 40], 60
 ; Offset in the callee: frame_size - 24
-; CHECK: stxdw [r10 - 24], r4
-; CHECK: mov64 r4, 4
+; CHECK: stdw [r10 - 24], 50
 ; Offset in the callee: frame_size - 16
-; CHECK: stxdw [r10 - 16], r4
-; CHECK: mov64 r4, 3
+; CHECK: stdw [r10 - 16], 4
 ; Offset in the callee: frame_size - 8
-; CHECK: stxdw [r10 - 8], r4
+; CHECK: stdw [r10 - 8], 3
 ; CHECK: mov64 r4, 1
 ; CHECK: mov64 r5, 2
 ; CHECK: call callee_no_alloca

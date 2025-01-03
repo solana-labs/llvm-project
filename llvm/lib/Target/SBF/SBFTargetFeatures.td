@@ -49,13 +49,18 @@ def FeatureExplicitSext : SubtargetFeature<"explicit-sext", "HasExplicitSignExt"
 def FeatureNewMemEncoding : SubtargetFeature<"mem-encoding", "NewMemEncoding",
                                        "true", "Enable the new encoding for memory instructions">;
 
+def FeatureJumpExt : SubtargetFeature<"jmp-ext", "HasJmpExt",
+                                       "true", "Enable jumps with less than and less than or equal">;
+
 class Proc<string Name, list<SubtargetFeature> Features>
  : Processor<Name, NoItineraries, Features>;
 
 def : Proc<"generic", []>;
-def : Proc<"v1", []>;
-def : Proc<"v2", []>;
-def : Proc<"v3", [ALU32]>;
-def : Proc<"sbfv2", [FeatureDynamicFrames, FeatureRelocAbs64, FeatureStaticSyscalls,
-                        FeatureDisableNeg, FeatureReverseSubImm, FeatureDisableLddw, FeatureCallxRegSrc,
-                          FeaturePqrInstr, FeatureExplicitSext]>;
+
+def : Proc<"v1", [FeatureDynamicFrames, FeatureStoreImm, FeatureJumpExt]>;
+def : Proc<"v2", [FeatureDynamicFrames, FeatureStoreImm, FeatureJumpExt, FeatureDisableLddw,
+                  FeatureNewMemEncoding, FeatureCallxRegSrc, FeaturePqrInstr, FeatureExplicitSext,
+                  FeatureDisableNeg, FeatureReverseSubImm, ALU32]>;
+def : Proc<"v3", [FeatureDynamicFrames, FeatureStoreImm, FeatureJumpExt, FeatureDisableLddw,
+                  FeatureNewMemEncoding, FeatureCallxRegSrc, FeaturePqrInstr, FeatureExplicitSext,
+                  FeatureDisableNeg, FeatureReverseSubImm, ALU32, FeatureStaticSyscalls, FeatureRelocAbs64]>;

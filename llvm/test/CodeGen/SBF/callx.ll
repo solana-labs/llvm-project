@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=sbf --show-mc-encoding \
-; RUN:      | FileCheck %s -check-prefixes=CHECK-v1
-; RUN: llc < %s -march=sbf --mcpu=sbfv2 --show-mc-encoding \
+; RUN:      | FileCheck %s -check-prefixes=CHECK-v0
+; RUN: llc < %s -march=sbf --mcpu=v2 --show-mc-encoding \
 ; RUN:      | FileCheck %s -check-prefixes=CHECK-v2
 ; source:
 ;   int test(int (*f)(void)) { return f(); }
@@ -9,7 +9,7 @@
 define dso_local i32 @test(i32 ()* nocapture %f) local_unnamed_addr #0 {
 entry:
   %call = tail call i32 %f() #1
-; CHECK-v1: callx r{{[0-9]+}} # encoding: [0x8d,0x00,0x00,0x00,0x0{{[0-9]|a|b}},0x00,0x00,0x00]
+; CHECK-v0: callx r{{[0-9]+}} # encoding: [0x8d,0x00,0x00,0x00,0x0{{[0-9]|a|b}},0x00,0x00,0x00]
 ; CHECK-v2: callx r{{[0-9]+}} # encoding: [0x8d,0x{{[0-9]}}0,0x00,0x00,0x00,0x00,0x00,0x00]
   ret i32 %call
 }

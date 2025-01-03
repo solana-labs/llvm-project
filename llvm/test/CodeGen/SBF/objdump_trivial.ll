@@ -1,6 +1,6 @@
-; RUN: llc -march=sbf -mcpu=sbfv2 -filetype=obj -o - %s | llvm-objdump -d - | FileCheck %s
+; RUN: llc -march=sbf -mcpu=v3 -filetype=obj -o - %s | llvm-objdump -d - | FileCheck %s
 
-; CHECK: jsgt r2, r1,
+; CHECK: jslt r1, 0x0,
 ; CHECK: call 0x1
 ; CHECK: return
 ; CHECK: call 0x2

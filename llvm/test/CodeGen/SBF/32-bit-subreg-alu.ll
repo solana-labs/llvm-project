@@ -1,5 +1,5 @@
-; RUN: llc -O2 -march=sbf -mattr=+alu32 < %s | FileCheck %s
-; RUN: llc -O2 -march=sbf -mcpu=v3 < %s | FileCheck %s
+; RUN: llc -O2 -march=sbf -mattr=+alu32 < %s | FileCheck --check-prefixes=CHECK,CHECK-V0 %s
+; RUN: llc -O2 -march=sbf -mcpu=v3 < %s | FileCheck --check-prefixes=CHECK,CHECK-V3 %s
 ;
 ; int mov(int a)
 ; {
@@ -130,7 +130,8 @@
 define dso_local i32 @mov(i32 returned %a) local_unnamed_addr #0 {
 entry:
   ret i32 %a
-; CHECK: mov32 w{{[0-9]+}}, w{{[0-9]+}}
+; CHECK-V0: mov32 w{{[0-9]+}}, w{{[0-9]+}}
+; CHECK-V3: mov64 w{{[0-9]+}}, w{{[0-9]+}}
 }
 
 ; Function Attrs: norecurse nounwind readnone
@@ -208,7 +209,8 @@ entry:
 define dso_local i32 @rem(i32 %a, i32 %b) local_unnamed_addr #0 {
 entry:
   %rem = urem i32 %a, %b
-; CHECK: mod32 w{{[0-9]+}}, w{{[0-9]+}}
+; CHECK-V0: mod32 w{{[0-9]+}}, w{{[0-9]+}}
+; CHECK-V3: urem32 w{{[0-9]+}}, w{{[0-9]+}}
   ret i32 %rem
 }
 
@@ -216,7 +218,8 @@ entry:
 define dso_local i32 @rem_i(i32 %a) local_unnamed_addr #0 {
 entry:
   %rem = urem i32 %a, 15
-; CHECK: mod32 w{{[0-9]+}}, 15
+; CHECK-V0: mod32 w{{[0-9]+}}, 15
+; CHECK-V3: urem32 w{{[0-9]+}}, 15
   ret i32 %rem
 }
 
@@ -320,6 +323,7 @@ entry:
 define dso_local i32 @neg(i32 %a) local_unnamed_addr #0 {
 entry:
   %sub = sub nsw i32 0, %a
-; CHECK: mov32 w{{[0-9]+}}, w{{[0-9]+}}
+; CHECK-V0: mov32 w{{[0-9]+}}, w{{[0-9]+}}
+; CHECK-V3: mov64 w{{[0-9]+}}, w{{[0-9]+}}
   ret i32 %sub
 }
