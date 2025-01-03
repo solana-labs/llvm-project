@@ -29,7 +29,6 @@ enum NodeType : unsigned {
   BR_CC,
   Wrapper,
   MEMCPY,
-  SYSCALL,
 };
 }
 

@@ -1,5 +1,5 @@
-; RUN: llc -march=sbf < %s | FileCheck --check-prefix=CHECK-V0 %s
-; RUN: llc -march=sbf -mattr=+static-syscalls -show-mc-encoding < %s | FileCheck --check-prefix=CHECK-V3 %s
+; RUN: llc -march=sbf < %s | FileCheck --check-prefixes=CHECK,CHECK-V0 %s
+; RUN: llc -march=sbf -mattr=+static-syscalls -show-mc-encoding < %s | FileCheck --check-prefixes=CHECK,CHECK-V3 %s
 
 
 ; Function Attrs: nounwind
@@ -19,7 +19,14 @@ entry:
 ; CHECK-V3: syscall 112
   %syscall_3 = tail call i32 inttoptr (i64 112 to ptr)(i32 noundef %a, i32 noundef %b)
 
+; CHECK: mov64 r1, 89
+; CHECK: mov64 r2, 87
+; CHECK-V0: call 112
+; CHECK-V3: syscall 112
+  %syscall_4 = tail call i32 inttoptr (i64 112 to ptr)(i32 89,  i32 87)
+
   %add_1 = add i32 %syscall_1, %syscall_2
   %add_2 = add i32 %add_1, %syscall_3
-  ret i32 %add_1
+  %add_3 = add i32 %add_2, %syscall_4
+  ret i32 %add_3
 }
