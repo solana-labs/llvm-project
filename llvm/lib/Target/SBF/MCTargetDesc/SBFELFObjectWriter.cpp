@@ -22,7 +22,7 @@ namespace {
 
 class SBFELFObjectWriter : public MCELFObjectTargetWriter {
 public:
-  SBFELFObjectWriter(uint8_t OSABI, bool relocAbs64, bool isSBFv2);
+  SBFELFObjectWriter(uint8_t OSABI, bool relocAbs64);
   ~SBFELFObjectWriter() override = default;
 
 protected:
@@ -47,10 +47,8 @@ bool SBFELFObjectWriter::needsRelocateWithSymbol(const MCValue &Val,
   return true;
 }
 
-SBFELFObjectWriter::SBFELFObjectWriter(uint8_t OSABI,
-                                       bool relocAbs64, bool isSBFv2)
-  : MCELFObjectTargetWriter(/*Is64Bit*/ true, OSABI,
-                            isSBFv2 ? ELF::EM_SBF : ELF::EM_BPF,
+SBFELFObjectWriter::SBFELFObjectWriter(uint8_t OSABI, bool relocAbs64)
+  : MCELFObjectTargetWriter(/*Is64Bit*/ true, OSABI,ELF::EM_SBF,
                             /*HasRelocationAddend*/ false),
       relocAbs64(relocAbs64) {}
 
@@ -110,6 +108,6 @@ unsigned SBFELFObjectWriter::getRelocType(MCContext &Ctx, const MCValue &Target,
 }
 
 std::unique_ptr<MCObjectTargetWriter>
-llvm::createSBFELFObjectWriter(uint8_t OSABI, bool useRelocAbs64, bool isSBFv2) {
-  return std::make_unique<SBFELFObjectWriter>(OSABI, useRelocAbs64, isSBFv2);
+llvm::createSBFELFObjectWriter(uint8_t OSABI, bool useRelocAbs64) {
+  return std::make_unique<SBFELFObjectWriter>(OSABI, useRelocAbs64);
 }

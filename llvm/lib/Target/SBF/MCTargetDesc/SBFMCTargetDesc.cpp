@@ -67,9 +67,18 @@ static MCStreamer *createSBFMCStreamer(const Triple &T, MCContext &Ctx,
   if (RelaxAll)
     S->getAssembler().setRelaxAll(true);
   const MCSubtargetInfo *STI = Ctx.getSubtargetInfo();
-  if (STI->getCPU() == "sbfv2") {
-    S->getAssembler().setELFHeaderEFlags(llvm::ELF::EF_SBF_V2);
+
+  StringRef CPU = STI->getCPU();
+  unsigned EFlag = llvm::ELF::EF_SBF_V0;
+  if (CPU == "v1") {
+    EFlag = llvm::ELF::EF_SBF_V1;
+  } else if (CPU == "v2") {
+    EFlag = llvm::ELF::EF_SBF_V2;
+  } else if (CPU == "v3") {
+    EFlag = llvm::ELF::EF_SBF_V3;
   }
+  S->getAssembler().setELFHeaderEFlags(EFlag);
+
   return S;
 }
 

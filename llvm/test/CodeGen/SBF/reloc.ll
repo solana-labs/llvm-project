@@ -1,4 +1,4 @@
-; RUN: llc -march=sbf -mcpu=sbfv2 -filetype=obj < %s | llvm-objdump -r - | FileCheck --check-prefix=CHECK-RELOC %s
+; RUN: llc -march=sbf -mcpu=v3 -filetype=obj < %s | llvm-objdump -r - | FileCheck --check-prefix=CHECK-RELOC %s
 
 %struct.bpf_context = type { i64, i64, i64, i64, i64, i64, i64 }
 %struct.sk_buff = type { i64, i64, i64, i64, i64, i64, i64 }

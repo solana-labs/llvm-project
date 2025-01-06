@@ -1,4 +1,4 @@
-; RUN: llc -march=sbf -mcpu=sbfv2 -mattr=+alu32 < %s | FileCheck --check-prefix=CHECK-v2 %s
+; RUN: llc -march=sbf -mcpu=v2 -mattr=+alu32 < %s | FileCheck --check-prefix=CHECK-v2 %s
 ; RUN: llc -march=sbf -mattr=+alu32 < %s | FileCheck --check-prefix=CHECK-v1 %s
 
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)

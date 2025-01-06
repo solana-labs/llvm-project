@@ -1,4 +1,4 @@
-; RUN: llc -march=sbf -mcpu=sbfv2 -filetype=obj -o %t.el < %s
+; RUN: llc -march=sbf -mcpu=v3 -filetype=obj -o %t.el < %s
 ; RUN: llvm-readelf -r %t.el | FileCheck %s
 
 ; source code:

@@ -1,4 +1,4 @@
-; RUN: llc -march=sbf -mcpu=v3 < %s | FileCheck %s
+; RUN: llc -march=sbf -mcpu=v2 < %s | FileCheck %s
 ;
 ; Source code:
 ;   void foo(int, int, int, long, int);
@@ -17,11 +17,11 @@ entry:
   tail call void @foo(i32 %a, i32 %b, i32 %c, i64 %d, i32 %e) #2
   tail call void asm sideeffect "", "~{r0},~{r1},~{r2},~{r3},~{r4},~{r5},~{r6},~{r7},~{r8},~{r9},~{memory}"() #2
 
-; CHECK:        stxw [r10 - 8], w5
-; CHECK:        stxdw [r10 - 16], r4
-; CHECK:        stxw [r10 - 24], w3
-; CHECK:        stxw [r10 - 32], w2
-; CHECK:        stxw [r10 - 40], w1
+; CHECK:        stxw [r10 + 56], w5
+; CHECK:        stxdw [r10 + 48], r4
+; CHECK:        stxw [r10 + 40], w3
+; CHECK:        stxw [r10 + 32], w2
+; CHECK:        stxw [r10 + 24], w1
 ; CHECK:        call foo
 
   tail call void @foo(i32 %a, i32 %b, i32 %c, i64 %d, i32 %e) #2

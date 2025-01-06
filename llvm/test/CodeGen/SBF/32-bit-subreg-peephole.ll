@@ -1,4 +1,4 @@
-; RUN: llc -O2 -march=sbf -mcpu=v2 -mattr=+alu32 < %s | FileCheck %s
+; RUN: llc -O2 -march=sbf -mcpu=v2 < %s | FileCheck %s
 ;
 ; long long select_u(unsigned a, unsigned b, long long c, long long d)
 ; {
@@ -47,7 +47,7 @@ define dso_local i64 @select_u(i32 %a, i32 %b, i64 %c, i64 %d) local_unnamed_add
 entry:
   %cmp = icmp ugt i32 %a, %b
   %c.d = select i1 %cmp, i64 %c, i64 %d
-; CHECK: mov32 r{{[0-9]+}}, w{{[0-9]+}}
+; CHECK: mov64 r{{[0-9]+}}, r{{[0-9]+}}
 ; CHECK-NOT: lsh32 r{{[0-9]+}}, 32
 ; CHECK-NOT: rsh32 r{{[0-9]+}}, 32
 ; CHECK: {{jlt|jgt}}  r{{[0-9]+}}, r{{[0-9]+}},
@@ -59,7 +59,7 @@ define dso_local i64 @select_u_2(i32 %a, i64 %b, i64 %c, i64 %d) local_unnamed_a
 ; CHECK-LABEL: select_u_2:
 entry:
   %conv = zext i32 %a to i64
-; CHECK: mov32 r{{[0-9]+}}, w{{[0-9]+}}
+; CHECK: mov64 r{{[0-9]+}}, r{{[0-9]+}}
 ; CHECK-NOT: lsh32 r{{[0-9]+}}, 32
 ; CHECK-NOT: rsh32 r{{[0-9]+}}, 32
   %cmp = icmp ugt i64 %conv, %b
@@ -73,8 +73,8 @@ define dso_local i64 @select_s(i32 %a, i32 %b, i64 %c, i64 %d) local_unnamed_add
 entry:
   %cmp = icmp sgt i32 %a, %b
   %c.d = select i1 %cmp, i64 %c, i64 %d
-; CHECK: lsh64 r{{[0-9]+}}, 32
-; CHECK-NEXT: arsh64 r{{[0-9]+}}, 32
+; CHECK: mov32 r{{[0-9]+}}, w{{[0-9]+}}
+; CHECK-NEXT: mov32 r{{[0-9]+}}, w{{[0-9]+}}
 ; CHECK: {{jslt|jsgt}} r{{[0-9]+}}, r{{[0-9]+}},
   ret i64 %c.d
 }
@@ -88,11 +88,12 @@ entry:
   %cmp = icmp ult i32 %conv, 10
 ; %call comes from function call returning i64 so the high bits will need
 ; to be cleared.
-; CHECK: mov32 r{{[0-9]+}}, w{{[0-9]+}}
+; CHECK: and32 w{{[0-9]+}}, -1
 ; CHECK-NOT: lsh32 r{{[0-9]+}}, 32
 ; CHECK-NOT: rsh32 r{{[0-9]+}}, 32
+; CHECK: mov32 r{{[0-9]+}}, w{{[0-9]+}}
   %b.c = select i1 %cmp, i32 %b, i32 %c
-; CHECK: {{jlt|jgt}} r{{[0-9]+}}, {{[0-9]+}},
+; CHECK: {{jlt|jgt}} r{{[0-9]+}}, 10,
   ret i32 %b.c
 }
 
@@ -103,7 +104,7 @@ define dso_local i32* @inc_p(i32* readnone %p, i32 %a) local_unnamed_addr #0 {
 ; CHECK-LABEL: inc_p:
 entry:
   %idx.ext = zext i32 %a to i64
-; CHECK: mov32 r{{[0-9]+}}, w{{[0-9]+}}
+; CHECK: mov64 r{{[0-9]+}}, r{{[0-9]+}}
 ; CHECK-NOT: lsh32 r{{[0-9]+}}, 32
 ; CHECK-NOT: rsh32 r{{[0-9]+}}, 32
   %add.ptr = getelementptr inbounds i32, i32* %p, i64 %idx.ext
@@ -117,8 +118,8 @@ entry:
   %cmp = icmp sgt i32 %call, 6
 ; The shifts can't be optimized out because %call comes from function call
 ; return i32 so the high bits might be invalid.
-; CHECK: lsh64 r{{[0-9]+}}, 32
-; CHECK-NEXT: arsh64 r{{[0-9]+}}, 32
+; CHECK: mov64 w{{[0-9]+}}, w{{[0-9]+}}
+; CHECK: mov32 r{{[0-9]+}}, w{{[0-9]+}}
   %cond = zext i1 %cmp to i32
 ; CHECK: {{jslt|jsgt}} r{{[0-9]+}}, {{[0-9]+}},
   ret i32 %cond

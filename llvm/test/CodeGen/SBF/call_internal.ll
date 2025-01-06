@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=sbf --show-mc-encoding | FileCheck --check-prefixes=CHECK-ASM,CHECK-ASM-V0 %s
 ; RUN: llc -march=sbf --filetype=obj -o - %s | llvm-objdump -d - | FileCheck --check-prefixes=CHECK-OBJ,CHECK-OBJ-V0 %s
-; RUN: llc < %s -march=sbf -mcpu=sbfv2 --show-mc-encoding | FileCheck --check-prefixes=CHECK-ASM,CHECK-ASM-V3 %s
-; RUN: llc -march=sbf -mcpu=sbfv2 --filetype=obj -o - %s | llvm-objdump -d -
+; RUN: llc < %s -march=sbf -mcpu=v3 --show-mc-encoding | FileCheck --check-prefixes=CHECK-ASM,CHECK-ASM-V3 %s
+; RUN: llc -march=sbf -mcpu=v3 --filetype=obj -o - %s | llvm-objdump -d -
 ;                                       | FileCheck --check-prefixes=CHECK-OBJ,CHECK-OBJ-V3 %s
 
 @.str = private unnamed_addr constant [5 x i8] c"foo\0A\00", align 1

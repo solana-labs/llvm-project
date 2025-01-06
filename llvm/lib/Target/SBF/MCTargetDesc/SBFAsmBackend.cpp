@@ -26,7 +26,6 @@ class SBFAsmBackend : public MCAsmBackend {
 public:
   SBFAsmBackend(endianness Endian, const MCSubtargetInfo &STI)
       : MCAsmBackend(Endian),
-        isSBFv2(STI.getCPU() == "sbfv2"),
         relocAbs64(STI.hasFeature(SBF::FeatureRelocAbs64)) {}
   ~SBFAsmBackend() override = default;
 
@@ -50,7 +49,6 @@ public:
   bool writeNopData(raw_ostream &OS, uint64_t Count,
                     const MCSubtargetInfo *STI) const override;
 private:
-  bool isSBFv2;
   bool relocAbs64;
 };
 
@@ -107,7 +105,7 @@ void SBFAsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
 
 std::unique_ptr<MCObjectTargetWriter>
 SBFAsmBackend::createObjectTargetWriter() const {
-  return createSBFELFObjectWriter(0, relocAbs64, isSBFv2);
+  return createSBFELFObjectWriter(0, relocAbs64);
 }
 
 MCAsmBackend *llvm::createSBFAsmBackend(const Target &T,

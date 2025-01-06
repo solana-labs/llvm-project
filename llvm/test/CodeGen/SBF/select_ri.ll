@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=sbf -mcpu=v2 -verify-machineinstrs | FileCheck %s
+; RUN: llc < %s -march=sbf -mcpu=v1 -verify-machineinstrs | FileCheck %s
 ;
 ; Source file:
 ; int b, c;

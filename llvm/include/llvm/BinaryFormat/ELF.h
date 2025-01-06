@@ -895,7 +895,10 @@ enum : unsigned {
 
 // SBF specific e_flags
 enum : unsigned {
-  EF_SBF_V2 = 0x20,
+  EF_SBF_V0 = 0x00,
+  EF_SBF_V1 = 0x01,
+  EF_SBF_V2 = 0x02,
+  EF_SBF_V3 = 0x03,
 };
 
 // ELF Relocation types for SBF.

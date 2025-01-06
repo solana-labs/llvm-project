@@ -41,7 +41,7 @@ entry:
   br i1 %tobool.not, label %if.end, label %cleanup, !dbg !42
 
 ; CHECK-LABEL: test
-; CHECK:       ldxdw r1, [r1 + 8]
+; CHECK:       ldxdw r1, [r1 + 0]
 ; CHECK:       jne r1, 0,
 
 if.end:                                           ; preds = %entry
@@ -53,7 +53,8 @@ if.end:                                           ; preds = %entry
   %tobool1.not = icmp eq ptr %7, null, !dbg !46
   br i1 %tobool1.not, label %if.then2, label %cleanup, !dbg !48
 
-; CHECK:       mov64 r1, 8
+; CHECK:       mov32 r1,
+; CHECK:       hor64 r1,
 ; CHECK:       ldxdw r1, [r1 + 0]
 ; CHECK:       jne r1, 0,
 
