@@ -75,10 +75,17 @@ int64_t SBF::getImplicitAddend(const uint8_t *buf, RelType type) const {
   switch (type) {
   case R_SBF_64_ABS32:
     return SignExtend64<32>(read32le(buf));
+  case R_SBF_64_64: {
+    uint64_t low = static_cast<uint64_t>(read32le(buf+4));
+    uint64_t high = static_cast<uint64_t>(read32le(buf+12));
+    return (high << 32) | low;
+  }
+  case R_SBF_64_ABS64: {
+    return read64le(buf);
+  }
   default:
     return 0;
   }
-  return 0;
 }
 
 void SBF::relocate(uint8_t *loc, const Relocation &rel, uint64_t val) const {
