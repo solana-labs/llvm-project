@@ -1906,6 +1906,10 @@ static void removeUnusedSyntheticSections() {
   });
 }
 
+static bool isSbfV3() {
+  return config->emachine == EM_SBF && config->eflags == 0x3;
+}
+
 // Create output section objects and add them to OutputSections.
 template <class ELFT> void Writer<ELFT>::finalizeSections() {
   if (!config->relocatable) {
@@ -2060,6 +2064,15 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
     llvm::TimeTraceScope timeScope("Add symbols to symtabs");
     // Now that we have defined all possible global symbols including linker-
     // synthesized ones. Visit all symbols to give the finishing touches.
+
+    if (in.symTab && isSbfV3()) {
+      for (SymbolTableEntry e : in.symTab->getSymbols()) {
+        if (e.sym && (e.sym->type & STT_FUNC) != 0) {
+          partitions[e.sym->partition - 1].dynSymTab->addSymbol(e.sym);
+        }
+      }
+    }
+
     for (Symbol *sym : symtab.getSymbols()) {
       if (!sym->isUsedInRegularObj || !includeInSymtab(*sym))
         continue;
@@ -2267,6 +2280,10 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   if (config->emachine == EM_ARM && !config->isLE && config->armBe8) {
     addArmInputSectionMappingSymbols();
     sortArmMappingSymbols();
+  } else if (isSbfV3()) {
+    for (Partition &part: partitions) {
+      part.dynSymTab->sortSymbolsByValue();
+    }
   }
 }
 

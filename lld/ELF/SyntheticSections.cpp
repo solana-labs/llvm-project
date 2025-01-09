@@ -2167,8 +2167,18 @@ void SymbolTableBaseSection::sortSymTabSymbols() {
 
 void SymbolTableBaseSection::addSymbol(Symbol *b) {
   // Adding a local symbol to a .dynsym is a bug.
-  assert(this->type != SHT_DYNSYM || !b->isLocal());
+  // NOT for SBF :P
+  assert(this->type != SHT_DYNSYM ||
+         !b->isLocal() ||
+         (config->emachine == EM_SBF && config->eflags == 0x3));
   symbols.push_back({b, strTabSec.addString(b->getName(), false)});
+}
+
+void SymbolTableBaseSection::sortSymbolsByValue() {
+  llvm::stable_sort(symbols,
+            [](const SymbolTableEntry &a, const SymbolTableEntry &b) {
+                return a.sym->getVA() < b.sym->getVA();
+            });
 }
 
 size_t SymbolTableBaseSection::getSymbolIndex(Symbol *sym) {
