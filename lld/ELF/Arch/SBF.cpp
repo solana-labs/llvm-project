@@ -134,7 +134,6 @@ uint32_t SBF::calcEFlags() const {
     if (ret == 0) {
       ret = flags;
     } else if (ret != flags) {
-    std::cout << "ret: " << ret << " flag: " << flags << std::endl;
       error("can not link object files with incompatible flags");
     }
   }
