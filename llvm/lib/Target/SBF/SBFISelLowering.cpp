@@ -97,6 +97,12 @@ SBFTargetLowering::SBFTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::ATOMIC_STORE, VT, Expand);
   }
 
+
+  if (STI.getHasPqrClass() && STI.getHasAlu32()) {
+    setOperationAction(ISD::MULHU, MVT::i32, Expand);
+    setOperationAction(ISD::MULHS, MVT::i32, Expand);
+  }
+
   for (auto VT : { MVT::i32, MVT::i64 }) {
     if (VT == MVT::i32 && !STI.getHasAlu32())
       continue;
