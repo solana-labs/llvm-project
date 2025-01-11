@@ -320,6 +320,10 @@ static OutputSection *findSection(StringRef name, unsigned partition = 1) {
   return nullptr;
 }
 
+static bool isSbfV3() {
+  return config->emachine == EM_SBF && config->eflags == 0x3;
+}
+
 template <class ELFT> void elf::createSyntheticSections() {
   // Initialize all pointers with NULL. This is needed because
   // you can call lld::elf::main more than once as a library.
@@ -346,7 +350,8 @@ template <class ELFT> void elf::createSyntheticSections() {
   Out::programHeaders = make<OutputSection>("", 0, SHF_ALLOC);
   Out::programHeaders->addralign = config->wordsize;
 
-  if (config->strip != StripPolicy::All) {
+  if (config->strip != StripPolicy::All || isSbfV3()) {
+    // Let's create these tables and then discard everything later
     in.strTab = std::make_unique<StringTableSection>(".strtab", false);
     in.symTab = std::make_unique<SymbolTableSection<ELFT>>(*in.strTab);
     in.symTabShndx = std::make_unique<SymtabShndxSection>();
@@ -1906,10 +1911,6 @@ static void removeUnusedSyntheticSections() {
   });
 }
 
-static bool isSbfV3() {
-  return config->emachine == EM_SBF && config->eflags == 0x3;
-}
-
 // Create output section objects and add them to OutputSections.
 template <class ELFT> void Writer<ELFT>::finalizeSections() {
   if (!config->relocatable) {
@@ -2070,6 +2071,12 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
         if (e.sym && (e.sym->type & STT_FUNC) != 0) {
           partitions[e.sym->partition - 1].dynSymTab->addSymbol(e.sym);
         }
+      }
+
+      if (config->strip == StripPolicy::All) {
+        in.strTab.reset();
+        in.symTab.reset();
+        in.symTabShndx.reset();
       }
     }
 
