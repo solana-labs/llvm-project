@@ -593,9 +593,6 @@ template <class ELFT> void elf::createSyntheticSections() {
   if (config->relocatable)
     add(*make<GnuStackSection>());
 
-//  if (isSbfV3() && config->strip == StripPolicy::All)
-//      return;
-
   if (in.symTab)
     add(*in.symTab);
   if (in.symTabShndx)
@@ -789,6 +786,7 @@ static void demoteAndCopyLocalSymbols() {
           if ((b->type & STT_FUNC) != 0) {
               std::ofstream out("/Users/lucasste/Documents/solana-test/program/demote.txt", std::ios::app);
               out << "Adding sym: " << b->getName().str() << std::endl;
+              partitions[b->partition - 1].dynSymTab->addSymbol(b);
           }
       }
     }
@@ -2079,20 +2077,6 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
     // Now that we have defined all possible global symbols including linker-
     // synthesized ones. Visit all symbols to give the finishing touches.
 
-    if (in.symTab && isSbfV3()) {
-      for (SymbolTableEntry e : in.symTab->getSymbols()) {
-        if (e.sym && (e.sym->type & STT_FUNC) != 0) {
-          partitions[e.sym->partition - 1].dynSymTab->addSymbol(e.sym);
-        }
-      }
-
-//      if (config->strip == StripPolicy::All) {
-//        in.strTab.reset();
-//        in.symTab.reset();
-//        in.symTabShndx.reset();
-//      }
-    }
-
     for (Symbol *sym : symtab.getSymbols()) {
       if (!sym->isUsedInRegularObj || !includeInSymtab(*sym))
         continue;
@@ -2114,6 +2098,8 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
         if (auto *file = dyn_cast_or_null<SharedFile>(sym->file))
           if (file->isNeeded && !sym->isUndefined())
             addVerneed(sym);
+      } else if (isSbfV3() && sym->used && (sym->type & STT_FUNC) != 0) {
+          partitions[sym->partition - 1].dynSymTab->addSymbol(sym);
       }
     }
 
