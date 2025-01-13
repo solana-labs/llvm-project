@@ -31,6 +31,8 @@
 #include "llvm/Support/TimeProfiler.h"
 #include "llvm/Support/xxhash.h"
 #include <climits>
+#include <iostream>
+#include <fstream>
 
 #define DEBUG_TYPE "lld"
 
@@ -591,6 +593,9 @@ template <class ELFT> void elf::createSyntheticSections() {
   if (config->relocatable)
     add(*make<GnuStackSection>());
 
+//  if (isSbfV3() && config->strip == StripPolicy::All)
+//      return;
+
   if (in.symTab)
     add(*in.symTab);
   if (in.symTabShndx)
@@ -776,8 +781,11 @@ static void demoteAndCopyLocalSymbols() {
 
       if (dr->section && !dr->section->isLive())
         demoteDefined(*dr, sectionIndexMap);
-      else if (in.symTab && includeInSymtab(*b) && shouldKeepInSymtab(*dr))
-        in.symTab->addSymbol(b);
+      else if (in.symTab && includeInSymtab(*b) && shouldKeepInSymtab(*dr)) {
+          in.symTab->addSymbol(b);
+          std::ofstream out("/Users/lucasste/Documents/solana-test/program/demote.txt", std::ios::app);
+          out << "Adding sym: " << b->getName().str() << std::endl;
+      }
     }
   }
 }
@@ -2073,11 +2081,11 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
         }
       }
 
-      if (config->strip == StripPolicy::All) {
-        in.strTab.reset();
-        in.symTab.reset();
-        in.symTabShndx.reset();
-      }
+//      if (config->strip == StripPolicy::All) {
+//        in.strTab.reset();
+//        in.symTab.reset();
+//        in.symTabShndx.reset();
+//      }
     }
 
     for (Symbol *sym : symtab.getSymbols()) {
@@ -2085,8 +2093,11 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
         continue;
       if (!config->relocatable)
         sym->binding = sym->computeBinding();
-      if (in.symTab)
-        in.symTab->addSymbol(sym);
+      if (in.symTab) {
+          std::ofstream out("/Users/lucasste/Documents/solana-test/program/for.txt", std::ios::app);
+          out << sym->getName().str() << "\n";
+          in.symTab->addSymbol(sym);
+      }
 
       if (sym->includeInDynsym()) {
         partitions[sym->partition - 1].dynSymTab->addSymbol(sym);

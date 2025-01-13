@@ -40,6 +40,8 @@
 #include "llvm/Support/Parallel.h"
 #include "llvm/Support/TimeProfiler.h"
 #include <cstdlib>
+#include <iostream>
+#include <fstream>
 
 using namespace llvm;
 using namespace llvm::dwarf;
@@ -269,8 +271,11 @@ Defined *elf::addSyntheticLocal(StringRef name, uint8_t type, uint64_t value,
                                 uint64_t size, InputSectionBase &section) {
   Defined *s = makeDefined(section.file, name, STB_LOCAL, STV_DEFAULT, type,
                            value, size, &section);
-  if (in.symTab)
-    in.symTab->addSymbol(s);
+  if (in.symTab) {
+      std::ofstream out("/Users/lucasste/Documents/solana-test/program/addsyn.txt", std::ios::app);
+      out << s->getName().str() << std::endl;
+      in.symTab->addSymbol(s);
+  }
 
   if (config->emachine == EM_ARM && !config->isLE && config->armBe8 &&
       (section.flags & SHF_EXECINSTR))
