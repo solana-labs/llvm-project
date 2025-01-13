@@ -783,8 +783,10 @@ static void demoteAndCopyLocalSymbols() {
         demoteDefined(*dr, sectionIndexMap);
       else if (in.symTab && includeInSymtab(*b) && shouldKeepInSymtab(*dr)) {
           in.symTab->addSymbol(b);
-          std::ofstream out("/Users/lucasste/Documents/solana-test/program/demote.txt", std::ios::app);
-          out << "Adding sym: " << b->getName().str() << std::endl;
+          if ((b->type & STT_FUNC) != 0) {
+              std::ofstream out("/Users/lucasste/Documents/solana-test/program/demote.txt", std::ios::app);
+              out << "Adding sym: " << b->getName().str() << std::endl;
+          }
       }
     }
   }
@@ -2094,8 +2096,10 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
       if (!config->relocatable)
         sym->binding = sym->computeBinding();
       if (in.symTab) {
-          std::ofstream out("/Users/lucasste/Documents/solana-test/program/for.txt", std::ios::app);
-          out << sym->getName().str() << "\n";
+          if ((sym->type & STT_FUNC) != 0) {
+              std::ofstream out("/Users/lucasste/Documents/solana-test/program/for.txt", std::ios::app);
+              out << sym->getName().str() << "\n";
+          }
           in.symTab->addSymbol(sym);
       }
 
