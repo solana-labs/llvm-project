@@ -2184,6 +2184,10 @@ void SymbolTableBaseSection::sortSymbolsByValue() {
             [](const SymbolTableEntry &a, const SymbolTableEntry &b) {
                 return a.sym->getVA() < b.sym->getVA();
             });
+  
+  symbols.erase(std::unique(symbols.begin(), symbols.end(), [](const SymbolTableEntry &a, const SymbolTableEntry &b) {
+      return a.sym->getVA() == b.sym->getVA();
+  }), symbols.end());
 }
 
 size_t SymbolTableBaseSection::getSymbolIndex(Symbol *sym) {
