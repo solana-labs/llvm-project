@@ -784,8 +784,8 @@ static void demoteAndCopyLocalSymbols() {
 
       if (isSbfV3() && includeInSymtab(*b) && shouldKeepInSymtab(*dr) && b->used) {
           if ((b->type & STT_FUNC) != 0) {
-              std::ofstream out("/Users/lucasste/Documents/solana-test/program/demote.txt", std::ios::app);
-              out << "Adding sym: " << b->getName().str() << std::endl;
+//              std::ofstream out("/Users/lucasste/Documents/solana-test/program/demote.txt", std::ios::app);
+//              out << "Adding sym: " << b->getName().str() << std::endl;
               partitions[b->partition - 1].dynSymTab->addSymbol(b);
           }
       }
@@ -2086,12 +2086,12 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
           in.symTab->addSymbol(sym);
       }
 
-      if (isSbfV3() && sym->used) {
-          if ((sym->type & STT_FUNC) != 0) {
-              std::ofstream out("/Users/lucasste/Documents/solana-test/program/for.txt", std::ios::app);
-              out << sym->getName().str() << "\n";
-          }
-      }
+//      if (isSbfV3() && sym->used) {
+//          if ((sym->type & STT_FUNC) != 0) {
+//              std::ofstream out("/Users/lucasste/Documents/solana-test/program/for.txt", std::ios::app);
+//              out << sym->getName().str() << "\n";
+//          }
+//      }
 
       if (sym->includeInDynsym()) {
         partitions[sym->partition - 1].dynSymTab->addSymbol(sym);
