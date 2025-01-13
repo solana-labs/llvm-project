@@ -352,7 +352,7 @@ template <class ELFT> void elf::createSyntheticSections() {
   Out::programHeaders = make<OutputSection>("", 0, SHF_ALLOC);
   Out::programHeaders->addralign = config->wordsize;
 
-  if (config->strip != StripPolicy::All || isSbfV3()) {
+  if (config->strip != StripPolicy::All) {
     // Let's create these tables and then discard everything later
     in.strTab = std::make_unique<StringTableSection>(".strtab", false);
     in.symTab = std::make_unique<SymbolTableSection<ELFT>>(*in.strTab);
@@ -783,6 +783,9 @@ static void demoteAndCopyLocalSymbols() {
         demoteDefined(*dr, sectionIndexMap);
       else if (in.symTab && includeInSymtab(*b) && shouldKeepInSymtab(*dr)) {
           in.symTab->addSymbol(b);
+      }
+
+      if (isSbfV3() && includeInSymtab(*b) && shouldKeepInSymtab(*dr) && b->used) {
           if ((b->type & STT_FUNC) != 0) {
               std::ofstream out("/Users/lucasste/Documents/solana-test/program/demote.txt", std::ios::app);
               out << "Adding sym: " << b->getName().str() << std::endl;
@@ -2096,11 +2099,14 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
       if (!config->relocatable)
         sym->binding = sym->computeBinding();
       if (in.symTab) {
+          in.symTab->addSymbol(sym);
+      }
+
+      if (isSbfV3() && sym->used) {
           if ((sym->type & STT_FUNC) != 0) {
               std::ofstream out("/Users/lucasste/Documents/solana-test/program/for.txt", std::ios::app);
               out << sym->getName().str() << "\n";
           }
-          in.symTab->addSymbol(sym);
       }
 
       if (sym->includeInDynsym()) {
