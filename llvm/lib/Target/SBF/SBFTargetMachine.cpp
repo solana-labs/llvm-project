@@ -73,6 +73,7 @@ SBFTargetMachine::SBFTargetMachine(const Target &T, const Triple &TT,
       static_cast<SBFMCAsmInfo *>(const_cast<MCAsmInfo *>(AsmInfo.get()));
   MAI->setDwarfUsesRelocationsAcrossSections(!Subtarget.getUseDwarfRIS());
   MAI->setSupportsDebugInformation(true);
+  this->Options.TrapUnreachable = true;
 }
 
 namespace {

@@ -32,12 +32,13 @@ def SDT_SBFMEMCPY       : SDTypeProfile<0, 4, [SDTCisVT<0, i64>,
                                                SDTCisVT<1, i64>,
                                                SDTCisVT<2, i64>,
                                                SDTCisVT<3, i64>]>;
-
 def SBFcall         : SDNode<"SBFISD::CALL", SDT_SBFCall,
                              [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
                               SDNPVariadic]>;
 def SBFretglue     : SDNode<"SBFISD::RET_GLUE", SDTNone,
                              [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
+def SBFtrapglue     : SDNode<"SBFISD::TRAP_RET", SDTNone, [SDNPHasChain]>;
+
 def SBFcallseq_start: SDNode<"ISD::CALLSEQ_START", SDT_SBFCallSeqStart,
                              [SDNPHasChain, SDNPOutGlue]>;
 def SBFcallseq_end  : SDNode<"ISD::CALLSEQ_END",   SDT_SBFCallSeqEnd,
@@ -899,6 +900,8 @@ let isReturn = 1, isTerminator = 1, hasDelaySlot=0, isBarrier = 1,
     isNotDuplicable = 1, Predicates = [SBFHasStaticSyscalls] in {
   def RETURN_v3 : RETURN<"return">;
 }
+
+def : Pat<(SBFtrapglue), (RETURN_v3)>, Requires<[SBFHasStaticSyscalls]>;
 
 // ADJCALLSTACKDOWN/UP pseudo insns
 let Defs = [R10], Uses = [R10], isCodeGenOnly = 1 in {
