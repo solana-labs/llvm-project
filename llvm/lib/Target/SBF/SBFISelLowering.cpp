@@ -54,8 +54,8 @@ SBFTargetLowering::SBFTargetLowering(const TargetMachine &TM,
 
   setStackPointerRegisterToSaveRestore(SBF::R10);
 
-  if (STI.getHasStaticSyscalls())
-    setOperationAction(ISD::TRAP, MVT::Other, Custom);
+//  if (STI.getHasStaticSyscalls())
+//    setOperationAction(ISD::TRAP, MVT::Other, Custom);
 
   setOperationAction(ISD::BR_CC, MVT::i64, Custom);
   setOperationAction(ISD::BR_JT, MVT::Other, Expand);
@@ -331,17 +331,17 @@ SDValue SBFTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
     return SDValue();
   case ISD::DYNAMIC_STACKALLOC:
     report_fatal_error("Unsupported dynamic stack allocation");
-  case ISD::TRAP:
-  {
-    SDValue Callee = DAG.getConstant(1, SDLoc(Op), MVT::i64);
-    SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
-    SmallVector<SDValue, 2> Ops;
-    Ops.push_back(Op.getOperand(0));
-    Ops.push_back(Callee);
-    SDValue call = DAG.getNode(SBFISD::CALL, SDLoc(Op), NodeTys, Ops);
-    SDValue val = DAG.getNode(SBFISD::TRAP_RET, SDLoc(Op), MVT::Other, call);
-    return val;
-  }
+//  case ISD::TRAP:
+//  {
+//    SDValue Callee = DAG.getConstant(1, SDLoc(Op), MVT::i64);
+//    SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
+//    SmallVector<SDValue, 2> Ops;
+//    Ops.push_back(Op.getOperand(0));
+//    Ops.push_back(Callee);
+//    SDValue call = DAG.getNode(SBFISD::CALL, SDLoc(Op), NodeTys, Ops);
+//    SDValue val = DAG.getNode(SBFISD::TRAP_RET, SDLoc(Op), MVT::Other, call);
+//    return val;
+//  }
   default:
     llvm_unreachable("unimplemented operation");
   }
@@ -928,8 +928,8 @@ const char *SBFTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "SBFISD::Wrapper";
   case SBFISD::MEMCPY:
     return "SBFISD::MEMCPY";
-  case SBFISD::TRAP_RET:
-    return "SBFISD::TRAP_RET";
+//  case SBFISD::TRAP_RET:
+//    return "SBFISD::TRAP_RET";
   }
   return nullptr;
 }

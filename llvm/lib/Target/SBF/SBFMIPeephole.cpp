@@ -28,6 +28,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/Debug.h"
 #include <set>
+#include <iostream>
 
 using namespace llvm;
 
@@ -131,6 +132,7 @@ struct SBFMIPreEmitPeephole : public MachineFunctionPass {
   static char ID;
   MachineFunction *MF;
   const TargetRegisterInfo *TRI;
+  const SBFInstrInfo *TII;
 
   SBFMIPreEmitPeephole() : MachineFunctionPass(ID) {
     initializeSBFMIPreEmitPeepholePass(*PassRegistry::getPassRegistry());
@@ -141,6 +143,7 @@ private:
   void initialize(MachineFunction &MFParm);
 
   bool eliminateRedundantMov();
+  bool addReturn();
 
 public:
 
@@ -151,7 +154,11 @@ public:
 
     initialize(MF);
 
-    return eliminateRedundantMov();
+    bool Executed = false;
+    if (MF.getSubtarget<SBFSubtarget>().getHasStaticSyscalls())
+      Executed = addReturn();
+
+    return eliminateRedundantMov() || Executed;
   }
 };
 
@@ -159,7 +166,30 @@ public:
 void SBFMIPreEmitPeephole::initialize(MachineFunction &MFParm) {
   MF = &MFParm;
   TRI = MF->getSubtarget<SBFSubtarget>().getRegisterInfo();
+  TII = MF->getSubtarget<SBFSubtarget>().getInstrInfo();
   LLVM_DEBUG(dbgs() << "*** SBF PreEmit peephole pass ***\n\n");
+}
+
+bool SBFMIPreEmitPeephole::addReturn() {
+  unsigned NumAdded = 0;
+
+  for (MachineBasicBlock &MBB : *MF) {
+    if (!MBB.succ_empty() || MBB.empty())
+      continue;
+
+    MachineInstr &I = MBB.back();
+
+    unsigned Opcode = I.getOpcode();
+    if (Opcode == SBF::JAL ||
+        Opcode == SBF::JALX ||
+        Opcode == SBF::JALX_v2 ||
+        Opcode == SBF::SYSCALL_v3) {
+      BuildMI(&MBB, I.getDebugLoc(), TII->get(SBF::RETURN_v3));
+      NumAdded++;
+    }
+  }
+
+  return NumAdded > 0;
 }
 
 bool SBFMIPreEmitPeephole::eliminateRedundantMov() {
