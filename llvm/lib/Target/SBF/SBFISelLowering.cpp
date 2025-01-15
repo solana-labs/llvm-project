@@ -39,18 +39,6 @@ static void fail(const SDLoc &DL, SelectionDAG &DAG, const Twine &Msg) {
       DiagnosticInfoUnsupported(MF.getFunction(), Msg, DL.getDebugLoc()));
 }
 
-static void fail(const SDLoc &DL, SelectionDAG &DAG, const char *Msg,
-                 SDValue Val) {
-  MachineFunction &MF = DAG.getMachineFunction();
-  std::string Str;
-  raw_string_ostream OS(Str);
-  OS << Msg;
-  Val->print(OS);
-  OS.flush();
-  DAG.getContext()->diagnose(
-      DiagnosticInfoUnsupported(MF.getFunction(), Str, DL.getDebugLoc()));
-}
-
 SBFTargetLowering::SBFTargetLowering(const TargetMachine &TM,
                                      const SBFSubtarget &STI)
     : TargetLowering(TM), Subtarget(&STI) {
