@@ -697,6 +697,7 @@ template <class ELFT> static void markUsedLocalSymbols() {
   // See MarkLive<ELFT>::resolveReloc().
   if (config->gcSections)
     return;
+
   for (ELFFileBase *file : ctx.objectFiles) {
     ObjFile<ELFT> *f = cast<ObjFile<ELFT>>(file);
     for (InputSectionBase *s : f->getSections()) {
@@ -782,7 +783,10 @@ static void demoteAndCopyLocalSymbols() {
           in.symTab->addSymbol(b);
       }
 
-      if (isSbfV3() && includeInSymtab(*b) && shouldKeepInSymtab(*dr) && b->used) {
+      if (isSbfV3() &&
+          includeInSymtab(*b) &&
+          shouldKeepInSymtab(*dr) &&
+          (b->used || (!config->gcSections && (!config->copyRelocs || config->discard == DiscardPolicy::None)))) {
           if ((b->type & STT_FUNC) != 0) {
 //              std::ofstream out("/Users/lucasste/Documents/solana-test/program/demote.txt", std::ios::app);
 //              out << "Adding sym: " << b->getName().str() << std::endl;
@@ -2098,7 +2102,9 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
         if (auto *file = dyn_cast_or_null<SharedFile>(sym->file))
           if (file->isNeeded && !sym->isUndefined())
             addVerneed(sym);
-      } else if (isSbfV3() && sym->used && (sym->type & STT_FUNC) != 0) {
+      } else if (isSbfV3() &&
+                 (sym->used || (!config->gcSections && (!config->copyRelocs || config->discard == DiscardPolicy::None))) &&
+                 (sym->type & STT_FUNC) != 0) {
           partitions[sym->partition - 1].dynSymTab->addSymbol(sym);
       }
     }

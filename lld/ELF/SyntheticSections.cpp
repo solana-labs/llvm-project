@@ -2176,7 +2176,16 @@ void SymbolTableBaseSection::addSymbol(Symbol *b) {
   assert(this->type != SHT_DYNSYM ||
          !b->isLocal() ||
          (config->emachine == EM_SBF && config->eflags == 0x3));
-  symbols.push_back({b, strTabSec.addString(b->getName(), false)});
+
+  unsigned Offset;
+  if (strTabSec.name == ".dynstr" && b->isLocal()) {
+    const static unsigned LocalOffset = strTabSec.addString("hidden_func", false);
+    Offset = LocalOffset;
+  } else {
+    Offset = strTabSec.addString(b->getName(), false);
+  }
+
+  symbols.push_back({b, Offset});
 }
 
 void SymbolTableBaseSection::sortSymbolsByValue() {
