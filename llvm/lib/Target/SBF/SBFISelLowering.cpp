@@ -112,6 +112,11 @@ SBFTargetLowering::SBFTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::SELECT_CC, VT, Custom);
   }
 
+  if (STI.getHasPqrClass() && STI.getHasAlu32()) {
+    setOperationAction(ISD::MULHU, MVT::i32, Expand);
+    setOperationAction(ISD::MULHS, MVT::i32, Expand);
+  }
+
   if (STI.getHasAlu32()) {
     setOperationAction(ISD::BSWAP, MVT::i32, Promote);
     setOperationAction(ISD::BR_CC, MVT::i32, Custom);
