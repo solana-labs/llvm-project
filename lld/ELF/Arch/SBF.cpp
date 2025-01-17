@@ -41,7 +41,7 @@ SBF::SBF() {
   symbolicRel = R_SBF_64_64;
   defaultCommonPageSize = 8;
   defaultMaxPageSize = 8;
-  defaultImageBase = 8;
+  defaultImageBase = 0;
 }
 
 RelExpr SBF::getRelExpr(RelType type, const Symbol &s,

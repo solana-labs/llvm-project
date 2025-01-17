@@ -786,12 +786,11 @@ static void demoteAndCopyLocalSymbols() {
       if (isSbfV3() &&
           includeInSymtab(*b) &&
           shouldKeepInSymtab(*dr) &&
-          (b->used || (!config->gcSections && (!config->copyRelocs || config->discard == DiscardPolicy::None)))) {
-          if ((b->type & STT_FUNC) != 0) {
+          (b->used || (!config->gcSections && (!config->copyRelocs || config->discard == DiscardPolicy::None))) &&
+          b->type == STT_FUNC) {
 //              std::ofstream out("/Users/lucasste/Documents/solana-test/program/demote.txt", std::ios::app);
 //              out << "Adding sym: " << b->getName().str() << std::endl;
-              partitions[b->partition - 1].dynSymTab->addSymbol(b);
-          }
+          partitions[b->partition - 1].dynSymTab->addSymbol(b);
       }
     }
   }
@@ -1712,6 +1711,7 @@ template <class ELFT> void Writer<ELFT>::finalizeAddressDependentContent() {
   AArch64Err843419Patcher a64p;
   ARMErr657417Patcher a32p;
   script->assignAddresses();
+  bool SbfDuplicateRemoval = false;
   // .ARM.exidx and SHF_LINK_ORDER do not require precise addresses, but they
   // do require the relative addresses of OutputSections because linker scripts
   // can assign Virtual Addresses to OutputSections that are not monotonically
@@ -1762,6 +1762,15 @@ template <class ELFT> void Writer<ELFT>::finalizeAddressDependentContent() {
     }
 
     const Defined *changedSym = script->assignAddresses();
+
+    if (!SbfDuplicateRemoval && isSbfV3()) {
+        for (Partition &part: partitions) {
+            part.dynSymTab->sortSymbolsByValue();
+        }
+        SbfDuplicateRemoval = true;
+        changed = true;
+    }
+
     if (!changed) {
       // Some symbols may be dependent on section addresses. When we break the
       // loop, the symbol values are finalized because a previous
@@ -2104,7 +2113,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
             addVerneed(sym);
       } else if (isSbfV3() &&
                  (sym->used || (!config->gcSections && (!config->copyRelocs || config->discard == DiscardPolicy::None))) &&
-                 (sym->type & STT_FUNC) != 0) {
+                 sym->type == STT_FUNC) {
           partitions[sym->partition - 1].dynSymTab->addSymbol(sym);
       }
     }
@@ -2300,11 +2309,12 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   if (config->emachine == EM_ARM && !config->isLE && config->armBe8) {
     addArmInputSectionMappingSymbols();
     sortArmMappingSymbols();
-  } else if (isSbfV3()) {
-    for (Partition &part: partitions) {
-      part.dynSymTab->sortSymbolsByValue();
-    }
   }
+//  else if (isSbfV3()) {
+//    for (Partition &part: partitions) {
+//      part.dynSymTab->sortSymbolsByValue();
+//    }
+//  }
 }
 
 // Ensure data sections are not mixed with executable sections when

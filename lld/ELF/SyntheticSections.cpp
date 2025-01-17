@@ -272,8 +272,6 @@ Defined *elf::addSyntheticLocal(StringRef name, uint8_t type, uint64_t value,
   Defined *s = makeDefined(section.file, name, STB_LOCAL, STV_DEFAULT, type,
                            value, size, &section);
   if (in.symTab) {
-      std::ofstream out("/Users/lucasste/Documents/solana-test/program/addsyn.txt", std::ios::app);
-      out << s->getName().str() << std::endl;
       in.symTab->addSymbol(s);
   }
 
@@ -2178,7 +2176,7 @@ void SymbolTableBaseSection::addSymbol(Symbol *b) {
          (config->emachine == EM_SBF && config->eflags == 0x3));
 
   unsigned Offset;
-  if (strTabSec.name == ".dynstr" && b->isLocal()) {
+  if (this->type == SHT_DYNSYM && b->isLocal()) {
     const static unsigned LocalOffset = strTabSec.addString("hidden_func", false);
     Offset = LocalOffset;
   } else {
