@@ -29,6 +29,7 @@ enum NodeType : unsigned {
   BR_CC,
   Wrapper,
   MEMCPY,
+//  TRAP_RET,
 };
 }
 

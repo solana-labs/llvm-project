@@ -32,12 +32,12 @@ def SDT_SBFMEMCPY       : SDTypeProfile<0, 4, [SDTCisVT<0, i64>,
                                                SDTCisVT<1, i64>,
                                                SDTCisVT<2, i64>,
                                                SDTCisVT<3, i64>]>;
-
 def SBFcall         : SDNode<"SBFISD::CALL", SDT_SBFCall,
                              [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
                               SDNPVariadic]>;
 def SBFretglue     : SDNode<"SBFISD::RET_GLUE", SDTNone,
                              [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
+
 def SBFcallseq_start: SDNode<"ISD::CALLSEQ_START", SDT_SBFCallSeqStart,
                              [SDNPHasChain, SDNPOutGlue]>;
 def SBFcallseq_end  : SDNode<"ISD::CALLSEQ_END",   SDT_SBFCallSeqEnd,

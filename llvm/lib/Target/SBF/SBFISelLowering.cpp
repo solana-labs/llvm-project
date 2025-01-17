@@ -25,6 +25,7 @@
 #include "llvm/IR/DiagnosticPrinter.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+
 using namespace llvm;
 
 #define DEBUG_TYPE "sbf-lower"
@@ -52,6 +53,9 @@ SBFTargetLowering::SBFTargetLowering(const TargetMachine &TM,
   computeRegisterProperties(STI.getRegisterInfo());
 
   setStackPointerRegisterToSaveRestore(SBF::R10);
+
+//  if (STI.getHasStaticSyscalls())
+//    setOperationAction(ISD::TRAP, MVT::Other, Custom);
 
   setOperationAction(ISD::BR_CC, MVT::i64, Custom);
   setOperationAction(ISD::BR_JT, MVT::Other, Expand);
@@ -83,6 +87,12 @@ SBFTargetLowering::SBFTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::ATOMIC_LOAD_XOR, VT, Custom);
     setOperationAction(ISD::ATOMIC_LOAD, VT, Expand);
     setOperationAction(ISD::ATOMIC_STORE, VT, Expand);
+  }
+
+
+  if (STI.getHasPqrClass() && STI.getHasAlu32()) {
+    setOperationAction(ISD::MULHU, MVT::i32, Expand);
+    setOperationAction(ISD::MULHS, MVT::i32, Expand);
   }
 
   for (auto VT : { MVT::i32, MVT::i64 }) {
@@ -326,6 +336,17 @@ SDValue SBFTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
     return SDValue();
   case ISD::DYNAMIC_STACKALLOC:
     report_fatal_error("Unsupported dynamic stack allocation");
+//  case ISD::TRAP:
+//  {
+//    SDValue Callee = DAG.getConstant(1, SDLoc(Op), MVT::i64);
+//    SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
+//    SmallVector<SDValue, 2> Ops;
+//    Ops.push_back(Op.getOperand(0));
+//    Ops.push_back(Callee);
+//    SDValue call = DAG.getNode(SBFISD::CALL, SDLoc(Op), NodeTys, Ops);
+//    SDValue val = DAG.getNode(SBFISD::TRAP_RET, SDLoc(Op), MVT::Other, call);
+//    return val;
+//  }
   default:
     llvm_unreachable("unimplemented operation");
   }
@@ -912,6 +933,8 @@ const char *SBFTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "SBFISD::Wrapper";
   case SBFISD::MEMCPY:
     return "SBFISD::MEMCPY";
+//  case SBFISD::TRAP_RET:
+//    return "SBFISD::TRAP_RET";
   }
   return nullptr;
 }

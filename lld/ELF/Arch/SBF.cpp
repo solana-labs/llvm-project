@@ -13,6 +13,7 @@
 #include "lld/Common/ErrorHandler.h"
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/Endian.h"
+#include <iostream>
 
 using namespace llvm;
 using namespace llvm::object;
@@ -38,6 +39,9 @@ public:
 SBF::SBF() {
   relativeRel = R_SBF_64_RELATIVE;
   symbolicRel = R_SBF_64_64;
+  defaultCommonPageSize = 8;
+  defaultMaxPageSize = 8;
+  defaultImageBase = 0;
 }
 
 RelExpr SBF::getRelExpr(RelType type, const Symbol &s,
@@ -78,7 +82,6 @@ int64_t SBF::getImplicitAddend(const uint8_t *buf, RelType type) const {
   default:
     return 0;
   }
-  return 0;
 }
 
 void SBF::relocate(uint8_t *loc, const Relocation &rel, uint64_t val) const {

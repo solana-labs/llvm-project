@@ -31,6 +31,8 @@
 #include "llvm/Support/TimeProfiler.h"
 #include "llvm/Support/xxhash.h"
 #include <climits>
+#include <iostream>
+#include <fstream>
 
 #define DEBUG_TYPE "lld"
 
@@ -320,6 +322,10 @@ static OutputSection *findSection(StringRef name, unsigned partition = 1) {
   return nullptr;
 }
 
+static bool isSbfV3() {
+  return config->emachine == EM_SBF && config->eflags == 0x3;
+}
+
 template <class ELFT> void elf::createSyntheticSections() {
   // Initialize all pointers with NULL. This is needed because
   // you can call lld::elf::main more than once as a library.
@@ -347,6 +353,7 @@ template <class ELFT> void elf::createSyntheticSections() {
   Out::programHeaders->addralign = config->wordsize;
 
   if (config->strip != StripPolicy::All) {
+    // Let's create these tables and then discard everything later
     in.strTab = std::make_unique<StringTableSection>(".strtab", false);
     in.symTab = std::make_unique<SymbolTableSection<ELFT>>(*in.strTab);
     in.symTabShndx = std::make_unique<SymtabShndxSection>();
@@ -690,6 +697,7 @@ template <class ELFT> static void markUsedLocalSymbols() {
   // See MarkLive<ELFT>::resolveReloc().
   if (config->gcSections)
     return;
+
   for (ELFFileBase *file : ctx.objectFiles) {
     ObjFile<ELFT> *f = cast<ObjFile<ELFT>>(file);
     for (InputSectionBase *s : f->getSections()) {
@@ -771,8 +779,19 @@ static void demoteAndCopyLocalSymbols() {
 
       if (dr->section && !dr->section->isLive())
         demoteDefined(*dr, sectionIndexMap);
-      else if (in.symTab && includeInSymtab(*b) && shouldKeepInSymtab(*dr))
-        in.symTab->addSymbol(b);
+      else if (in.symTab && includeInSymtab(*b) && shouldKeepInSymtab(*dr)) {
+          in.symTab->addSymbol(b);
+      }
+
+      if (isSbfV3() &&
+          includeInSymtab(*b) &&
+          shouldKeepInSymtab(*dr) &&
+          (b->used || (!config->gcSections && (!config->copyRelocs || config->discard == DiscardPolicy::None))) &&
+          b->type == STT_FUNC) {
+//              std::ofstream out("/Users/lucasste/Documents/solana-test/program/demote.txt", std::ios::app);
+//              out << "Adding sym: " << b->getName().str() << std::endl;
+          partitions[b->partition - 1].dynSymTab->addSymbol(b);
+      }
     }
   }
 }
@@ -1692,6 +1711,7 @@ template <class ELFT> void Writer<ELFT>::finalizeAddressDependentContent() {
   AArch64Err843419Patcher a64p;
   ARMErr657417Patcher a32p;
   script->assignAddresses();
+  bool SbfDuplicateRemoval = false;
   // .ARM.exidx and SHF_LINK_ORDER do not require precise addresses, but they
   // do require the relative addresses of OutputSections because linker scripts
   // can assign Virtual Addresses to OutputSections that are not monotonically
@@ -1742,6 +1762,15 @@ template <class ELFT> void Writer<ELFT>::finalizeAddressDependentContent() {
     }
 
     const Defined *changedSym = script->assignAddresses();
+
+    if (!SbfDuplicateRemoval && isSbfV3()) {
+        for (Partition &part: partitions) {
+            part.dynSymTab->sortSymbolsByValue();
+        }
+        SbfDuplicateRemoval = true;
+        changed = true;
+    }
+
     if (!changed) {
       // Some symbols may be dependent on section addresses. When we break the
       // loop, the symbol values are finalized because a previous
@@ -2060,19 +2089,32 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
     llvm::TimeTraceScope timeScope("Add symbols to symtabs");
     // Now that we have defined all possible global symbols including linker-
     // synthesized ones. Visit all symbols to give the finishing touches.
+
     for (Symbol *sym : symtab.getSymbols()) {
       if (!sym->isUsedInRegularObj || !includeInSymtab(*sym))
         continue;
       if (!config->relocatable)
         sym->binding = sym->computeBinding();
-      if (in.symTab)
-        in.symTab->addSymbol(sym);
+      if (in.symTab) {
+          in.symTab->addSymbol(sym);
+      }
+
+//      if (isSbfV3() && sym->used) {
+//          if ((sym->type & STT_FUNC) != 0) {
+//              std::ofstream out("/Users/lucasste/Documents/solana-test/program/for.txt", std::ios::app);
+//              out << sym->getName().str() << "\n";
+//          }
+//      }
 
       if (sym->includeInDynsym()) {
         partitions[sym->partition - 1].dynSymTab->addSymbol(sym);
         if (auto *file = dyn_cast_or_null<SharedFile>(sym->file))
           if (file->isNeeded && !sym->isUndefined())
             addVerneed(sym);
+      } else if (isSbfV3() &&
+                 (sym->used || (!config->gcSections && (!config->copyRelocs || config->discard == DiscardPolicy::None))) &&
+                 sym->type == STT_FUNC) {
+          partitions[sym->partition - 1].dynSymTab->addSymbol(sym);
       }
     }
 
@@ -2268,6 +2310,11 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
     addArmInputSectionMappingSymbols();
     sortArmMappingSymbols();
   }
+//  else if (isSbfV3()) {
+//    for (Partition &part: partitions) {
+//      part.dynSymTab->sortSymbolsByValue();
+//    }
+//  }
 }
 
 // Ensure data sections are not mixed with executable sections when

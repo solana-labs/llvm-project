@@ -40,6 +40,8 @@
 #include "llvm/Support/Parallel.h"
 #include "llvm/Support/TimeProfiler.h"
 #include <cstdlib>
+#include <iostream>
+#include <fstream>
 
 using namespace llvm;
 using namespace llvm::dwarf;
@@ -269,8 +271,9 @@ Defined *elf::addSyntheticLocal(StringRef name, uint8_t type, uint64_t value,
                                 uint64_t size, InputSectionBase &section) {
   Defined *s = makeDefined(section.file, name, STB_LOCAL, STV_DEFAULT, type,
                            value, size, &section);
-  if (in.symTab)
-    in.symTab->addSymbol(s);
+  if (in.symTab) {
+      in.symTab->addSymbol(s);
+  }
 
   if (config->emachine == EM_ARM && !config->isLE && config->armBe8 &&
       (section.flags & SHF_EXECINSTR))
@@ -2167,8 +2170,31 @@ void SymbolTableBaseSection::sortSymTabSymbols() {
 
 void SymbolTableBaseSection::addSymbol(Symbol *b) {
   // Adding a local symbol to a .dynsym is a bug.
-  assert(this->type != SHT_DYNSYM || !b->isLocal());
-  symbols.push_back({b, strTabSec.addString(b->getName(), false)});
+  // NOT for SBF :P
+  assert(this->type != SHT_DYNSYM ||
+         !b->isLocal() ||
+         (config->emachine == EM_SBF && config->eflags == 0x3));
+
+  unsigned Offset;
+  if (this->type == SHT_DYNSYM && b->isLocal()) {
+    const static unsigned LocalOffset = strTabSec.addString("hidden_func", false);
+    Offset = LocalOffset;
+  } else {
+    Offset = strTabSec.addString(b->getName(), false);
+  }
+
+  symbols.push_back({b, Offset});
+}
+
+void SymbolTableBaseSection::sortSymbolsByValue() {
+  llvm::stable_sort(symbols,
+            [](const SymbolTableEntry &a, const SymbolTableEntry &b) {
+                return a.sym->getVA() < b.sym->getVA();
+            });
+  
+  symbols.erase(std::unique(symbols.begin(), symbols.end(), [](const SymbolTableEntry &a, const SymbolTableEntry &b) {
+      return a.sym->getVA() == b.sym->getVA();
+  }), symbols.end());
 }
 
 size_t SymbolTableBaseSection::getSymbolIndex(Symbol *sym) {

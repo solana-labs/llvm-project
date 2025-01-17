@@ -31,6 +31,7 @@
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/Parallel.h"
 #include "llvm/Support/Threading.h"
+#include <unordered_set>
 
 namespace lld::elf {
 class Defined;
@@ -643,6 +644,7 @@ public:
   unsigned getNumSymbols() const { return symbols.size() + 1; }
   size_t getSymbolIndex(Symbol *sym);
   ArrayRef<SymbolTableEntry> getSymbols() const { return symbols; }
+  void sortSymbolsByValue();
 
 protected:
   void sortSymTabSymbols();
